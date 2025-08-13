@@ -1,0 +1,10 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ReSharper disable Xaml.ConstructorWarning -->
+    <FontFamily x:Key="Source Code Pro">ms-appx:///Assets/Fonts/SourceCodePro/SourceCodePro-Regular.ttf#Source Code Pro</FontFamily>
+    <FontFamily x:Key="Font Awesome 7 Brands">ms-appx:///Assets/Fonts/FontAwesome/Font Awesome 7 Brands-Regular-400.otf#Font Awesome 7 Brands</FontFamily>
+    <FontFamily x:Key="Font Awesome 7 Free Solid">ms-appx:///Assets/Fonts/FontAwesome/Font Awesome 7 Free-Solid-900.otf#Font Awesome 7 Free Solid</FontFamily>
+    <!-- ReSharper restore Xaml.ConstructorWarning -->
+</ResourceDictionary>

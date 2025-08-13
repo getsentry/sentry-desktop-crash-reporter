@@ -1,0 +1,207 @@
+using System.ComponentModel;
+
+// ReSharper disable InconsistentNaming
+
+namespace Sentry.CrashReporter.Models;
+
+public record ExceptionCode(string Type, string? Value);
+
+public static class ExceptionCodeExtensions
+{
+    public static ExceptionCode? AsExceptionCode(this uint code, string os)
+    {
+        Dictionary<string, Type> osEnums = new()
+        {
+            { "linux", typeof(ExceptionCodeLinux) },
+            { "windows", typeof(ExceptionCodeWindows) },
+            { "macos", typeof(ExceptionCodeMacOS) }
+        };
+
+        if (!osEnums.TryGetValue(os.ToLowerInvariant(), out var enumType) || !Enum.IsDefined(enumType, code))
+        {
+            return null;
+        }
+
+        var name = Enum.ToObject(enumType, code).ToString();
+        if (name is null)
+        {
+            return null;
+        }
+
+        var member = enumType.GetMember(name).FirstOrDefault();
+        var attribute = member?.GetCustomAttributes(typeof(DescriptionAttribute), false)
+            .OfType<DescriptionAttribute>().FirstOrDefault();
+
+        return new ExceptionCode(name, attribute?.Description);
+    }
+}
+
+// https://github.com/getsentry/rust-minidump/blob/1ae2d079d8c6978ca964a5db068d434e8d387ea5/minidump-common/src/errors/linux.rs
+internal enum ExceptionCodeLinux : uint
+{
+    [Description("Hangup")] // (POSIX)
+    SIGHUP = 0x1,
+
+    [Description("Interrupt")] // (ANSI)
+    SIGINT = 0x2,
+
+    [Description("Quit")] // (POSIX)
+    SIGQUIT = 0x3,
+
+    [Description("Illegal instruction")] // (ANSI)
+    SIGILL = 0x4,
+
+    [Description("Trace trap")] // (POSIX)
+    SIGTRAP = 0x5,
+
+    [Description("Abort")] // (ANSI)
+    SIGABRT = 0x6,
+
+    [Description("BUS error")] // (4.2 BSD)
+    SIGBUS = 0x7,
+
+    [Description("Floating-point exception")] // (ANSI)
+    SIGFPE = 0x8,
+
+    [Description("Kill, unblockable")] // (POSIX)
+    SIGKILL = 0x9,
+
+    [Description("User-defined signal 1")] // (POSIX)
+    SIGUSR1 = 0xa,
+
+    [Description("Segmentation violation")] // (ANSI)
+    SIGSEGV = 0xb,
+
+    [Description("User-defined signal 2")] // (POSIX)
+    SIGUSR2 = 0xc,
+
+    [Description("Broken pipe")] // (POSIX)
+    SIGPIPE = 0xd,
+
+    [Description("Alarm clock")] // (POSIX)
+    SIGALRM = 0xe,
+
+    [Description("Termination")] // (ANSI)
+    SIGTERM = 0xf,
+
+    [Description("Stack fault")] //
+    SIGSTKFLT = 0x10,
+
+    [Description("Child status has changed")] // (POSIX)
+    SIGCHLD = 0x11,
+
+    [Description("Continue")] // (POSIX)
+    SIGCONT = 0x12,
+
+    [Description("Stop, unblockable")] // (POSIX)
+    SIGSTOP = 0x13,
+
+    [Description("Keyboard stop")] // (POSIX)
+    SIGTSTP = 0x14,
+
+    [Description("Background read from tty")] // (POSIX)
+    SIGTTIN = 0x15,
+
+    [Description("Background write to tty")] // (POSIX)
+    SIGTTOU = 0x16,
+
+    [Description("Urgent condition on socket")] // (4.2 BSD)
+    SIGURG = 0x17,
+
+    [Description("CPU limit exceeded")] // (4.2 BSD)
+    SIGXCPU = 0x18,
+
+    [Description("File size limit exceeded")] // (4.2 BSD)
+    SIGXFSZ = 0x19,
+
+    [Description("Virtual alarm clock")] // (4.2 BSD)
+    SIGVTALRM = 0x1a,
+
+    [Description("Profiling alarm clock")] // (4.2 BSD)
+    SIGPROF = 0x1b,
+
+    [Description("Window size change")] // (4.3 BSD, Sun)
+    SIGWINCH = 0x1c,
+
+    [Description("I/O now possible")] // (4.2 BSD)
+    SIGIO = 0x1d,
+
+    [Description("Power failure restart")] // (System V)
+    SIGPWR = 0x1e,
+
+    [Description("Bad system call")] //
+    SIGSYS = 0x1f,
+
+    [Description("Dump requested")] //
+    DUMP_REQUESTED = 0xffffffff
+}
+
+// https://github.com/getsentry/rust-minidump/blob/1ae2d079d8c6978ca964a5db068d434e8d387ea5/minidump-common/src/errors/windows.rs
+internal enum ExceptionCodeWindows : uint
+{
+    EXCEPTION_GUARD_PAGE = 0x80000001,
+    EXCEPTION_DATATYPE_MISALIGNMENT = 0x80000002,
+    EXCEPTION_BREAKPOINT = 0x80000003,
+    EXCEPTION_SINGLE_STEP = 0x80000004,
+    EXCEPTION_ACCESS_VIOLATION = 0xc0000005,
+    EXCEPTION_IN_PAGE_ERROR = 0xc0000006,
+    EXCEPTION_INVALID_HANDLE = 0xc0000008,
+    EXCEPTION_ILLEGAL_INSTRUCTION = 0xc000001d,
+    EXCEPTION_NONCONTINUABLE_EXCEPTION = 0xc0000025,
+    EXCEPTION_INVALID_DISPOSITION = 0xc0000026,
+    EXCEPTION_BOUNDS_EXCEEDED = 0xc000008c,
+    EXCEPTION_FLT_DENORMAL_OPERAND = 0xc000008d,
+    EXCEPTION_FLT_DIVIDE_BY_ZERO = 0xc000008e,
+    EXCEPTION_FLT_INEXACT_RESULT = 0xc000008f,
+    EXCEPTION_FLT_INVALID_OPERATION = 0xc0000090,
+    EXCEPTION_FLT_OVERFLOW = 0xc0000091,
+    EXCEPTION_FLT_STACK_CHECK = 0xc0000092,
+    EXCEPTION_FLT_UNDERFLOW = 0xc0000093,
+    EXCEPTION_INT_DIVIDE_BY_ZERO = 0xc0000094,
+    EXCEPTION_INT_OVERFLOW = 0xc0000095,
+    EXCEPTION_PRIV_INSTRUCTION = 0xc0000096,
+    EXCEPTION_STACK_OVERFLOW = 0xc00000fd,
+    EXCEPTION_POSSIBLE_DEADLOCK = 0xc0000194,
+
+    // Exception thrown by Chromium allocators to indicate OOM
+    //
+    // See base/process/memory.h in Chromium for rationale.
+    OUT_OF_MEMORY = 0xe0000008,
+
+    // Per <http://support.microsoft.com/kb/185294>, generated by Visual C++ compiler
+    UNHANDLED_CPP_EXCEPTION = 0xe06d7363,
+
+    // Per <https://learn.microsoft.com/en-us/shows/inside/e0434352>, 'CCR', exception thrown from managed code
+    MANAGED_EXCEPTION_CODE_V4 = 0xe0434352,
+
+    // Fake exception code used by Crashpad
+    SIMULATED = 0x0517a7ed
+}
+
+// https://github.com/getsentry/rust-minidump/blob/1ae2d079d8c6978ca964a5db068d434e8d387ea5/minidump-common/src/errors/macos.rs
+internal enum ExceptionCodeMacOS : uint
+{
+    // code can be a kern_return_t
+    EXC_BAD_ACCESS = 1,
+
+    // code is CPU-specific
+    EXC_BAD_INSTRUCTION = 2,
+
+    // code is CPU-specific
+    EXC_ARITHMETIC = 3,
+
+    // code is CPU-specific
+    EXC_EMULATION = 4,
+    EXC_SOFTWARE = 5,
+
+    // code is CPU-specific
+    EXC_BREAKPOINT = 6,
+    EXC_SYSCALL = 7,
+    EXC_MACH_SYSCALL = 8,
+    EXC_RPC_ALERT = 9,
+    EXC_RESOURCE = 11,
+    EXC_GUARD = 12,
+
+    // Fake exception code used by Crashpad's SimulateCrash ('CPsx')
+    SIMULATED = 0x43507378
+}

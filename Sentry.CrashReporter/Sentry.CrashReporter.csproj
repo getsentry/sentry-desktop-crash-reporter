@@ -1,0 +1,68 @@
+<Project Sdk="Uno.Sdk">
+    <PropertyGroup>
+        <TargetFrameworks>net9.0-desktop;net9.0</TargetFrameworks>
+
+        <OutputType>Exe</OutputType>
+        <!--PublishAot>true</PublishAot-->
+        <UnoSingleProject>true</UnoSingleProject>
+
+        <!-- Display name -->
+        <ApplicationTitle>Sentry.CrashReporter</ApplicationTitle>
+        <!-- App Identifier -->
+        <ApplicationId>com.companyname.Sentry.CrashReporter</ApplicationId>
+        <!-- Versions -->
+        <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+        <ApplicationVersion>1</ApplicationVersion>
+        <!-- Package Publisher -->
+        <ApplicationPublisher>O=Sentry.CrashReporter</ApplicationPublisher>
+        <!-- Package Description -->
+        <Description>Sentry.CrashReporter powered by Uno Platform.</Description>
+
+        <!--
+          UnoFeatures let's you quickly add and manage implicit package references based on the features you want to use.
+          https://aka.platform.uno/singleproject-features
+        -->
+        <UnoFeatures>
+            CSharpMarkup;
+            Lottie;
+            Hosting;
+            Toolkit;
+            Logging;
+            Mvvm;
+            Configuration;
+            ThemeService;
+            SkiaRenderer;
+        </UnoFeatures>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)'=='Debug' or '$(IsUiAutomationMappingEnabled)'=='True'">
+        <IsUiAutomationMappingEnabled>True</IsUiAutomationMappingEnabled>
+        <DefineConstants>$(DefineConstants);USE_UITESTS</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Content Include="Assets\SentryGlyph.png" />
+        <Content Include="Assets\SentryGlyph.scale-200.png" />
+        <Content Include="Assets\SentryGlyph.dark.png" />
+        <Content Include="Assets\SentryGlyph.dark.scale-200.png" />
+        <Content Include="Assets\SentryGlyph.light.png" />
+        <Content Include="Assets\SentryGlyph.light.scale-200.png" />
+        <Content Include="Assets\Fonts\SourceCodePro\SourceCodePro-Regular.ttf">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Assets\Fonts\FontAwesome\Font Awesome 7 Brands-Regular-400.otf">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Assets\Fonts\FontAwesome\Font Awesome 7 Free-Solid-900.otf">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <None Include="Info.plist">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="KaitaiStruct.Runtime.CSharp"/>
+    </ItemGroup>
+
+</Project>
