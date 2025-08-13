@@ -1,52 +1,39 @@
-using Microsoft.UI.Dispatching;
 using Sentry.CrashReporter.Services;
 
 namespace Sentry.CrashReporter.ViewModels;
 
-public partial class FooterViewModel : ObservableObject
+public partial class FooterViewModel : ReactiveObject
 {
     private readonly ISentryClient _client;
-    private Envelope? _envelope;
-    [ObservableProperty] private string? _dsn;
-    [ObservableProperty] private string? _eventId;
-    [ObservableProperty] private string? _shortEventId;
+    [Reactive] private Envelope? _envelope;
+    [ObservableAsProperty] private string? _dsn = string.Empty;
+    [ObservableAsProperty] private string? _eventId = string.Empty;
+    [ObservableAsProperty] private string? _shortEventId = string.Empty;
+    private readonly IObservable<bool> _canSubmit;
 
     public FooterViewModel(IEnvelopeService? service = null, ISentryClient? client = null)
     {
         service ??= Ioc.Default.GetRequiredService<IEnvelopeService>();
         _client = client ?? Ioc.Default.GetRequiredService<ISentryClient>();
 
-        var dispatcherQueue = DispatcherQueue.GetForCurrentThread();
-        Task.Run(async () =>
-        {
-            var envelope = await service.LoadAsync();
-            dispatcherQueue.TryEnqueue(() =>
-            {
-                Envelope = envelope;
-                SubmitCommand.NotifyCanExecuteChanged();
-            });
-        });
+        _dsnHelper = this.WhenAnyValue(x => x.Envelope,  e => e?.TryGetDsn())
+            .ToProperty(this, x => x.Dsn);
+
+        _eventIdHelper = this.WhenAnyValue(x => x.Envelope, e => e?.TryGetEventId())
+            .ToProperty(this, x => x.EventId);
+
+        _shortEventIdHelper = this.WhenAnyValue(x => x.EventId)
+            .Select(eventId => eventId?.Replace("-", string.Empty)[..8])
+            .ToProperty(this, x => x.ShortEventId);
+
+        _canSubmit = this.WhenAnyValue(x => x.Dsn, dsn => !string.IsNullOrWhiteSpace(dsn));
+
+        Observable.FromAsync(() => service.LoadAsync().AsTask())
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(value => Envelope = value);
     }
 
-    private Envelope? Envelope
-    {
-        get => _envelope;
-        set
-        {
-            SetProperty(ref _envelope, value);
-            Dsn = value?.TryGetDsn();
-            EventId = value?.TryGetEventId();
-            ShortEventId = EventId?.Replace("-", string.Empty)[..8];
-            SubmitCommand.NotifyCanExecuteChanged();
-        }
-    }
-
-    private bool CanSubmit()
-    {
-        return _envelope != null && !string.IsNullOrWhiteSpace(Dsn);
-    }
-
-    [RelayCommand(CanExecute = nameof(CanSubmit))]
+    [ReactiveCommand(CanExecute = nameof(_canSubmit))]
     private void Submit()
     {
         _client.SubmitEnvelopeAsync(_envelope!).GetAwaiter().GetResult();
@@ -54,7 +41,7 @@ public partial class FooterViewModel : ObservableObject
         (Application.Current as App)?.MainWindow?.Close(); // TODO: cleanup
     }
 
-    [RelayCommand]
+    [ReactiveCommand]
     private void Cancel()
     {
         (Application.Current as App)?.MainWindow?.Close(); // TODO: cleanup

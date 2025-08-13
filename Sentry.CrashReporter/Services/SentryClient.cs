@@ -2,7 +2,7 @@ using System.Text.Json.Nodes;
 
 namespace Sentry.CrashReporter.Services;
 
-public record Feedback(string Name, string Email, string Message);
+public record Feedback(string? Name, string? Email, string Message);
 
 
 public interface ISentryClient

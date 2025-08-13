@@ -3,12 +3,11 @@ using Sentry.CrashReporter.ViewModels;
 
 namespace Sentry.CrashReporter.Views;
 
-public sealed partial class HeaderView : Page
+public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
 {
     public HeaderView()
     {
         this.DataContext(new HeaderViewModel(), (view, vm) => view
-            .Background(ThemeResource.Get<Brush>("ApplicationPageBackgroundThemeBrush"))
             .Content(new Grid()
                 .ColumnDefinitions("*,Auto")
                 .Children(
@@ -26,9 +25,9 @@ public sealed partial class HeaderView : Page
                                 .Children(
                                     new IconLabel(FA.Bug)
                                         .Margin(8, 4)
-                                        .ToolTip(x => x.Binding(() => vm.ExceptionValue))
-                                        .Text(x => x.Binding(() => vm.ExceptionType))
-                                        .Visibility(x => x.Binding(() => vm.ExceptionType).Convert(ToVisibility)),
+                                        .ToolTip(x => x.Binding(() => vm.Exception).Convert(e => e?.Value ?? "Exception"))
+                                        .Text(x => x.Binding(() => vm.Exception).Convert(e => e?.Type ?? string.Empty))
+                                        .Visibility(x => x.Binding(() => vm.Exception).Convert(ToVisibility)),
                                     new IconLabel(FA.Globe)
                                         .Margin(8, 4)
                                         .ToolTip("Release")
@@ -38,8 +37,8 @@ public sealed partial class HeaderView : Page
                                         .Margin(8, 4)
                                         .Brand(x => x.Binding(() => vm.OsName).Convert(ToBrand))
                                         .ToolTip("Operating System")
-                                        .Text(x => x.Binding(() => vm.Os))
-                                        .Visibility(x => x.Binding(() => vm.Os).Convert(ToVisibility)),
+                                        .Text(x => x.Binding(() => vm.OsPretty))
+                                        .Visibility(x => x.Binding(() => vm.OsPretty).Convert(ToVisibility)),
                                     new IconLabel(FA.Wrench)
                                         .Margin(8, 4)
                                         .ToolTip("Environment")
@@ -62,13 +61,23 @@ public sealed partial class HeaderView : Page
                             .Add("ButtonBorderBrushPointerOver",
                                 new SolidColorBrush(Colors.Transparent))
                             .Add("ButtonBorderBrushPressed", new SolidColorBrush(Colors.Transparent)))
-                        .Command(new RelayCommand(() =>
+                        .Command(ReactiveCommand.Create(() =>
                             (Window.Current?.Content as Frame)?.Navigate(typeof(EnvelopeView)))))));
     }
 
-    private static Visibility ToVisibility(string? value)
+    private static Visibility ToVisibility(object? obj)
     {
-        return string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
+        return IsNotNullOrEmpty(obj) ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private static bool IsNotNullOrEmpty(object? obj)
+    {
+        return obj switch
+        {
+            EnvelopeException e => !string.IsNullOrEmpty(e.Type),
+            string s => !string.IsNullOrEmpty(s),
+            _ => obj is not null
+        };
     }
 
     private static string ToBrand(string? value)
