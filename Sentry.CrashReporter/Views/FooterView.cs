@@ -3,12 +3,11 @@ using Sentry.CrashReporter.ViewModels;
 
 namespace Sentry.CrashReporter.Views;
 
-public sealed partial class FooterView : Page
+public sealed class FooterView : ReactiveUserControl<FooterViewModel>
 {
     public FooterView()
     {
         this.DataContext(new FooterViewModel(), (view, vm) => view
-            .Background(ThemeResource.Get<Brush>("ApplicationPageBackgroundThemeBrush"))
             .Content(new Grid()
                 .ColumnSpacing(8)
                 .ColumnDefinitions("Auto,*,Auto,Auto")

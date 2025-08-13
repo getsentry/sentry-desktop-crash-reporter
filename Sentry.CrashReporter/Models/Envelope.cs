@@ -1,8 +1,13 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Sentry.CrashReporter.Extensions;
 
 namespace Sentry.CrashReporter.Models;
+
+public record EnvelopeException(string? Type, string? Value);
+public record FormattedEnvelopeItem(string Header, string Payload);
+public record FormattedEnvelope(string Header, List<FormattedEnvelopeItem> Items);
 
 public sealed class EnvelopeItem(JsonObject header, byte[] payload)
 {
@@ -34,6 +39,28 @@ public sealed class EnvelopeItem(JsonObject header, byte[] payload)
         catch (JsonException)
         {
             return null;
+        }
+    }
+
+    public FormattedEnvelopeItem Format(JsonSerializerOptions? options = null)
+    {
+        options ??= new JsonSerializerOptions { WriteIndented = true };
+        var header = Header.ToJsonString(options);
+        try
+        {
+            var json = JsonNode.Parse(Payload);
+            var payload = json?.AsObject().ToJsonString(options);
+            return new FormattedEnvelopeItem(header, payload ?? string.Empty);
+        }
+        catch (JsonException)
+        {
+            const int maxLen = 32;
+            var hex = BitConverter.ToString(Payload.Take(maxLen).ToArray()).Replace("-", " ");
+            if (Payload.Length > maxLen)
+            {
+                hex += "...";
+            }
+            return new FormattedEnvelopeItem(header, hex);
         }
     }
 
@@ -120,10 +147,45 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
         return Minidump.FromBytes(item.Payload);
     }
 
+    public EnvelopeException? TryGetException()
+    {
+        var payload = TryGetEvent()?.TryParseAsJson();
+        var os = payload?.TryGetString("contexts.os.name");
+
+        if (payload?.TryGetProperty("exception.values")?.AsArray().FirstOrDefault()?.AsObject() is { } inproc)
+        {
+            return new EnvelopeException(inproc.TryGetString("type"), inproc.TryGetString("value"));
+        }
+
+        if (TryGetMinidump()?.Streams.Select(s => s.Data)
+                .OfType<Minidump.ExceptionStream>()
+                .FirstOrDefault() is { } minidump)
+        {
+            var code = minidump.ExceptionRec.Code.AsExceptionCode(os ?? string.Empty);
+            return new EnvelopeException(code?.Type, code?.Value);
+        }
+
+        return null;
+    }
+
     public Envelope WithItems(IEnumerable<(JsonObject Header, JsonObject Payload)> items)
     {
         var envelopeItems = items.Select(item => new EnvelopeItem(item.Header, Encoding.UTF8.GetBytes(item.Payload.ToJsonString())));
         return new Envelope(Header, Items.Concat(envelopeItems).ToList());
+    }
+
+    public FormattedEnvelope Format(JsonSerializerOptions? options = null)
+    {
+        options ??= new JsonSerializerOptions { WriteIndented = true };
+        var header = Header.ToJsonString(options);
+
+        var items = new List<FormattedEnvelopeItem>();
+        foreach (var item in Items)
+        {
+            items.Add(item.Format(options));
+        }
+
+        return new FormattedEnvelope(header, items);
     }
 
     public async Task SerializeAsync(

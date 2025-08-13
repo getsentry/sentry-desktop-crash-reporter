@@ -8,7 +8,7 @@ using Sentry.CrashReporter.ViewModels;
 
 namespace Sentry.CrashReporter.Views;
 
-public sealed partial class EventView : UserControl
+public sealed class EventView : ReactiveUserControl<EventViewModel>
 {
     public EventView()
     {
@@ -204,8 +204,8 @@ internal class AttachmentGrid : Grid
                             new SolidColorBrush(Colors.Transparent))
                         .Add("ButtonBorderBrushPressed", new SolidColorBrush(Colors.Transparent))
                         .Add("ButtonBorderBrushDisabled", new SolidColorBrush(Colors.Transparent)))
-                    .Command(new RelayCommand(() => Preview?.Invoke(item), () =>
-                        item.Filename.EndsWith(".png") || item.Filename.EndsWith(".jpg")))));
+                    .Command(ReactiveCommand.Create(() => Preview?.Invoke(item),
+                        Observable.Return(item.Filename.EndsWith(".png") || item.Filename.EndsWith(".jpg"))))));
 
             row++;
         }

@@ -4,7 +4,7 @@ using Sentry.CrashReporter.ViewModels;
 
 namespace Sentry.CrashReporter.Views;
 
-public sealed class EnvelopeView : Page
+public sealed class EnvelopeView : ReactivePage<EnvelopeViewModel>
 {
     public EnvelopeView()
     {
@@ -23,7 +23,7 @@ public sealed class EnvelopeView : Page
                                 .ToolTip("Back")
                                 .Icon(new FontAwesomeIcon(FA.ArrowLeft))
                                 .LabelPosition(CommandBarLabelPosition.Collapsed)
-                                .Command(new RelayCommand(() => (Window.Current?.Content as Frame)?.GoBack())),
+                                .Command(ReactiveCommand.Create(() => (Window.Current?.Content as Frame)?.GoBack())),
                             new StackPanel()
                                 .Grid(1)
                                 .VerticalAlignment(VerticalAlignment.Center)
@@ -46,9 +46,9 @@ public sealed class EnvelopeView : Page
                             .Children(
                                 new SelectableTextBlock()
                                     .WithSourceCodePro()
-                                    .Text(x => x.Binding(() => vm.Header)),
+                                    .Text(x => x.Binding(() => vm.Formatted?.Header)),
                                 new ItemsControl()
-                                    .ItemsSource(x => x.Binding(() => vm.Items))
+                                    .ItemsSource(x => x.Binding(() => vm.Formatted?.Items))
                                     .ItemTemplate(() =>
                                         new Expander()
                                             .HorizontalAlignment(HorizontalAlignment.Stretch)
