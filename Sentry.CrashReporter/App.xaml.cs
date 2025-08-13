@@ -74,7 +74,6 @@ public partial class App : Application
                 .UseConfiguration(configure: configBuilder =>
                     configBuilder
                         .EmbeddedSource<App>()
-                        .WithConfigurationSectionFromEntity(new AppConfig { FilePath = args.Arguments })
                         .Section<AppConfig>()
                 )
             );

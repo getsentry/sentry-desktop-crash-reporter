@@ -3,7 +3,7 @@
         <TargetFrameworks>net9.0-desktop;net9.0</TargetFrameworks>
 
         <OutputType>Exe</OutputType>
-        <!--PublishAot>true</PublishAot-->
+        <PublishAot>true</PublishAot>
         <UnoSingleProject>true</UnoSingleProject>
 
         <!-- Display name -->
