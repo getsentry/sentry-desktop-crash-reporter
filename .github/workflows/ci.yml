@@ -67,7 +67,7 @@ jobs:
 
       - name: Build Sentry.CrashReporter (Debug)
         shell: pwsh
-        run: dotnet publish -f net9.0-desktop -f ${{ matrix.build_rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./artifacts
+        run: dotnet publish -f net9.0-desktop -r ${{ matrix.build_rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./artifacts
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
