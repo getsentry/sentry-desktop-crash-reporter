@@ -65,7 +65,7 @@ jobs:
         with:
           target-platform: "desktop"
 
-      - name: Build Sentry.CrashReporter (Debug)
+      - name: Build Sentry.CrashReporter
         shell: pwsh
         run: dotnet publish -f net9.0-desktop -r ${{ matrix.build_rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./artifacts
 
@@ -73,6 +73,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.platform }}
+          include-hidden-files: true
           path: .\artifacts
 
   unit_test:
