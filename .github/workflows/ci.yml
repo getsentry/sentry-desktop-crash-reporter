@@ -26,6 +26,8 @@ jobs:
       - name: Install Dependencies
         timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
         uses: "./.github/steps/install_dependencies"
+        with:
+          target-platform: "desktop"
 
       # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
       - name: Setup MSBuild
@@ -60,6 +62,8 @@ jobs:
       - name: Install Dependencies
         timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
         uses: "./.github/steps/install_dependencies"
+        with:
+          target-platform: "desktop"
 
       - name: Build Sentry.CrashReporter (Debug)
         shell: pwsh
