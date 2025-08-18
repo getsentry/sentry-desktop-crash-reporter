@@ -35,6 +35,42 @@ jobs:
         shell: pwsh
         run: msbuild ./Sentry.CrashReporter/Sentry.CrashReporter.csproj /r
 
+  release_build:
+    strategy:
+      matrix:
+       include:
+         - platform: 'macOS'
+           agent: 'windows-latest'
+           build_rid: 'macos-arm64'
+         - platform: 'Linux'
+           agent: 'ubuntu-latest'
+           build_rid: 'linux-x64'
+         - platform: 'Windows'
+           agent: 'windows-latest'
+           build_rid: 'windows-x64'
+
+    name: Release Build (${{ matrix.platform }})
+
+    runs-on: ${{ matrix.agent }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install Dependencies
+        timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
+        uses: "./.github/steps/install_dependencies"
+
+      - name: Build Sentry.CrashReporter (Debug)
+        shell: pwsh
+        run: dotnet publish -f net9.0-desktop -f ${{ matrix.build_rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./artifacts
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          path: .\artifacts
+
   unit_test:
     name: Unit Tests
     runs-on: windows-latest
