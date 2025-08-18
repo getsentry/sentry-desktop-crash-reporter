@@ -43,7 +43,7 @@ jobs:
        include:
          - platform: 'macOS'
            agent: 'windows-latest'
-           build_rid: 'macos-arm64'
+           build_rid: 'osx-arm64'
          - platform: 'Linux'
            agent: 'ubuntu-latest'
            build_rid: 'linux-x64'
