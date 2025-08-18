@@ -49,7 +49,7 @@ jobs:
            build_rid: 'linux-x64'
          - platform: 'Windows'
            agent: 'windows-latest'
-           build_rid: 'windows-x64'
+           build_rid: 'win-x64'
 
     name: Release Build (${{ matrix.platform }})
 
