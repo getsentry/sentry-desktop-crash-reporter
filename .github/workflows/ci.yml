@@ -42,7 +42,7 @@ jobs:
       matrix:
        include:
          - platform: 'macOS'
-           agent: 'windows-latest'
+           agent: 'macos-latest'
            build_rid: 'osx-arm64'
          - platform: 'Linux'
            agent: 'ubuntu-latest'
