@@ -40,6 +40,25 @@
         <DefineConstants>$(DefineConstants);USE_UITESTS</DefineConstants>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+
+        <UnoXamlResourcesTrimming>true</UnoXamlResourcesTrimming>
+        <PublishTrimmed>true</PublishTrimmed>
+        <publishSingleFile>true</publishSingleFile>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+        <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <!-- Known cultures to include for text localization -->
+        <UnoSupportedLanguage Include="en-US" />
+
+        <!-- Required for the main assembly when trimming is enabled -->
+        <TrimmerRootAssembly Include="Sentry.CrashReporter" />
+    </ItemGroup>
+
+
     <ItemGroup>
         <Content Include="Assets\SentryGlyph.png" />
         <Content Include="Assets\SentryGlyph.scale-200.png" />

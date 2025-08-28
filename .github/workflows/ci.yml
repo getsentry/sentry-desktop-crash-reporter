@@ -26,6 +26,8 @@ jobs:
       - name: Install Dependencies
         timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
         uses: "./.github/steps/install_dependencies"
+        with:
+          target-platform: "desktop"
 
       # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
       - name: Setup MSBuild
@@ -34,6 +36,45 @@ jobs:
       - name: Build Sentry.CrashReporter (Debug)
         shell: pwsh
         run: msbuild ./Sentry.CrashReporter/Sentry.CrashReporter.csproj /r
+
+  release_build:
+    strategy:
+      matrix:
+       include:
+         - platform: 'macOS'
+           agent: 'macos-latest'
+           build_rid: 'osx-arm64'
+         - platform: 'Linux'
+           agent: 'ubuntu-latest'
+           build_rid: 'linux-x64'
+         - platform: 'Windows'
+           agent: 'windows-latest'
+           build_rid: 'win-x64'
+
+    name: Release Build (${{ matrix.platform }})
+
+    runs-on: ${{ matrix.agent }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install Dependencies
+        timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
+        uses: "./.github/steps/install_dependencies"
+        with:
+          target-platform: "desktop"
+
+      - name: Build Sentry.CrashReporter
+        shell: pwsh
+        run: dotnet publish -f net9.0-desktop -r ${{ matrix.build_rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./artifacts -bl:./artifacts/build.binlog
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          include-hidden-files: true
+          path: ./artifacts
 
   unit_test:
     name: Unit Tests
