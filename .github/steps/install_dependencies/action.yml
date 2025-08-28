@@ -24,12 +24,6 @@ runs:
       with:
         dotnet-version: '${{ inputs.dotnet-version }}'
 
-    # Install Windows SDK
-    - name: Install Windows SDK ${{ inputs.sdkVersion }}
-      shell: pwsh
-      if: ${{ runner.os == 'Windows' }}
-      run: .\.github\Install-WindowsSdkISO.ps1 ${{ inputs.sdkVersion }}
-
     # Run Uno.Check
     - name: Install ${{ inputs.target-platform }} Workloads
       shell: pwsh
