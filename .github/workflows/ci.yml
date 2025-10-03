@@ -5,12 +5,13 @@ on:
     branches:
       - main
       - release/**
-
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
       - main
       - release/**
+  workflow_dispatch:
+
 env:
   STEP_TIMEOUT_MINUTES: 60
 
