@@ -3,6 +3,8 @@ using Sentry.CrashReporter.Extensions;
 
 namespace Sentry.CrashReporter.Controls;
 
+using JsonGridData = IList<KeyValuePair<string, JsonNode>>;
+
 public class JsonGrid : Grid
 {
     public JsonGrid()
@@ -16,30 +18,30 @@ public class JsonGrid : Grid
     public static readonly DependencyProperty DataProperty =
         DependencyProperty.Register(
             nameof(Data),
-            typeof(JsonObject),
+            typeof(JsonGridData),
             typeof(JsonGrid),
             new PropertyMetadata(null, (d, e) =>
             {
                 if (d is JsonGrid grid)
-                    grid.UpdateGrid(e.NewValue as JsonObject);
+                    grid.UpdateGrid(e.NewValue as JsonGridData);
             }));
 
-    public JsonObject? Data
+    public JsonGridData? Data
     {
-        get => (JsonObject?)GetValue(DataProperty);
+        get => (JsonGridData?)GetValue(DataProperty);
         set => SetValue(DataProperty, value);
     }
 
     private void TryAutoBind()
     {
         if (ReadLocalValue(DataProperty) == DependencyProperty.UnsetValue &&
-            DataContext is JsonObject json)
+            DataContext is JsonGridData json)
         {
             Data = json;
         }
     }
 
-    private void UpdateGrid(JsonObject? json)
+    private void UpdateGrid(JsonGridData? json)
     {
         if (!DispatcherQueue.HasThreadAccess)
         {
