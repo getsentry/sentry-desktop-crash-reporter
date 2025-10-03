@@ -1,3 +1,5 @@
+using System.Text.Json.Nodes;
+
 namespace Sentry.CrashReporter.Services;
 
 public record Feedback(string Name, string Email, string Message);
@@ -69,18 +71,18 @@ public class SentryClient(HttpClient httpClient) : ISentryClient
         // TODO: merge feedback into the same envelope
         if (_feedback != null)
         {
-            var feedback = Envelope.FromJson(new { dsn },
+            var feedback = Envelope.FromJson(new JsonObject { ["dsn"] = dsn },
                 [
-                    (Header: new { type = "feedback" }, Payload: new
+                    (Header: new JsonObject { ["type"] = "feedback" }, Payload: new JsonObject
                     {
-                        contexts = new
+                        ["contexts"] = new JsonObject
                         {
-                            feedback = new
+                            ["feedback"] = new JsonObject
                             {
-                                contact_email = _feedback.Email,
-                                name = _feedback.Name,
-                                message = _feedback.Message,
-                                associated_event_id = envelope.TryGetEventId()?.Replace("-", "")
+                                ["contact_email"] = _feedback.Email,
+                                ["name"] = _feedback.Name,
+                                ["message"] = _feedback.Message,
+                                ["associated_event_id"] = envelope.TryGetEventId()?.Replace("-", "")
                             }
                         }
                     })

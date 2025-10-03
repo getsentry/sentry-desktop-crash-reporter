@@ -120,17 +120,10 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
         return Minidump.FromBytes(item.Payload);
     }
 
-    public Envelope WithItems(IEnumerable<(object Header, object Payload)> items)
+    public Envelope WithItems(IEnumerable<(JsonObject Header, JsonObject Payload)> items)
     {
-        var addedItems = new List<EnvelopeItem>();
-        foreach (var item in items)
-        {
-            var itemHeader = JsonSerializer.SerializeToNode(item.Header)!.AsObject();
-            var itemPayload = JsonSerializer.SerializeToNode(item.Payload)!.AsObject();
-            addedItems.Add(new EnvelopeItem(itemHeader!, Encoding.UTF8.GetBytes(itemPayload!.ToJsonString())));
-        }
-
-        return new Envelope(Header, Items.Concat(addedItems).ToList());
+        var envelopeItems = items.Select(item => new EnvelopeItem(item.Header, Encoding.UTF8.GetBytes(item.Payload.ToJsonString())));
+        return new Envelope(Header, Items.Concat(envelopeItems).ToList());
     }
 
     public async Task SerializeAsync(
@@ -165,17 +158,10 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
         return new Envelope(header, items);
     }
 
-    public static Envelope FromJson(object header, IEnumerable<(object Header, object Payload)> items)
+    public static Envelope FromJson(JsonObject header, IEnumerable<(JsonObject Header, JsonObject Payload)> items)
     {
-        var envelopeHeader = JsonSerializer.SerializeToNode(header)!.AsObject();
-        var envelopeItems = new List<EnvelopeItem>();
-        foreach (var item in items)
-        {
-            var itemHeader = JsonSerializer.SerializeToNode(item.Header)!.AsObject();
-            var itemPayload = JsonSerializer.SerializeToNode(item.Payload)!.AsObject();
-            envelopeItems.Add(new EnvelopeItem(itemHeader!, Encoding.UTF8.GetBytes(itemPayload!.ToJsonString())));
-        }
-        return new Envelope(envelopeHeader!, envelopeItems);
+        var envelopeItems = items.Select(item => new EnvelopeItem(item.Header, Encoding.UTF8.GetBytes(item.Payload.ToJsonString())));
+        return new Envelope(header, envelopeItems.ToList());
     }
 }
 
