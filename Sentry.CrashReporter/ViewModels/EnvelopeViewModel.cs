@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.UI.Dispatching;
 using Sentry.CrashReporter.Services;
 using Path = System.IO.Path;
@@ -41,17 +42,17 @@ public partial class EnvelopeViewModel : ObservableObject
             EventId = value?.TryGetEventId();
 
             var options = new JsonSerializerOptions { WriteIndented = true };
-            Header = JsonSerializer.Serialize(value?.Header, options);
+            Header = value?.Header.ToJsonString(options);
 
             var items = new List<FormattedEnvelopeItem>();
             foreach (var item in Envelope?.Items ?? [])
             {
-                var header = JsonSerializer.Serialize(item.Header, options);
+                var header = item.Header.ToJsonString(options);
                 try
                 {
-                    var json = JsonDocument.Parse(item.Payload)?.RootElement;
-                    var payload = JsonSerializer.Serialize(json, options);
-                    items.Add(new FormattedEnvelopeItem(header, payload));
+                    var json = JsonNode.Parse(item.Payload);
+                    var payload = json?.AsObject().ToJsonString(options);
+                    items.Add(new FormattedEnvelopeItem(header, payload ?? ""));
                 }
                 catch (JsonException)
                 {
