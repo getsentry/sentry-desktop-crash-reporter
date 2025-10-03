@@ -101,4 +101,6 @@ jobs:
 
       - name: Run Unit Tests
         shell: pwsh
-        run: dotnet test ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        # TODO: re-enable coverage
+        # --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        run: dotnet test ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash
