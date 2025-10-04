@@ -1,82 +1,41 @@
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Microsoft.UI.Dispatching;
 using Sentry.CrashReporter.Services;
 using Path = System.IO.Path;
 
 namespace Sentry.CrashReporter.ViewModels;
 
-public record FormattedEnvelopeItem(string Header, string Payload);
-
-public partial class EnvelopeViewModel : ObservableObject
+public partial class EnvelopeViewModel : ReactiveObject
 {
-    private Envelope? _envelope;
-    [ObservableProperty] private string? _eventId;
-    [ObservableProperty] private string? _header;
-    [ObservableProperty] private List<FormattedEnvelopeItem>? _items;
+    [Reactive] private Envelope? _envelope;
+    [ObservableAsProperty] private string? _eventId = string.Empty;
+    [ObservableAsProperty] private FormattedEnvelope? _formatted;
+    private readonly IObservable<bool> _canLaunch;
 
     public EnvelopeViewModel(IEnvelopeService? service = null)
     {
         service ??= Ioc.Default.GetRequiredService<IEnvelopeService>();
         FilePath = service.FilePath;
 
-        var dispatcherQueue = DispatcherQueue.GetForCurrentThread();
-        Task.Run(async () =>
-        {
-            var envelope = await service.LoadAsync();
-            dispatcherQueue.TryEnqueue(() => Envelope = envelope);
-        });
+        _eventIdHelper = this.WhenAnyValue(x => x.Envelope, e => e?.TryGetEventId())
+            .ToProperty(this, x => x.EventId);
+
+        _formattedHelper = this.WhenAnyValue(x => x.Envelope, e => e?.Format())
+            .ToProperty(this, x => x.Formatted);
+
+        _canLaunch = this.WhenAnyValue(x => x.FilePath, filePath => !string.IsNullOrWhiteSpace(filePath));
+
+        Observable.FromAsync(() => service.LoadAsync().AsTask())
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(value => Envelope = value);
     }
 
     public string? FilePath { get; }
     public string? FileName => Path.GetFileName(FilePath);
     public string? Directory => Path.GetDirectoryName(FilePath);
 
-    public Envelope? Envelope
-    {
-        get => _envelope;
-        private set
-        {
-            SetProperty(ref _envelope, value);
-            EventId = value?.TryGetEventId();
-
-            var options = new JsonSerializerOptions { WriteIndented = true };
-            Header = value?.Header.ToJsonString(options);
-
-            var items = new List<FormattedEnvelopeItem>();
-            foreach (var item in Envelope?.Items ?? [])
-            {
-                var header = item.Header.ToJsonString(options);
-                try
-                {
-                    var json = JsonNode.Parse(item.Payload);
-                    var payload = json?.AsObject().ToJsonString(options);
-                    items.Add(new FormattedEnvelopeItem(header, payload ?? ""));
-                }
-                catch (JsonException)
-                {
-                    const int maxLen = 32;
-                    var hex = BitConverter.ToString(item.Payload.Take(maxLen).ToArray()).Replace("-", " ");
-                    if (item.Payload.Length > maxLen)
-                    {
-                        hex += "...";
-                    }
-
-                    items.Add(new FormattedEnvelopeItem(header, hex));
-                }
-            }
-
-            Items = items;
-        }
-    }
-
-    private bool CanLaunch()
-    {
-        return !string.IsNullOrWhiteSpace(FilePath);
-    }
-
-    [RelayCommand(CanExecute = nameof(CanLaunch))]
+    [ReactiveCommand(CanExecute = nameof(_canLaunch))]
     private void Launch()
     {
         var launched = false;
