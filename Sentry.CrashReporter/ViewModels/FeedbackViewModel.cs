@@ -26,7 +26,7 @@ public partial class FeedbackViewModel : ReactiveObject
         _isEnabledHelper = this.WhenAnyValue(x => x.Dsn, y => y.EventId, (x, y) => !string.IsNullOrWhiteSpace(x) && !string.IsNullOrWhiteSpace(y))
             .ToProperty(this, x => x.IsEnabled);
 
-        this.WhenAnyValue(x => x.Name, x => x.Email)
+        this.WhenAnyValue(x => x.Name, x => x.Email, x => x.Description)
             .Subscribe(_ => client.UpdateFeedback(new Feedback(Name, Email, Description)));
 
         // TODO: do we want to pre-fill the user information?
