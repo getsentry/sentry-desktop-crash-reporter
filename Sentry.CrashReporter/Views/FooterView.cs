@@ -15,6 +15,7 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
                     new IconLabel(FA.Copy)
                         .ToolTip("Event ID")
                         .Text(x => x.Binding(() => vm.ShortEventId))
+                        .Visibility(x => x.Binding(() => vm.ShortEventId).Convert(ToVisibility))
                         .Grid(0),
                     new Button { Content = "Cancel" }
                         .Grid(2)
@@ -25,5 +26,10 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
                         .Command(() => vm.SubmitCommand)
                         .Foreground(Colors.White)
                         .Background(ThemeResource.Get<Brush>("SystemAccentColorBrush")))));
+    }
+
+    private static Visibility ToVisibility(string? obj)
+    {
+        return string.IsNullOrEmpty(obj) ? Visibility.Collapsed : Visibility.Visible;
     }
 }
