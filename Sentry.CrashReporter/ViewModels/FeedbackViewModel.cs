@@ -1,66 +1,41 @@
-using Microsoft.UI.Dispatching;
 using Sentry.CrashReporter.Services;
 
 namespace Sentry.CrashReporter.ViewModels;
 
-public partial class FeedbackViewModel : ObservableObject
+public partial class FeedbackViewModel : ReactiveObject
 {
-    private readonly ISentryClient _client;
-    private Envelope? _envelope;
-    [ObservableProperty] private string? _dsn;
-    [ObservableProperty] private string? _eventId;
-    [ObservableProperty] private string _description = string.Empty;
-    [ObservableProperty] private string _email = string.Empty;
-    [ObservableProperty] private string _name = string.Empty;
-    [ObservableProperty] private bool _isEnabled;
-
-    partial void OnNameChanged(string value)
-    {
-        UpdateFeedback();
-    }
-
-    partial void OnEmailChanged(string value)
-    {
-        UpdateFeedback();
-    }
-
-    partial void OnDescriptionChanged(string value)
-    {
-        UpdateFeedback();
-    }
-
-    private void UpdateFeedback()
-    {
-        _client.UpdateFeedback(new Feedback(Name, Email, Description));
-    }
+    [Reactive] private Envelope? _envelope;
+    [ObservableAsProperty] private string? _dsn;
+    [ObservableAsProperty] private string? _eventId;
+    [ObservableAsProperty] private bool _isEnabled;
+    [Reactive] private string _description = string.Empty;
+    [Reactive] private string? _email;
+    [Reactive] private string? _name;
 
     public FeedbackViewModel(IEnvelopeService? service = null, ISentryClient? client = null)
     {
         service ??= Ioc.Default.GetRequiredService<IEnvelopeService>();
-        _client = client ?? Ioc.Default.GetRequiredService<ISentryClient>();
+        client ??= Ioc.Default.GetRequiredService<ISentryClient>();
 
-        var dispatcherQueue = DispatcherQueue.GetForCurrentThread();
-        Task.Run(async () =>
-        {
-            var envelope = await service.LoadAsync();
-            dispatcherQueue.TryEnqueue(() => Envelope = envelope);
+        _dsnHelper = this.WhenAnyValue(x => x.Envelope, e => e?.TryGetDsn())
+            .ToProperty(this, x => x.Dsn);
 
-            // TODO: do we want to pre-fill the user information?
-            // var user = envelope.TryGetEvent()?.TryGetPayload("user");
-            // Name = (user?.TryGetProperty("username", out var value) == true ? value.GetString() : null) ?? string.Empty;
-            // Email = (user?.TryGetProperty("email", out value) == true ? value.GetString() : null) ?? string.Empty;
-        });
-    }
+        _eventIdHelper = this.WhenAnyValue(x => x.Envelope, e => e?.TryGetEventId())
+            .ToProperty(this, x => x.EventId);
 
-    private Envelope? Envelope
-    {
-        get => _envelope;
-        set
-        {
-            Dsn = value?.TryGetDsn();
-            EventId = value?.TryGetEventId();
-            IsEnabled = EventId is not null && !string.IsNullOrWhiteSpace(Dsn);
-            SetProperty(ref _envelope, value);
-        }
+        _isEnabledHelper = this.WhenAnyValue(x => x.Dsn, y => y.EventId, (x, y) => !string.IsNullOrWhiteSpace(x) && !string.IsNullOrWhiteSpace(y))
+            .ToProperty(this, x => x.IsEnabled);
+
+        this.WhenAnyValue(x => x.Name, x => x.Email, x => x.Description)
+            .Subscribe(_ => client.UpdateFeedback(new Feedback(Name, Email, Description)));
+
+        // TODO: do we want to pre-fill the user information?
+        // var user = envelope.TryGetEvent()?.TryGetPayload("user");
+        // Name = (user?.TryGetProperty("username", out var value) == true ? value.GetString() : null) ?? string.Empty;
+        // Email = (user?.TryGetProperty("email", out value) == true ? value.GetString() : null) ?? string.Empty;
+
+        Observable.FromAsync(() => service.LoadAsync().AsTask())
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(value => Envelope = value);
     }
 }

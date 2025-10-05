@@ -3,12 +3,11 @@ using Sentry.CrashReporter.ViewModels;
 
 namespace Sentry.CrashReporter.Views;
 
-public sealed partial class FooterView : Page
+public sealed class FooterView : ReactiveUserControl<FooterViewModel>
 {
     public FooterView()
     {
         this.DataContext(new FooterViewModel(), (view, vm) => view
-            .Background(ThemeResource.Get<Brush>("ApplicationPageBackgroundThemeBrush"))
             .Content(new Grid()
                 .ColumnSpacing(8)
                 .ColumnDefinitions("Auto,*,Auto,Auto")
@@ -16,6 +15,7 @@ public sealed partial class FooterView : Page
                     new IconLabel(FA.Copy)
                         .ToolTip("Event ID")
                         .Text(x => x.Binding(() => vm.ShortEventId))
+                        .Visibility(x => x.Binding(() => vm.ShortEventId).Convert(ToVisibility))
                         .Grid(0),
                     new Button { Content = "Cancel" }
                         .Grid(2)
@@ -26,5 +26,10 @@ public sealed partial class FooterView : Page
                         .Command(() => vm.SubmitCommand)
                         .Foreground(Colors.White)
                         .Background(ThemeResource.Get<Brush>("SystemAccentColorBrush")))));
+    }
+
+    private static Visibility ToVisibility(string? obj)
+    {
+        return string.IsNullOrEmpty(obj) ? Visibility.Collapsed : Visibility.Visible;
     }
 }

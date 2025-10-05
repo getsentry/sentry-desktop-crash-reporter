@@ -2,12 +2,11 @@ using Sentry.CrashReporter.ViewModels;
 
 namespace Sentry.CrashReporter.Views;
 
-public sealed partial class FeedbackView : Page
+public sealed class FeedbackView : ReactiveUserControl<FeedbackViewModel>
 {
     public FeedbackView()
     {
         this.DataContext(new FeedbackViewModel(), (view, vm) => view
-            .Background(ThemeResource.Get<Brush>("ApplicationPageBackgroundThemeBrush"))
             .Content(new Grid()
                 .RowSpacing(8)
                 .RowDefinitions("Auto,Auto,Auto,*")
