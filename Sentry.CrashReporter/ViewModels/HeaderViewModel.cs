@@ -21,9 +21,9 @@ public partial class HeaderViewModel : ReactiveObject
     [ObservableAsProperty] private string? _environment = string.Empty;
     [ObservableAsProperty] private EnvelopeException? _exception;
 
-    public HeaderViewModel(IEnvelopeService? service = null)
+    public HeaderViewModel(ICrashReporter? reporter = null)
     {
-        service ??= Ioc.Default.GetRequiredService<IEnvelopeService>();
+        reporter ??= Ioc.Default.GetRequiredService<ICrashReporter>();
 
         _eventHelper = this.WhenAnyValue(x => x.Envelope, e => e?.TryGetEvent())
             .ToProperty(this, x => x.Event);
@@ -65,7 +65,7 @@ public partial class HeaderViewModel : ReactiveObject
         _exceptionHelper = this.WhenAnyValue(x => x.Envelope, e => e?.TryGetException())
             .ToProperty(this, x => x.Exception);
 
-        Observable.FromAsync(() => service.LoadAsync().AsTask())
+        Observable.FromAsync(() => reporter.LoadAsync().AsTask())
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(value => Envelope = value);
     }

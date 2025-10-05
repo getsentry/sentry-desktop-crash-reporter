@@ -13,10 +13,10 @@ public partial class EnvelopeViewModel : ReactiveObject
     [ObservableAsProperty] private FormattedEnvelope? _formatted;
     private readonly IObservable<bool> _canLaunch;
 
-    public EnvelopeViewModel(IEnvelopeService? service = null)
+    public EnvelopeViewModel(ICrashReporter? reporter = null)
     {
-        service ??= Ioc.Default.GetRequiredService<IEnvelopeService>();
-        FilePath = service.FilePath;
+        reporter ??= Ioc.Default.GetRequiredService<ICrashReporter>();
+        FilePath = reporter.FilePath;
 
         _eventIdHelper = this.WhenAnyValue(x => x.Envelope, e => e?.TryGetEventId())
             .ToProperty(this, x => x.EventId);
@@ -26,7 +26,7 @@ public partial class EnvelopeViewModel : ReactiveObject
 
         _canLaunch = this.WhenAnyValue(x => x.FilePath, filePath => !string.IsNullOrWhiteSpace(filePath));
 
-        Observable.FromAsync(() => service.LoadAsync().AsTask())
+        Observable.FromAsync(() => reporter.LoadAsync().AsTask())
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(value => Envelope = value);
     }

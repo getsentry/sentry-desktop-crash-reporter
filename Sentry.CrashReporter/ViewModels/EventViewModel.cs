@@ -17,9 +17,9 @@ public partial class EventViewModel : ReactiveObject
     [ObservableAsProperty] private JsonObject? _sdk;
     [ObservableAsProperty] private List<Attachment>? _attachments;
 
-    public EventViewModel(IEnvelopeService? service = null)
+    public EventViewModel(ICrashReporter? reporter = null)
     {
-        service ??= Ioc.Default.GetRequiredService<IEnvelopeService>();
+        reporter ??= Ioc.Default.GetRequiredService<ICrashReporter>();
 
         _eventHelper = this.WhenAnyValue(x => x.Envelope)
             .Select(envelope => envelope?.TryGetEvent())
@@ -53,7 +53,7 @@ public partial class EventViewModel : ReactiveObject
                 .ToList())
             .ToProperty(this, x => x.Attachments);
 
-        Observable.FromAsync(() => service.LoadAsync().AsTask())
+        Observable.FromAsync(() => reporter.LoadAsync().AsTask())
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(envelope => Envelope = envelope);
     }
