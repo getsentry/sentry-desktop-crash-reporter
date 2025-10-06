@@ -2,16 +2,13 @@ namespace Sentry.CrashReporter.Services;
 
 public interface ISentryClient
 {
-    public Task SubmitEnvelopeAsync(Envelope envelope, CancellationToken cancellationToken = default);
+    public Task SubmitEnvelopeAsync(string dsn, Envelope envelope, CancellationToken cancellationToken = default);
 }
 
 public class SentryClient(HttpClient httpClient) : ISentryClient
 {
-    public async Task SubmitEnvelopeAsync(Envelope envelope, CancellationToken cancellationToken = default)
+    public async Task SubmitEnvelopeAsync(string dsn, Envelope envelope, CancellationToken cancellationToken = default)
     {
-        var dsn = envelope.TryGetDsn()
-                  ?? throw new InvalidOperationException("Envelope does not contain a valid DSN.");
-
         // <scheme>://<key>@<host>:<port>/<project-id> ->
         // <scheme>://<key>@<host>:<port>/api/<project-id>/envelope
         var projectId = new Uri(dsn).LocalPath.Trim('/');

@@ -20,7 +20,7 @@ public class CrashReporterTests
 
         // Assert
         Assert.That(envelope, Is.Not.Null);
-        client.Verify(c => c.SubmitEnvelopeAsync(
+        client.Verify(c => c.SubmitEnvelopeAsync(It.IsAny<string>(),
             envelope!,
             It.IsAny<CancellationToken>()),
             Times.Once);
@@ -34,8 +34,8 @@ public class CrashReporterTests
         var client = new Mock<ISentryClient>();
         var reporter = new Services.CrashReporter(filePath, client.Object);
         var submittedEnvelopes = new List<Envelope>();
-        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<Envelope>(), It.IsAny<CancellationToken>()))
-            .Callback<Envelope, CancellationToken>((e, _) => submittedEnvelopes.Add(e));
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<CancellationToken>()))
+            .Callback<string, Envelope, CancellationToken>((_, e, _) => submittedEnvelopes.Add(e));
         var feedback = new Feedback("John Doe", "john.doe@example.com", "It crashed!");
 
         // Act

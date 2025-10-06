@@ -25,10 +25,10 @@ public sealed class FeedbackView : ReactiveUserControl<FeedbackViewModel>
                         .Text(x => x.Binding(() => vm.Email).TwoWay())
                         .Grid(row: 2),
                     new TextBox()
-                        .PlaceholderText("Description")
+                        .PlaceholderText("Message")
                         .AcceptsReturn(true)
                         .TextWrapping(TextWrapping.Wrap)
-                        .Text(x => x.Binding(() => vm.Description).TwoWay())
+                        .Text(x => x.Binding(() => vm.Message).TwoWay())
                         .IsEnabled(x => x.Binding(() => vm.IsEnabled))
                         .VerticalAlignment(VerticalAlignment.Stretch)
                         .Grid(row: 3))));

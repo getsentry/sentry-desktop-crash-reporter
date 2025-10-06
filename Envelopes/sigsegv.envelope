@@ -1,0 +1,3 @@
+{"event_id":"9f8c4b2d7e9a45e5b6c8d7a91e2f3b44"}
+{"type":"event","content_type":"application/json"}
+{"event_id":"9f8c4b2d7e9a45e5b6c8d7a91e2f3b44","level":"fatal","exception":{"values":[{"type":"SIGSEGV","mechanism":{"type":"signal","handled":false}}]}}
