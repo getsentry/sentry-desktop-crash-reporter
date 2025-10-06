@@ -39,6 +39,7 @@ Describe "Crash reporter" {
 
         $result.Envelopes()[0] | Should -Match """event_id"":""9f8c4b2d7e9a45e5b6c8d7a91e2f3b44"""
         $result.Envelopes()[0] | Should -Match """type"":""event"""
+        $result.Envelopes()[0] | Should -Match """level"":""fatal"""
         $result.Envelopes()[0] | Should -Match """type"":""SIGSEGV"""
     }
 
@@ -66,6 +67,7 @@ Describe "Crash reporter" {
 
         $result.Envelopes()[0] | Should -Match """event_id"":""9f8c4b2d7e9a45e5b6c8d7a91e2f3b44"""
         $result.Envelopes()[0] | Should -Match """type"":""event"""
+        $result.Envelopes()[0] | Should -Match """level"":""fatal"""
         $result.Envelopes()[0] | Should -Match """type"":""SIGSEGV"""
 
         $result.Envelopes()[1] | Should -Match """type"":""feedback"""
