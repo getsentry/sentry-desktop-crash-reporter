@@ -35,7 +35,7 @@ public partial class App : Application
         var services = new ServiceCollection();
         services.AddSingleton<HttpClient>();
         services.AddSingleton<ISentryClient, SentryClient>();
-        services.AddSingleton<IEnvelopeService>(sp => new EnvelopeService(args.Arguments ?? string.Empty));
+        services.AddSingleton<ICrashReporter>(sp => new Services.CrashReporter(args.Arguments ?? string.Empty));
         Ioc.Default.ConfigureServices(services.BuildServiceProvider());
 
         var builder = this.CreateBuilder(args)

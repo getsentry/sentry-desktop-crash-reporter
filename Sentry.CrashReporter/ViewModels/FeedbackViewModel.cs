@@ -12,10 +12,9 @@ public partial class FeedbackViewModel : ReactiveObject
     [Reactive] private string? _email;
     [Reactive] private string? _name;
 
-    public FeedbackViewModel(IEnvelopeService? service = null, ISentryClient? client = null)
+    public FeedbackViewModel(ICrashReporter? reporter = null)
     {
-        service ??= Ioc.Default.GetRequiredService<IEnvelopeService>();
-        client ??= Ioc.Default.GetRequiredService<ISentryClient>();
+        reporter ??= Ioc.Default.GetRequiredService<ICrashReporter>();
 
         _dsnHelper = this.WhenAnyValue(x => x.Envelope, e => e?.TryGetDsn())
             .ToProperty(this, x => x.Dsn);
@@ -27,14 +26,14 @@ public partial class FeedbackViewModel : ReactiveObject
             .ToProperty(this, x => x.IsEnabled);
 
         this.WhenAnyValue(x => x.Name, x => x.Email, x => x.Description)
-            .Subscribe(_ => client.UpdateFeedback(new Feedback(Name, Email, Description)));
+            .Subscribe(_ => reporter.UpdateFeedback(new Feedback(Name, Email, Description)));
 
         // TODO: do we want to pre-fill the user information?
         // var user = envelope.TryGetEvent()?.TryGetPayload("user");
         // Name = (user?.TryGetProperty("username", out var value) == true ? value.GetString() : null) ?? string.Empty;
         // Email = (user?.TryGetProperty("email", out value) == true ? value.GetString() : null) ?? string.Empty;
 
-        Observable.FromAsync(() => service.LoadAsync().AsTask())
+        Observable.FromAsync(() => reporter.LoadAsync().AsTask())
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(value => Envelope = value);
     }

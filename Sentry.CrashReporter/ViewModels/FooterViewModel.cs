@@ -4,17 +4,16 @@ namespace Sentry.CrashReporter.ViewModels;
 
 public partial class FooterViewModel : ReactiveObject
 {
-    private readonly ISentryClient _client;
+    private readonly ICrashReporter _reporter;
     [Reactive] private Envelope? _envelope;
     [ObservableAsProperty] private string? _dsn = string.Empty;
     [ObservableAsProperty] private string? _eventId = string.Empty;
     [ObservableAsProperty] private string? _shortEventId = string.Empty;
     private readonly IObservable<bool> _canSubmit;
 
-    public FooterViewModel(IEnvelopeService? service = null, ISentryClient? client = null)
+    public FooterViewModel(ICrashReporter? reporter = null)
     {
-        service ??= Ioc.Default.GetRequiredService<IEnvelopeService>();
-        _client = client ?? Ioc.Default.GetRequiredService<ISentryClient>();
+        _reporter ??= Ioc.Default.GetRequiredService<ICrashReporter>();
 
         _dsnHelper = this.WhenAnyValue(x => x.Envelope,  e => e?.TryGetDsn())
             .ToProperty(this, x => x.Dsn);
@@ -28,15 +27,15 @@ public partial class FooterViewModel : ReactiveObject
 
         _canSubmit = this.WhenAnyValue(x => x.Dsn, dsn => !string.IsNullOrWhiteSpace(dsn));
 
-        Observable.FromAsync(() => service.LoadAsync().AsTask())
+        Observable.FromAsync(() => _reporter.LoadAsync().AsTask())
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(value => Envelope = value);
     }
 
     [ReactiveCommand(CanExecute = nameof(_canSubmit))]
-    private void Submit()
+    private async Task Submit()
     {
-        _client.SubmitEnvelopeAsync(_envelope!).GetAwaiter().GetResult();
+        await _reporter.SubmitAsync();
 
         (Application.Current as App)?.MainWindow?.Close(); // TODO: cleanup
     }

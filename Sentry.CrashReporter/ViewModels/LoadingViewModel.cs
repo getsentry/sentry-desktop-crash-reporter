@@ -19,15 +19,15 @@ public class LoadingViewModel : ILoadable
 
     public event EventHandler? IsExecutingChanged;
 
-    public LoadingViewModel(IEnvelopeService? service = null)
+    public LoadingViewModel(ICrashReporter? reporter = null)
     {
-        service ??= Ioc.Default.GetRequiredService<IEnvelopeService>();
+        reporter ??= Ioc.Default.GetRequiredService<ICrashReporter>();
 
         IsExecuting = true;
         var dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         Task.Run(async () =>
         {
-            await service.LoadAsync();
+            await reporter.LoadAsync();
             dispatcherQueue.TryEnqueue(() => IsExecuting = false);
         });
     }
