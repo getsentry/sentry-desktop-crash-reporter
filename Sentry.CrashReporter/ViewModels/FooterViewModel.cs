@@ -13,7 +13,7 @@ public partial class FooterViewModel : ReactiveObject
 
     public FooterViewModel(ICrashReporter? reporter = null)
     {
-        _reporter ??= Ioc.Default.GetRequiredService<ICrashReporter>();
+        _reporter = reporter ?? Ioc.Default.GetRequiredService<ICrashReporter>();
 
         _dsnHelper = this.WhenAnyValue(x => x.Envelope,  e => e?.TryGetDsn())
             .ToProperty(this, x => x.Dsn);

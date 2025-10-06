@@ -53,7 +53,7 @@ public partial class HeaderViewModel : ReactiveObject
         _osVersionHelper = this.WhenAnyValue(x => x.Os, os => os?.TryGetString("version"))
             .ToProperty(this, x => x.OsVersion);
 
-        _osPrettyHelper = this.WhenAnyValue(x => x.OsName, x => x.OsVersion, (name, version) => $"{name} {version}")
+        _osPrettyHelper = this.WhenAnyValue(x => x.OsName, x => x.OsVersion, (name, version) => $"{name} {version}".Trim())
             .ToProperty(this, x => x.OsPretty);
 
         _releaseHelper = this.WhenAnyValue(x => x.Payload, p => p?.TryGetString("release"))
