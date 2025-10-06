@@ -23,7 +23,7 @@ Describe "Crash reporter" {
             param([string]$url)
             $dsn = $url.Replace('http://', 'http://key@') + '/0'
             dotnet run `
-                $PSScriptRoot/../Envelopes/two_items.envelope `
+                $PSScriptRoot/../Envelopes/sigsegv.envelope `
                 --no-build `
                 --configuration Release `
                 --framework net9.0-desktop `
@@ -37,9 +37,9 @@ Describe "Crash reporter" {
         $result.HasErrors() | Should -BeFalse
         $result.Envelopes().Count | Should -Be 1
 
-        $result.Envelopes()[0] | Should -Match """event_id"":""9ec79c33ec9942ab8353589fcb2e04dc"""
+        $result.Envelopes()[0] | Should -Match """event_id"":""9f8c4b2d7e9a45e5b6c8d7a91e2f3b44"""
         $result.Envelopes()[0] | Should -Match """type"":""event"""
-        $result.Envelopes()[0] | Should -Match """level"":""error"""
+        $result.Envelopes()[0] | Should -Match """type"":""SIGSEGV"""
     }
 
     It "with feedback" {
@@ -47,7 +47,7 @@ Describe "Crash reporter" {
             param([string]$url)
             $dsn = $url.Replace('http://', 'http://key@') + '/0'
             dotnet run `
-                $PSScriptRoot/../Envelopes/two_items.envelope `
+                $PSScriptRoot/../Envelopes/sigsegv.envelope `
                 --no-build `
                 --configuration Release `
                 --framework net9.0-desktop `
@@ -64,9 +64,9 @@ Describe "Crash reporter" {
         $result.HasErrors() | Should -BeFalse
         $result.Envelopes().Count | Should -Be 2
 
-        $result.Envelopes()[0] | Should -Match """event_id"":""9ec79c33ec9942ab8353589fcb2e04dc"""
+        $result.Envelopes()[0] | Should -Match """event_id"":""9f8c4b2d7e9a45e5b6c8d7a91e2f3b44"""
         $result.Envelopes()[0] | Should -Match """type"":""event"""
-        $result.Envelopes()[0] | Should -Match """level"":""error"""
+        $result.Envelopes()[0] | Should -Match """type"":""SIGSEGV"""
 
         $result.Envelopes()[1] | Should -Match """type"":""feedback"""
         $result.Envelopes()[1] | Should -Match """name"":""John Doe"""

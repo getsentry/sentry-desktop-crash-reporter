@@ -1,0 +1,3 @@
+{"event_id":"9f8c4b2d7e9a45e5b6c8d7a91e2f3b44"}
+{"type":"event","content_type":"application/json"}
+{"event_id":"9f8c4b2d7e9a45e5b6c8d7a91e2f3b44","timestamp":"2025-10-06T12:00:00Z","level":"fatal","platform":"native","logger":"test-crash","exception":{"values":[{"type":"SIGSEGV","value":"Segmentation fault (test)","mechanism":{"type":"signal","handled":false}}]},"threads":{"values":[{"id":1,"crashed":true,"stacktrace":{"frames":[{"function":"main","in_app":true}]}}]}}
