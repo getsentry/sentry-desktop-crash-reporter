@@ -82,7 +82,7 @@ jobs:
 
   unit_test:
     name: Unit Tests
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -94,19 +94,18 @@ jobs:
         with:
           target-platform: "desktop"
 
-      # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
-
       - name: Build Sentry.CrashReporter.Tests (Release)
         shell: pwsh
-        run: msbuild ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj /p:Configuration=Release /p:OverrideTargetFramework=net9.0 /r
+        run: dotnet build ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj /p:Configuration=Release /p:OverrideTargetFramework=net9.0
 
       - name: Run Unit Tests
         shell: pwsh
-        # TODO: re-enable coverage
-        # --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-        run: dotnet test ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash
+        run: dotnet test ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.SingleHit=true
+
+      - name: Upload code coverage
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   integration_test:
     name: Integration Test
