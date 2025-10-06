@@ -68,8 +68,9 @@ public class CrashReporter(string filePath, ISentryClient? client = null) : ICra
     {
         var dsn = Dsn ?? _envelope?.TryGetDsn()
                   ?? throw new InvalidOperationException("Envelope does not contain a valid DSN.");
+        var envelope = await LoadAsync(cancellationToken) ?? throw new InvalidOperationException("No envelope to submit.");
 
-        await _client.SubmitEnvelopeAsync(dsn, _envelope!, cancellationToken);
+        await _client.SubmitEnvelopeAsync(dsn, envelope!, cancellationToken);
 
         if (_feedback != null)
         {
