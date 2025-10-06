@@ -24,6 +24,7 @@ public class SentryClientTests
     {
         await using var file = File.OpenRead(filePath);
         var envelope = await Envelope.DeserializeAsync(file);
+        var dsn = envelope.TryGetDsn()!;
 
         var requestContent = "";
         _messageHandler.Protected()
@@ -34,7 +35,7 @@ public class SentryClientTests
             })
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.OK });
 
-        await _client.SubmitEnvelopeAsync(envelope);
+        await _client.SubmitEnvelopeAsync(dsn, envelope);
 
         var expected = await File.ReadAllTextAsync(filePath);
 
@@ -42,15 +43,5 @@ public class SentryClientTests
         var expectedLines = expected.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
 
         Assert.That(requestLines, Is.EqualTo(expectedLines));
-    }
-
-    [Test]
-    public async Task SubmitEnvelope_Throws()
-    {
-        await using var file = File.OpenRead("Envelopes/empty_headers_eof.envelope");
-        var envelope = await Envelope.DeserializeAsync(file);
-
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _client.SubmitEnvelopeAsync(envelope));
-        Assert.That(ex?.Message, Does.Match(@"\bDSN\b"));
     }
 }
