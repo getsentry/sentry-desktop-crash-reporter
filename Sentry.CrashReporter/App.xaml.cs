@@ -31,13 +31,6 @@ public partial class App : Application
         Resources.Build(r => r.Merged(
             new ToolkitResources()));
 
-        // Configure services
-        var services = new ServiceCollection();
-        services.AddSingleton<HttpClient>();
-        services.AddSingleton<ISentryClient, SentryClient>();
-        services.AddSingleton<ICrashReporter>(sp => new Services.CrashReporter(args.Arguments ?? string.Empty));
-        Ioc.Default.ConfigureServices(services.BuildServiceProvider());
-
         var builder = this.CreateBuilder(args)
             .Configure(host => host
 #if DEBUG

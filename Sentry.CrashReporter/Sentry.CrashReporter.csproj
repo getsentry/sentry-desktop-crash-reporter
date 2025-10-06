@@ -40,6 +40,10 @@
         <DefineConstants>$(DefineConstants);USE_UITESTS</DefineConstants>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(IntegrationTest)'=='True'">
+        <DefineConstants>$(DefineConstants);INTEGRATION_TEST</DefineConstants>
+    </PropertyGroup>
+
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
 
@@ -49,7 +53,7 @@
         <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
         <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <!-- Known cultures to include for text localization -->
         <UnoSupportedLanguage Include="en-US" />

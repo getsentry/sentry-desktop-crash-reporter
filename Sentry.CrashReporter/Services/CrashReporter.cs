@@ -7,7 +7,9 @@ public record Feedback(string? Name, string? Email, string Message);
 
 public interface ICrashReporter
 {
+    string? Dsn { get; }
     string FilePath { get; }
+    Feedback? Feedback { get; }
     public ValueTask<Envelope?> LoadAsync(CancellationToken cancellationToken = default);
     public Task SubmitAsync(CancellationToken cancellationToken = default);
     public void UpdateFeedback(Feedback? feedback);
@@ -17,9 +19,11 @@ public class CrashReporter(string filePath, ISentryClient? client = null) : ICra
 {
     private readonly ISentryClient _client = client ?? Ioc.Default.GetRequiredService<ISentryClient>();
     private Envelope? _envelope;
-    private Feedback? _feedback;
+    private Feedback? _feedback = ResolveFeedback();
 
+    public string? Dsn { get; private set; } = Environment.GetEnvironmentVariable("SENTRY_TEST_DSN");
     public string FilePath { get; } = filePath;
+    public Feedback? Feedback { get => _feedback; }
 
     public async ValueTask<Envelope?> LoadAsync(CancellationToken cancellationToken = default)
     {
@@ -41,6 +45,7 @@ public class CrashReporter(string filePath, ISentryClient? client = null) : ICra
             stopwatch.Stop();
             this.Log().LogInformation($"Loaded {FilePath} in {stopwatch.ElapsedMilliseconds} ms.");
             _envelope = envelope;
+            Dsn ??= envelope.TryGetDsn();
             return envelope;
         }
         catch (Exception ex)
@@ -61,10 +66,10 @@ public class CrashReporter(string filePath, ISentryClient? client = null) : ICra
 
     public async Task SubmitAsync(CancellationToken cancellationToken = default)
     {
-        var dsn = _envelope?.TryGetDsn()
+        var dsn = Dsn ?? _envelope?.TryGetDsn()
                   ?? throw new InvalidOperationException("Envelope does not contain a valid DSN.");
 
-        await _client.SubmitEnvelopeAsync(_envelope!, cancellationToken);
+        await _client.SubmitEnvelopeAsync(dsn, _envelope!, cancellationToken);
 
         if (_feedback != null)
         {
@@ -79,18 +84,33 @@ public class CrashReporter(string filePath, ISentryClient? client = null) : ICra
                                 ["contact_email"] = _feedback.Email,
                                 ["name"] = _feedback.Name,
                                 ["message"] = _feedback.Message,
-                                ["associated_event_id"] = _envelope.TryGetEventId()?.Replace("-", "")
+                                ["associated_event_id"] = _envelope!.TryGetEventId()?.Replace("-", "")
                             }
                         }
                     })
                 ]
             );
-            await _client.SubmitEnvelopeAsync(feedback, cancellationToken);
+            await _client.SubmitEnvelopeAsync(dsn, feedback, cancellationToken);
         }
     }
 
     public void UpdateFeedback(Feedback? feedback)
     {
         _feedback = feedback;
+    }
+
+    private static Feedback? ResolveFeedback()
+    {
+        var message = Environment.GetEnvironmentVariable("SENTRY_FEEDBACK_MESSAGE");
+        var email = Environment.GetEnvironmentVariable("SENTRY_FEEDBACK_EMAIL");
+        var name = Environment.GetEnvironmentVariable("SENTRY_FEEDBACK_NAME");
+        if (string.IsNullOrWhiteSpace(message) &&
+            string.IsNullOrWhiteSpace(email) &&
+            string.IsNullOrWhiteSpace(name))
+        {
+            return null;
+        }
+
+        return new Feedback(name, email, message ?? string.Empty);
     }
 }
