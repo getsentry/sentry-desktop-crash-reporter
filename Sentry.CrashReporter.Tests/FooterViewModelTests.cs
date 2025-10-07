@@ -58,7 +58,7 @@ public class FooterViewModelTests
     }
 
     [Test]
-    public void CannotSubmit()
+    public async Task CannotSubmit()
     {
         // Arrange
         Envelope? envelope = null;
@@ -68,14 +68,14 @@ public class FooterViewModelTests
 
         // Act
         var viewModel = new FooterViewModel(mockReporter.Object);
-        var canSubmit = viewModel.SubmitCommand.CanExecute.FirstOrDefaultAsync().GetAwaiter().GetResult();
+        var canSubmit = await viewModel.SubmitCommand.CanExecute.FirstOrDefaultAsync();
 
         // Assert
         Assert.That(canSubmit, Is.False);
     }
 
     [Test]
-    public void CanSubmit()
+    public async Task CanSubmit()
     {
         // Arrange
         var envelope = new Envelope(
@@ -88,7 +88,7 @@ public class FooterViewModelTests
 
         // Act
         var viewModel = new FooterViewModel(mockReporter.Object);
-        var canSubmit = viewModel.SubmitCommand.CanExecute.FirstOrDefaultAsync().GetAwaiter().GetResult();
+        var canSubmit = await viewModel.SubmitCommand.CanExecute.FirstOrDefaultAsync();
 
         // Assert
         Assert.That(canSubmit, Is.True);

@@ -48,7 +48,7 @@ public class EnvelopeViewModelTests
     [Test]
     [TestCase("", false)]
     [TestCase("foo.envelope", true)]
-    public void CannotLaunch(string filePath, bool expectedCanLaunch)
+    public async Task CannotLaunch(string filePath, bool expectedCanLaunch)
     {
         // Arrange
         Envelope? envelope = null;
@@ -59,7 +59,7 @@ public class EnvelopeViewModelTests
 
         // Act
         var viewModel = new EnvelopeViewModel(mockReporter.Object);
-        var canLaunch = viewModel.LaunchCommand.CanExecute.FirstOrDefaultAsync().GetAwaiter().GetResult();
+        var canLaunch = await viewModel.LaunchCommand.CanExecute.FirstOrDefaultAsync();
 
         // Assert
         Assert.That(canLaunch, Is.EqualTo(expectedCanLaunch));
