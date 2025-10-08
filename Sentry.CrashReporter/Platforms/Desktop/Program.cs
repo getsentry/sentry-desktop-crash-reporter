@@ -6,7 +6,7 @@ namespace Sentry.CrashReporter;
 internal class Program
 {
     [STAThread]
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var services = new ServiceCollection();
         services.AddSingleton<HttpClient>();
@@ -16,8 +16,8 @@ internal class Program
 
 #if INTEGRATION_TEST
         var reporter = Ioc.Default.GetRequiredService<ICrashReporter>();
-        var envelope = reporter.LoadAsync().GetAwaiter().GetResult();
-        reporter.SubmitAsync().GetAwaiter().GetResult();
+        await reporter.LoadAsync();
+        await reporter.SubmitAsync();
 #else
         var host = UnoPlatformHostBuilder.Create()
             .App(() => new App())
@@ -27,7 +27,7 @@ internal class Program
             .UseWin32()
             .Build();
 
-        host.Run();
+        await host.RunAsync();
 #endif
     }
 }
