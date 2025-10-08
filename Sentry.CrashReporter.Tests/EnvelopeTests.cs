@@ -5,7 +5,7 @@ public class EnvelopeTests
     [Test]
     public async Task ParseTwoItems()
     {
-        await using var file = File.OpenRead("Envelopes/two_items.envelope");
+        await using var file = File.OpenRead("data/two_items.envelope");
         var envelope = await Envelope.DeserializeAsync(file);
 
         envelope.TryGetDsn().Should().Be("https://e12d836b15bb49d7bbf99e64295d995b:@sentry.io/42");
@@ -30,7 +30,7 @@ public class EnvelopeTests
     [Test]
     public async Task ParseTwoEmptyAttachments()
     {
-        await using var file = File.OpenRead("Envelopes/two_empty_attachments.envelope");
+        await using var file = File.OpenRead("data/two_empty_attachments.envelope");
         var envelope = await Envelope.DeserializeAsync(file);
 
         envelope.TryGetDsn().Should().BeNull();
@@ -50,7 +50,7 @@ public class EnvelopeTests
     [Test]
     public async Task ParseImplicitLength()
     {
-        await using var file = File.OpenRead("Envelopes/implicit_length.envelope");
+        await using var file = File.OpenRead("data/implicit_length.envelope");
         var envelope = await Envelope.DeserializeAsync(file);
 
         envelope.TryGetDsn().Should().BeNull();
@@ -68,7 +68,7 @@ public class EnvelopeTests
     [Test]
     public async Task ParseEmptyHeadersEof()
     {
-        await using var file = File.OpenRead("Envelopes/empty_headers_eof.envelope");
+        await using var file = File.OpenRead("data/empty_headers_eof.envelope");
         var envelope = await Envelope.DeserializeAsync(file);
 
         envelope.TryGetDsn().Should().BeNull();
@@ -85,7 +85,7 @@ public class EnvelopeTests
     [Test]
     public async Task ParseBinaryAttachment()
     {
-        await using var file = File.OpenRead("Envelopes/binary_attachment.envelope");
+        await using var file = File.OpenRead("data/binary_attachment.envelope");
         var envelope = await Envelope.DeserializeAsync(file);
 
         envelope.TryGetDsn().Should().BeNull();
@@ -99,11 +99,11 @@ public class EnvelopeTests
     }
 
     [Test]
-    [TestCase("Envelopes/two_items.envelope")]
-    [TestCase("Envelopes/two_empty_attachments.envelope")]
-    [TestCase("Envelopes/implicit_length.envelope")]
-    [TestCase("Envelopes/empty_headers_eof.envelope")]
-    [TestCase("Envelopes/binary_attachment.envelope")]
+    [TestCase("data/two_items.envelope")]
+    [TestCase("data/two_empty_attachments.envelope")]
+    [TestCase("data/implicit_length.envelope")]
+    [TestCase("data/empty_headers_eof.envelope")]
+    [TestCase("data/binary_attachment.envelope")]
     public async Task Serialize(string filePath)
     {
         await using var file = File.OpenRead(filePath);

@@ -20,7 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="..\Envelopes\*.envelope" Link="Envelopes\%(Filename)%(Extension)">
+        <None Include="data\*" Link="data\%(Filename)%(Extension)">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>

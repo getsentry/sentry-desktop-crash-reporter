@@ -3,7 +3,7 @@ namespace Sentry.CrashReporter.Tests;
 public class CrashReporterTests
 {
     [Test]
-    [TestCase("Envelopes/two_items.envelope")]
+    [TestCase("data/two_items.envelope")]
     public async Task SubmitAsync_WithValidEnvelope_CallsSentryClient(string filePath)
     {
         // Arrange
@@ -23,7 +23,7 @@ public class CrashReporterTests
     }
 
     [Test]
-    [TestCase("Envelopes/two_items.envelope")]
+    [TestCase("data/two_items.envelope")]
     public async Task SubmitAsync_WithFeedback_CallsSentryClientTwice(string filePath)
     {
         // Arrange
@@ -57,7 +57,7 @@ public class CrashReporterTests
     }
 
     [Test]
-    [TestCase("Envelopes/empty_headers_eof.envelope")]
+    [TestCase("data/empty_headers_eof.envelope")]
     public async Task SubmitAsync_NoDsn_Throws(string filePath)
     {
         // Arrange

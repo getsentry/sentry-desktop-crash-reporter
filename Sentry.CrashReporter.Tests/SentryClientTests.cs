@@ -19,7 +19,7 @@ public class SentryClientTests
     }
 
     [Test]
-    [TestCase("Envelopes/two_items.envelope")]
+    [TestCase("data/two_items.envelope")]
     public async Task SubmitEnvelope_Sends_Request(string filePath)
     {
         await using var file = File.OpenRead(filePath);

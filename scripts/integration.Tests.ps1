@@ -23,7 +23,7 @@ Describe "Crash reporter" {
             param([string]$url)
             $dsn = $url.Replace('http://', 'http://key@') + '/0'
             dotnet run `
-                $PSScriptRoot/../Envelopes/sigsegv.envelope `
+                $PSScriptRoot/../Sentry.CrashReporter.Tests/data/sigsegv.envelope `
                 --no-build `
                 --configuration Release `
                 --framework net9.0-desktop `
@@ -48,7 +48,7 @@ Describe "Crash reporter" {
             param([string]$url)
             $dsn = $url.Replace('http://', 'http://key@') + '/0'
             dotnet run `
-                $PSScriptRoot/../Envelopes/sigsegv.envelope `
+                $PSScriptRoot/../Sentry.CrashReporter.Tests/data/sigsegv.envelope `
                 --no-build `
                 --configuration Release `
                 --framework net9.0-desktop `
