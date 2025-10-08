@@ -215,4 +215,122 @@ public class JsonExtensionsTests
         // Assert
         Assert.That(flat.Count, Is.EqualTo(0));
     }
+
+    [Test]
+    public void FormatNode_Null_ReturnsNullString()
+    {
+        // Arrange
+        JsonNode? node = null;
+
+        // Act
+        var result = node.FormatNode();
+
+        // Assert
+        Assert.That(result, Is.EqualTo("null"));
+    }
+
+    [TestCase(true, "true")]
+    [TestCase(false, "false")]
+    public void FormatNode_Bool_ReturnsString(bool value, string expected)
+    {
+        // Arrange
+        var node = JsonValue.Create(value);
+
+        // Act
+        var result = node.FormatNode();
+
+        // Assert
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void FormatNode_Int_ReturnsString()
+    {
+        // Arrange
+        var node = JsonValue.Create(123);
+
+        // Act
+        var result = node.FormatNode();
+
+        // Assert
+        Assert.That(result, Is.EqualTo("123"));
+    }
+
+    [Test]
+    public void FormatNode_Long_ReturnsString()
+    {
+        // Arrange
+        var node = JsonValue.Create(123456L);
+
+        // Act
+        var result = node.FormatNode();
+
+        // Assert
+        Assert.That(result, Is.EqualTo("123456"));
+    }
+
+    [Test]
+    public void FormatNode_Float_ReturnsString()
+    {
+        // Arrange
+        var node = JsonValue.Create(1.23f);
+
+        // Act
+        var result = node.FormatNode();
+
+        // Assert
+        Assert.That(result, Is.EqualTo("1.23"));
+    }
+
+    [Test]
+    public void FormatNode_Double_ReturnsString()
+    {
+        // Arrange
+        var node = JsonValue.Create(1.23456d);
+
+        // Act
+        var result = node.FormatNode();
+
+        // Assert
+        Assert.That(result, Is.EqualTo("1.23456"));
+    }
+
+    [Test]
+    public void FormatNode_String_ReturnsString()
+    {
+        // Arrange
+        var node = JsonValue.Create("a");
+
+        // Act
+        var result = node.FormatNode();
+
+        // Assert
+        Assert.That(result, Is.EqualTo("a"));
+    }
+
+    [Test]
+    public void FormatNode_Object_ReturnsJsonString()
+    {
+        // Arrange
+        var node = new JsonObject { ["a"] = "b" };
+
+        // Act
+        var result = node.FormatNode();
+
+        // Assert
+        Assert.That(result, Is.EqualTo("{\"a\":\"b\"}"));
+    }
+
+    [Test]
+    public void FormatNode_Array_ReturnsJsonString()
+    {
+        // Arrange
+        var node = new JsonArray { "a", "b" };
+
+        // Act
+        var result = node.FormatNode();
+
+        // Assert
+        Assert.That(result, Is.EqualTo("[\"a\",\"b\"]"));
+    }
 }
