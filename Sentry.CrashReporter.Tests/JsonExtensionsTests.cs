@@ -1,4 +1,4 @@
-namespace Sentry.CrashReporter.Tests.Extensions;
+namespace Sentry.CrashReporter.Tests;
 
 public class JsonExtensionsTests
 {
@@ -154,5 +154,65 @@ public class JsonExtensionsTests
 
         // Assert
         Assert.That(flat["a"]!.GetValue<string>(), Is.EqualTo("b, c, d"));
+    }
+
+    [Test]
+    public void AsFlatObject_NullPropertyValue_FlattensToNull()
+    {
+        // Arrange
+        var json = new JsonObject { ["a"] = null };
+
+        // Act
+        var flat = json.AsFlatObject();
+
+        // Assert
+        Assert.That(flat.Count, Is.EqualTo(1));
+        Assert.That(flat.ContainsKey("a"), Is.True);
+        Assert.That(flat["a"], Is.Null);
+    }
+
+    [Test]
+    public void AsFlatObject_Empty_ReturnsEmpty()
+    {
+        // Arrange
+        var json = new JsonObject();
+
+        // Act
+        var flat = json.AsFlatObject();
+
+        // Assert
+        Assert.That(flat.Count, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void AsFlatObject_ArrayOfValuesWithDifferentTypes_Joins()
+    {
+        // Arrange
+        var json = new JsonObject
+        {
+            ["a"] = new JsonArray { "b", 1, true, null, 1.23 }
+        };
+
+        // Act
+        var flat = json.AsFlatObject();
+
+        // Assert
+        Assert.That(flat["a"]!.GetValue<string>(), Is.EqualTo("b, 1, true, null, 1.23"));
+    }
+
+    [Test]
+    public void AsFlatObject_NestedEmptyObject_IsEmpty()
+    {
+        // Arrange
+        var json = new JsonObject
+        {
+            ["a"] = new JsonObject()
+        };
+
+        // Act
+        var flat = json.AsFlatObject();
+
+        // Assert
+        Assert.That(flat.Count, Is.EqualTo(0));
     }
 }
