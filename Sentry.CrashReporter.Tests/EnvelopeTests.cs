@@ -4,11 +4,6 @@ namespace Sentry.CrashReporter.Tests;
 
 public class EnvelopeTests
 {
-    [SetUp]
-    public void Setup()
-    {
-    }
-
     [Test]
     public void ParseTwoItems()
     {

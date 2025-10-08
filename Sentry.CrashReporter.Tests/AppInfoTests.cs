@@ -2,11 +2,6 @@ namespace Sentry.CrashReporter.Tests;
 
 public class AppInfoTests
 {
-    [SetUp]
-    public void Setup()
-    {
-    }
-
     [Test]
     public void AppInfoCreation()
     {
