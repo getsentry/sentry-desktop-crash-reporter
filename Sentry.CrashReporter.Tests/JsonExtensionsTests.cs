@@ -190,14 +190,14 @@ public class JsonExtensionsTests
         // Arrange
         var json = new JsonObject
         {
-            ["a"] = new JsonArray { "b", 1, true, null, 1.23 }
+            ["a"] = new JsonArray { null, true, 123L, 4.56, "str" }
         };
 
         // Act
         var flat = json.AsFlatObject();
 
         // Assert
-        Assert.That(flat["a"]!.GetValue<string>(), Is.EqualTo("b, 1, true, null, 1.23"));
+        Assert.That(flat["a"]!.GetValue<string>(), Is.EqualTo("null, true, 123, 4.56, str"));
     }
 
     [Test]

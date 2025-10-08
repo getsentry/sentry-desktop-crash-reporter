@@ -86,10 +86,6 @@ public static class JsonExtensions
                     nodes[prefix] = val;
                     break;
 
-                case null:
-                    nodes[prefix] = null;
-                    break;
-
                 default:
                     nodes[prefix] = node;
                     break;
@@ -101,11 +97,9 @@ public static class JsonExtensions
     {
         return node switch
         {
-            null => "null",
             JsonValue v when v.TryGetValue<bool>(out var b) => b ? "true" : "false",
-            JsonValue v when v.TryGetValue<double>(out var d) => d.ToString(CultureInfo.InvariantCulture),
             JsonValue v when v.TryGetValue<long>(out var l) => l.ToString(),
-            JsonValue v when v.TryGetValue<int>(out var i) => i.ToString(),
+            JsonValue v when v.TryGetValue<double>(out var d) => d.ToString(CultureInfo.InvariantCulture),
             JsonValue v when v.TryGetValue<string>(out var s) => s,
             _ => node?.ToJsonString() ?? "null"
         };
