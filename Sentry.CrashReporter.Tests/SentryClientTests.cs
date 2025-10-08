@@ -1,8 +1,3 @@
-using System.Net;
-using Moq;
-using Moq.Protected;
-using Sentry.CrashReporter.Services;
-
 namespace Sentry.CrashReporter.Tests;
 
 public class SentryClientTests

@@ -1,5 +1,8 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Nodes;
+
+[assembly: InternalsVisibleTo("Sentry.CrashReporter.Tests")]
 
 namespace Sentry.CrashReporter.Extensions;
 
@@ -30,7 +33,11 @@ public static class JsonExtensions
 
     public static DateTime? TryGetDateTime(this JsonObject json, string propertyName)
     {
-        return DateTime.TryParse(json.TryGetString(propertyName) ?? string.Empty, out var timestamp)
+        return DateTime.TryParse(
+            json.TryGetString(propertyName),
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AdjustToUniversal,
+            out var timestamp)
             ? timestamp
             : null;
     }
@@ -82,10 +89,6 @@ public static class JsonExtensions
                     nodes[prefix] = val;
                     break;
 
-                case null:
-                    nodes[prefix] = null;
-                    break;
-
                 default:
                     nodes[prefix] = node;
                     break;
@@ -93,15 +96,13 @@ public static class JsonExtensions
         }
     }
 
-    private static object? FormatNode(this JsonNode? node)
+    internal static object? FormatNode(this JsonNode? node)
     {
         return node switch
         {
-            null => "null",
             JsonValue v when v.TryGetValue<bool>(out var b) => b ? "true" : "false",
-            JsonValue v when v.TryGetValue<double>(out var d) => d.ToString(CultureInfo.InvariantCulture),
             JsonValue v when v.TryGetValue<long>(out var l) => l.ToString(),
-            JsonValue v when v.TryGetValue<int>(out var i) => i.ToString(),
+            JsonValue v when v.TryGetValue<double>(out var d) => d.ToString(CultureInfo.InvariantCulture),
             JsonValue v when v.TryGetValue<string>(out var s) => s,
             _ => node?.ToJsonString() ?? "null"
         };
