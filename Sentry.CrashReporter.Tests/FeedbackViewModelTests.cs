@@ -1,8 +1,3 @@
-using System.Text.Json.Nodes;
-using Moq;
-using Sentry.CrashReporter.Services;
-using Sentry.CrashReporter.ViewModels;
-
 namespace Sentry.CrashReporter.Tests;
 
 public class FeedbackViewModelTests

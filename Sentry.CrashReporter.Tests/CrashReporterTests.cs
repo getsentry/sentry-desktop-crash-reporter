@@ -1,7 +1,3 @@
-using Moq;
-using Sentry.CrashReporter.Services;
-using System.Text.Json.Nodes;
-
 namespace Sentry.CrashReporter.Tests;
 
 public class CrashReporterTests

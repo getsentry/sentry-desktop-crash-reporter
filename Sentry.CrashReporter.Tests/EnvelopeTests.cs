@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Sentry.CrashReporter.Tests;
 
 public class EnvelopeTests

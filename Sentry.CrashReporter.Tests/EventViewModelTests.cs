@@ -1,15 +1,3 @@
-
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json.Nodes;
-using System.Threading;
-using System.Threading.Tasks;
-using Moq;
-using NUnit.Framework;
-using Sentry.CrashReporter.Models;
-using Sentry.CrashReporter.Services;
-using Sentry.CrashReporter.ViewModels;
-
 namespace Sentry.CrashReporter.Tests;
 
 public class EventViewModelTests

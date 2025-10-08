@@ -1,3 +1,9 @@
 global using FluentAssertions;
-global using Sentry.CrashReporter.Models;
+global using Moq;
 global using NUnit.Framework;
+global using Sentry.CrashReporter.Models;
+global using Sentry.CrashReporter.Services;
+global using Sentry.CrashReporter.ViewModels;
+global using System.Reactive.Linq;
+global using System.Text;
+global using System.Text.Json.Nodes;
