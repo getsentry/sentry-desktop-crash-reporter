@@ -30,7 +30,11 @@ public static class JsonExtensions
 
     public static DateTime? TryGetDateTime(this JsonObject json, string propertyName)
     {
-        return DateTime.TryParse(json.TryGetString(propertyName) ?? string.Empty, out var timestamp)
+        return DateTime.TryParse(
+            json.TryGetString(propertyName),
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AdjustToUniversal,
+            out var timestamp)
             ? timestamp
             : null;
     }

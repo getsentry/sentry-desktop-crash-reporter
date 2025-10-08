@@ -36,6 +36,7 @@ public partial class HeaderViewModel : ReactiveObject
             .ToProperty(this, x => x.EventId);
 
         _timestampHelper = this.WhenAnyValue(x => x.Payload, p => p?.TryGetDateTime("timestamp"))
+            .Select(t => t?.ToLocalTime())
             .ToProperty(this, x => x.Timestamp);
 
         _platformHelper = this.WhenAnyValue(x => x.Payload, p => p?.TryGetString("platform"))
