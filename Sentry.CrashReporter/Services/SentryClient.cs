@@ -17,7 +17,7 @@ public class SentryClient(HttpClient httpClient) : ISentryClient
             Path = $"/api/{projectId}/envelope/"
         };
 
-        using var stream = new MemoryStream();
+        var stream = new MemoryStream();
         await envelope.SerializeAsync(stream, cancellationToken).ConfigureAwait(false);
         await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
         stream.Seek(0, SeekOrigin.Begin);
