@@ -3,10 +3,10 @@ namespace Sentry.CrashReporter.Tests;
 public class EnvelopeTests
 {
     [Test]
-    public void ParseTwoItems()
+    public async Task ParseTwoItems()
     {
-        using var file = File.OpenRead("Envelopes/two_items.envelope");
-        var envelope = Envelope.DeserializeAsync(file).GetAwaiter().GetResult();
+        await using var file = File.OpenRead("Envelopes/two_items.envelope");
+        var envelope = await Envelope.DeserializeAsync(file);
 
         envelope.TryGetDsn().Should().Be("https://e12d836b15bb49d7bbf99e64295d995b:@sentry.io/42");
         envelope.TryGetEventId().Should().Be("9ec79c33ec9942ab8353589fcb2e04dc");
@@ -28,10 +28,10 @@ public class EnvelopeTests
     }
 
     [Test]
-    public void ParseTwoEmptyAttachments()
+    public async Task ParseTwoEmptyAttachments()
     {
-        using var file = File.OpenRead("Envelopes/two_empty_attachments.envelope");
-        var envelope = Envelope.DeserializeAsync(file).GetAwaiter().GetResult();
+        await using var file = File.OpenRead("Envelopes/two_empty_attachments.envelope");
+        var envelope = await Envelope.DeserializeAsync(file);
 
         envelope.TryGetDsn().Should().BeNull();
         envelope.TryGetEventId().Should().Be("9ec79c33ec9942ab8353589fcb2e04dc");
@@ -48,10 +48,10 @@ public class EnvelopeTests
     }
 
     [Test]
-    public void ParseImplicitLength()
+    public async Task ParseImplicitLength()
     {
-        using var file = File.OpenRead("Envelopes/implicit_length.envelope");
-        var envelope = Envelope.DeserializeAsync(file).GetAwaiter().GetResult();
+        await using var file = File.OpenRead("Envelopes/implicit_length.envelope");
+        var envelope = await Envelope.DeserializeAsync(file);
 
         envelope.TryGetDsn().Should().BeNull();
         envelope.TryGetEventId().Should().Be("9ec79c33ec9942ab8353589fcb2e04dc");
@@ -66,10 +66,10 @@ public class EnvelopeTests
     }
 
     [Test]
-    public void ParseEmptyHeadersEof()
+    public async Task ParseEmptyHeadersEof()
     {
-        using var file = File.OpenRead("Envelopes/empty_headers_eof.envelope");
-        var envelope = Envelope.DeserializeAsync(file).GetAwaiter().GetResult();
+        await using var file = File.OpenRead("Envelopes/empty_headers_eof.envelope");
+        var envelope = await Envelope.DeserializeAsync(file);
 
         envelope.TryGetDsn().Should().BeNull();
         envelope.TryGetEventId().Should().BeNull();
@@ -83,10 +83,10 @@ public class EnvelopeTests
     }
 
     [Test]
-    public void ParseBinaryAttachment()
+    public async Task ParseBinaryAttachment()
     {
-        using var file = File.OpenRead("Envelopes/binary_attachment.envelope");
-        var envelope = Envelope.DeserializeAsync(file).GetAwaiter().GetResult();
+        await using var file = File.OpenRead("Envelopes/binary_attachment.envelope");
+        var envelope = await Envelope.DeserializeAsync(file);
 
         envelope.TryGetDsn().Should().BeNull();
         envelope.TryGetEventId().Should().Be("9ec79c33ec9942ab8353589fcb2e04dc");
@@ -104,18 +104,18 @@ public class EnvelopeTests
     [TestCase("Envelopes/implicit_length.envelope")]
     [TestCase("Envelopes/empty_headers_eof.envelope")]
     [TestCase("Envelopes/binary_attachment.envelope")]
-    public void Serialize(string filePath)
+    public async Task Serialize(string filePath)
     {
-        using var file = File.OpenRead(filePath);
-        var envelope = Envelope.DeserializeAsync(file).GetAwaiter().GetResult();
+        await using var file = File.OpenRead(filePath);
+        var envelope = await Envelope.DeserializeAsync(file);
 
         using var stream = new MemoryStream();
-        envelope.SerializeAsync(stream).GetAwaiter().GetResult();
-        stream.FlushAsync().GetAwaiter().GetResult();
+        await envelope.SerializeAsync(stream);
+        await stream.FlushAsync();
         stream.Seek(0, SeekOrigin.Begin);
 
         const byte newLine = (byte)'\n';
-        var bytes = stream.ReadBytesAsync(CancellationToken.None).GetAwaiter().GetResult();
+        var bytes = await stream.ReadBytesAsync(CancellationToken.None);
         bytes.Should().StartWith(Encoding.UTF8.GetBytes(envelope.Header.ToJsonString()).Append(newLine));
         bytes.Should().EndWith(
             envelope.Items
