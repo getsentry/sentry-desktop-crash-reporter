@@ -18,6 +18,16 @@ public partial class App : Application
         InitializeComponent();
     }
 
+    public static ServiceCollection ConfigureServices(StorageFile? file)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<HttpClient>();
+        services.AddSingleton<ISentryClient, SentryClient>();
+        services.AddSingleton<ICrashReporter>(sp => new Services.CrashReporter(file));
+        Ioc.Default.ConfigureServices(services.BuildServiceProvider());
+        return services;
+    }
+
     public Window? MainWindow { get; private set; }
     protected IHost? Host { get; private set; }
 
@@ -74,12 +84,14 @@ public partial class App : Application
 
         MainWindow.Title = "Sentry Crash Reporter";
 
+#if !__WASM__
         var scale = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
         MainWindow.AppWindow.Resize(new SizeInt32
             { Width = (int)Math.Round(900 * scale), Height = (int)Math.Round(640 * scale) });
 
         var view = ApplicationView.GetForCurrentView();
         view.SetPreferredMinSize(new Size(600, 400));
+#endif
 
 #if DEBUG
         MainWindow.UseStudio();

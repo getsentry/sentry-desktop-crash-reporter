@@ -1,5 +1,7 @@
 using Uno.UI.Hosting;
+#if INTEGRATION_TEST
 using Sentry.CrashReporter.Services;
+#endif
 
 namespace Sentry.CrashReporter;
 
@@ -8,11 +10,12 @@ internal class Program
     [STAThread]
     public static async Task Main(string[] args)
     {
-        var services = new ServiceCollection();
-        services.AddSingleton<HttpClient>();
-        services.AddSingleton<ISentryClient, SentryClient>();
-        services.AddSingleton<ICrashReporter>(sp => new Services.CrashReporter(args.SingleOrDefault() ?? string.Empty));
-        Ioc.Default.ConfigureServices(services.BuildServiceProvider());
+        StorageFile? file = null;
+        if (args.Length == 1)
+        {
+            file = await StorageFile.GetFileFromPathAsync(args[0]);
+        }
+        App.ConfigureServices(file);
 
 #if INTEGRATION_TEST
         var reporter = Ioc.Default.GetRequiredService<ICrashReporter>();

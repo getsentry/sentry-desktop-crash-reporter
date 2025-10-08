@@ -1,0 +1,10 @@
+{
+  "background_color": "#ffffff",
+  "description": "Sentry.CrashReporter",
+  "display": "standalone",
+  "name": "Sentry.CrashReporter",
+  "short_name": "Sentry.CrashReporter",
+  "start_url": "/index.html",
+  "theme_color": "#ffffff",
+  "scope": "/"
+}

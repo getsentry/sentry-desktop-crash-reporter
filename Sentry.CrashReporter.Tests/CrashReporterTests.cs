@@ -8,7 +8,8 @@ public class CrashReporterTests
     {
         // Arrange
         var client = new Mock<ISentryClient>();
-        var reporter = new Services.CrashReporter(filePath, client.Object);
+        var file = await StorageFile.GetFileFromPathAsync(filePath);
+        var reporter = new Services.CrashReporter(file, client.Object);
 
         // Act
         var envelope = await reporter.LoadAsync();
@@ -28,7 +29,8 @@ public class CrashReporterTests
     {
         // Arrange
         var client = new Mock<ISentryClient>();
-        var reporter = new Services.CrashReporter(filePath, client.Object);
+        var file = await StorageFile.GetFileFromPathAsync(filePath);
+        var reporter = new Services.CrashReporter(file, client.Object);
         var submittedEnvelopes = new List<Envelope>();
         client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<CancellationToken>()))
             .Callback<string, Envelope, CancellationToken>((_, e, _) => submittedEnvelopes.Add(e));
@@ -62,7 +64,8 @@ public class CrashReporterTests
     {
         // Arrange
         var client = new Mock<ISentryClient>();
-        var reporter = new Services.CrashReporter(filePath, client.Object);
+        var file = await StorageFile.GetFileFromPathAsync(filePath);
+        var reporter = new Services.CrashReporter(file, client.Object);
 
         // Act
         await reporter.LoadAsync();
