@@ -1,3 +1,5 @@
+using Path = System.IO.Path;
+
 namespace Sentry.CrashReporter.UITests;
 
 public class TestBase
@@ -6,11 +8,7 @@ public class TestBase
 
     static TestBase()
     {
-        AppInitializer.TestEnvironment.AndroidAppName = Constants.AndroidAppName;
         AppInitializer.TestEnvironment.WebAssemblyDefaultUri = Constants.WebAssemblyDefaultUri;
-        AppInitializer.TestEnvironment.iOSAppName = Constants.iOSAppName;
-        AppInitializer.TestEnvironment.AndroidAppName = Constants.AndroidAppName;
-        AppInitializer.TestEnvironment.iOSDeviceNameOrId = Constants.iOSDeviceNameOrId;
         AppInitializer.TestEnvironment.CurrentPlatform = Constants.CurrentPlatform;
         AppInitializer.TestEnvironment.WebAssemblyBrowser = Constants.WebAssemblyBrowser;
 
@@ -76,5 +74,17 @@ public class TestBase
         }
 
         return fileInfo;
+    }
+
+    public static async Task WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
+    {
+        var sw = Stopwatch.StartNew();
+        while (sw.Elapsed < timeout)
+        {
+            if (condition())
+                return;
+            await Task.Delay(50);
+        }
+        throw new TimeoutException();
     }
 }

@@ -26,6 +26,7 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
                     new Button { Content = "Submit" }
                         .Grid(3)
                         .Name("submitButton")
+                        .AutomationProperties(automationId: "submitButton")
                         .Command(() => vm.SubmitCommand)
                         .Foreground(Colors.White)
                         .Background(ThemeResource.Get<Brush>("SystemAccentColorBrush")))));

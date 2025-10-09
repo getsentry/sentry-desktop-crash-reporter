@@ -10,10 +10,14 @@ public class SentryClient(HttpClient httpClient) : ISentryClient
     public async Task SubmitEnvelopeAsync(string dsn, Envelope envelope, CancellationToken cancellationToken = default)
     {
         // <scheme>://<key>@<host>:<port>/<project-id> ->
-        // <scheme>://<key>@<host>:<port>/api/<project-id>/envelope
-        var projectId = new Uri(dsn).LocalPath.Trim('/');
-        var uriBuilder = new UriBuilder(dsn)
+        // <scheme>://<host>:<port>/api/<project-id>/envelope
+        var uri = new Uri(dsn);
+        var projectId = uri.LocalPath.Trim('/');
+        var uriBuilder = new UriBuilder()
         {
+            Scheme = uri.Scheme,
+            Host = uri.Host,
+            Port = uri.Port,
             Path = $"/api/{projectId}/envelope/"
         };
 

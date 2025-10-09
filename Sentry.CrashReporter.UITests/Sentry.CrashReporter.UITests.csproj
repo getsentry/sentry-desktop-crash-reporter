@@ -12,10 +12,15 @@
         <PackageReference Include="NUnit"/>
         <PackageReference Include="NUnit3TestAdapter"/>
         <PackageReference Include="Uno.UITest.Helpers"/>
+        <PackageReference Include="WireMock.Net" />
         <PackageReference Include="Xamarin.UITest"/>
         <PackageReference Include="GitHubActionsTestLogger">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Sentry.CrashReporter\Sentry.CrashReporter.csproj" />
     </ItemGroup>
 </Project>

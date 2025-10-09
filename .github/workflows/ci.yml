@@ -100,12 +100,65 @@ jobs:
 
       - name: Run Unit Tests
         shell: pwsh
-        run: dotnet test ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.SingleHit=true
+        run: dotnet test ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.SingleHit=true
 
       - name: Upload code coverage
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: |
+            Sentry.CrashReporter.Tests/TestResults/
+
+  ui_test:
+    name: UI Tests
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Install Dependencies
+        timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
+        uses: "./.github/steps/install_dependencies"
+        with:
+          target-platform: "webassembly"
+
+      - name: Build Sentry.CrashReporter (WebAssembly, Release)
+        run: dotnet build -c Release -f net9.0-browserwasm -p:IsUiAutomationMappingEnabled=True Sentry.CrashReporter/Sentry.CrashReporter.csproj
+
+      - name: Build Sentry.CrashReporter.UITests (Release)
+        run: dotnet build -c Release -f net9.0 Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
+
+      - name: Run UI Tests
+        shell: pwsh
+        env:
+          UNO_UITEST_PLATFORM: Browser
+          UNO_UITEST_TARGETURI: "http://localhost:5000"
+          UNO_UITEST_CHROME_CONTAINER_MODE: true
+        run: |
+          $env:UNO_UITEST_DRIVER_PATH = $env:CHROMEWEBDRIVER
+          $server = Start-Process -FilePath dotnet -ArgumentList "run --no-build -c Release -f net9.0-browserwasm --project Sentry.CrashReporter/Sentry.CrashReporter.csproj --launch-profile ""Sentry.CrashReporter (WebAssembly)""" -PassThru
+          try {
+            dotnet test --no-build -c Release -f net9.0 -l GitHubActions -l trx Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
+          }
+          finally {
+            Stop-Process -Id $server.Id -Force
+          }
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-results
+          path: |
+            Sentry.CrashReporter.UITests/TestResults/
 
   integration_test:
     name: Integration Test

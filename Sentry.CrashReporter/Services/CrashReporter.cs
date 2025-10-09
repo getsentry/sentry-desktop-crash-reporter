@@ -72,7 +72,7 @@ public class CrashReporter(StorageFile? file = null, ISentryClient? client = nul
 
         await _client.SubmitEnvelopeAsync(dsn, envelope, cancellationToken);
 
-        if (_feedback != null)
+        if (!string.IsNullOrEmpty(_feedback?.Message))
         {
             var feedback = Envelope.FromJson(new JsonObject { ["dsn"] = dsn },
                 [
