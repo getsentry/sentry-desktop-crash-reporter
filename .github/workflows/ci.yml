@@ -137,8 +137,8 @@ jobs:
         shell: bash
         run: |
           export UNO_UITEST_DRIVER_PATH=$(dirname ${{ steps.setup-chrome.outputs.chromedriver-path }})
-          dotnet run --no-build -c Debug -f net9.0-browserwasm --project ./Sentry.CrashReporter/Sentry.CrashReporter.csproj &
-          dotnet test ./Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
+          xvfb-run -a dotnet run --no-build -c Debug -f net9.0-browserwasm --project ./Sentry.CrashReporter/Sentry.CrashReporter.csproj &
+          xvfb-run -a dotnet test ./Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
           jobs
           kill %%
 
