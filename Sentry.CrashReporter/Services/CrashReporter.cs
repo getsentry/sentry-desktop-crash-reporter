@@ -15,19 +15,19 @@ public interface ICrashReporter
     public void UpdateFeedback(Feedback? feedback);
 }
 
-public class CrashReporter(string filePath, ISentryClient? client = null) : ICrashReporter
+public class CrashReporter(StorageFile? file = null, ISentryClient? client = null) : ICrashReporter
 {
     private readonly ISentryClient _client = client ?? Ioc.Default.GetRequiredService<ISentryClient>();
     private Envelope? _envelope;
     private Feedback? _feedback = ResolveFeedback();
 
     public string? Dsn { get; private set; } = Environment.GetEnvironmentVariable("SENTRY_TEST_DSN");
-    public string FilePath { get; } = filePath;
+    public string FilePath { get => file?.Path ?? string.Empty; }
     public Feedback? Feedback { get => _feedback; }
 
     public async ValueTask<Envelope?> LoadAsync(CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(FilePath))
+        if (file is null)
         {
             return null;
         }
@@ -40,8 +40,8 @@ public class CrashReporter(string filePath, ISentryClient? client = null) : ICra
         try
         {
             var stopwatch = Stopwatch.StartNew();
-            await using var file = File.OpenRead(FilePath);
-            var envelope = await Envelope.DeserializeAsync(file, cancellationToken);
+            await using var stream = await file.OpenStreamForReadAsync();
+            var envelope = await Envelope.DeserializeAsync(stream, cancellationToken);
             stopwatch.Stop();
             this.Log().LogInformation($"Loaded {FilePath} in {stopwatch.ElapsedMilliseconds} ms.");
             _envelope = envelope;

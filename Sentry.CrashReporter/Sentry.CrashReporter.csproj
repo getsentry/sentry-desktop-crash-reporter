@@ -1,6 +1,6 @@
 <Project Sdk="Uno.Sdk">
     <PropertyGroup>
-        <TargetFrameworks>net9.0-desktop;net9.0</TargetFrameworks>
+        <TargetFrameworks>net9.0-browserwasm;net9.0-desktop;net9.0</TargetFrameworks>
 
         <OutputType>Exe</OutputType>
         <!--PublishAot>true</PublishAot-->
@@ -31,8 +31,12 @@
             Mvvm;
             Configuration;
             ThemeService;
-            SkiaRenderer;
         </UnoFeatures>
+        <UnoFeatures Condition="!$(TargetFramework.Contains('browserwasm'))">
+            SkiaRenderer;
+            $(UnoFeatures)
+        </UnoFeatures>
+
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)'=='Debug' or '$(IsUiAutomationMappingEnabled)'=='True'">
@@ -43,6 +47,10 @@
     <PropertyGroup Condition="'$(IntegrationTest)'=='True'">
         <DefineConstants>$(DefineConstants);INTEGRATION_TEST</DefineConstants>
     </PropertyGroup>
+
+    <ItemGroup Condition="$(TargetFramework.Contains('browserwasm'))">
+        <Content Include="../Sentry.CrashReporter.Tests/data/inproc.envelope" />
+    </ItemGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>

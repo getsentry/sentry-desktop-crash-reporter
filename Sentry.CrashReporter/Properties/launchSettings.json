@@ -12,6 +12,16 @@
       "commandName": "Project",
       "compatibleTargetFramework": "desktop"
     },
+    "Sentry.CrashReporter (WebAssembly)": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5000",
+      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
     "Sentry.CrashReporter (Desktop WSL2)": {
       "commandName": "WSL2",
       "commandLineArgs": "{ProjectDir}/bin/Debug/net9.0-desktop/Sentry.CrashReporter.dll",
