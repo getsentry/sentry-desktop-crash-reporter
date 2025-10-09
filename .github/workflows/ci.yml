@@ -122,8 +122,6 @@ jobs:
           install-chromedriver: true
           install-dependencies: true
 
-      - run: dotnet dev-certs https --trust --verbose
-
       - name: Install Dependencies
         timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
         uses: "./.github/steps/install_dependencies"
