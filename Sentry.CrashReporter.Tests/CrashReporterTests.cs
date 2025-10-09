@@ -4,6 +4,38 @@ public class CrashReporterTests
 {
     [Test]
     [TestCase("data/two_items.envelope")]
+    public async Task LoadAsync(string filePath)
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        var file = await StorageFile.GetFileFromPathAsync(filePath);
+        var reporter = new Services.CrashReporter(file, client.Object);
+
+        // Act
+        var envelope = await reporter.LoadAsync();
+
+        // Assert
+        Assert.That(envelope, Is.Not.Null);
+        Assert.That(reporter.FilePath, Is.EqualTo(filePath));
+    }
+
+    [Test]
+    public async Task LoadAsync_Null()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        var reporter = new Services.CrashReporter(null, client.Object);
+
+        // Act
+        var envelope = await reporter.LoadAsync();
+
+        // Assert
+        Assert.That(envelope, Is.Null);
+        Assert.That(reporter.FilePath, Is.Empty);
+    }
+
+    [Test]
+    [TestCase("data/two_items.envelope")]
     public async Task SubmitAsync_WithValidEnvelope_CallsSentryClient(string filePath)
     {
         // Arrange
