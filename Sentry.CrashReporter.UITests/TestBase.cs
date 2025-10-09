@@ -38,7 +38,7 @@ public class TestBase
     [TearDown]
     public void TearDownTest()
     {
-        TakeScreenshot("teardown");
+        // TakeScreenshot("teardown");
     }
 
     public FileInfo TakeScreenshot(string stepName)
