@@ -128,7 +128,7 @@ jobs:
         with:
           target-platform: "webassembly"
 
-      - name: Build Sentry.CrashReporter
+      - name: Build Sentry.CrashReporter (WASM)
         run: dotnet build -c Debug -f net9.0-browserwasm ./Sentry.CrashReporter/Sentry.CrashReporter.csproj
 
       - name: Run UI Tests
