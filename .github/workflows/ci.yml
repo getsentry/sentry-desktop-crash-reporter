@@ -132,13 +132,16 @@ jobs:
         run: dotnet build -c Debug -f net9.0-browserwasm ./Sentry.CrashReporter/Sentry.CrashReporter.csproj
 
       - name: Run UI Tests
-        shell: bash
+        shell: pwsh
         run: |
-          export UNO_UITEST_DRIVER_PATH=$(dirname ${{ steps.setup-chrome.outputs.chromedriver-path }})
-          dotnet run --no-build -c Debug -f net9.0-browserwasm --project ./Sentry.CrashReporter/Sentry.CrashReporter.csproj &
-          dotnet test ./Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
-          jobs
-          kill %%
+          $env:UNO_UITEST_DRIVER_PATH = Split-Path -Path "${{ steps.setup-chrome.outputs.chromedriver-path }}"
+          $p = Start-Process -FilePath "dotnet" -ArgumentList "run --no-build -c Debug -f net9.0-browserwasm --project ./Sentry.CrashReporter/Sentry.CrashReporter.csproj" -PassThru
+          try {
+            dotnet test ./Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
+          }
+          finally {
+            Stop-Process -Id $p.Id -Force
+          }
 
   integration_test:
     name: Integration Tests
