@@ -19,35 +19,27 @@ env:
   STEP_TIMEOUT_MINUTES: 60
 
 jobs:
-  ui_test:
-    name: UI Tests
+  smoke_test:
+    name: Smoke Test
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
 
-      - uses: browser-actions/setup-chrome@b94431e051d1c52dcbe9a7092a4f10f827795416 # v2.1.0
-        with:
-          chrome-version: 141
-          install-chromedriver: true
-
       - name: Install Dependencies
         timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
         uses: "./.github/steps/install_dependencies"
         with:
-          target-platform: "webassembly"
+          target-platform: "desktop"
 
-      - name: Build Sentry.CrashReporter
-        shell: bash
-        run: dotnet build -c Debug -f net9.0-browserwasm ./Sentry.CrashReporter/Sentry.CrashReporter.csproj
+      # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
 
-      - name: Run Sentry.CrashReporter
-        shell: bash
-        run: dotnet run --no-build -c Debug -f net9.0-browserwasm --project ./Sentry.CrashReporter/Sentry.CrashReporter.csproj &
-
-      - name: Run UI Tests
-        run: dotnet test ./Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
+      - name: Build Sentry.CrashReporter (Debug)
+        shell: pwsh
+        run: msbuild ./Sentry.CrashReporter/Sentry.CrashReporter.csproj /r
 
   release_build:
     strategy:
@@ -114,6 +106,36 @@ jobs:
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  ui_test:
+    name: UI Tests
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - uses: browser-actions/setup-chrome@b94431e051d1c52dcbe9a7092a4f10f827795416 # v2.1.0
+        with:
+          chrome-version: 141
+          install-chromedriver: true
+
+      - name: Install Dependencies
+        timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
+        uses: "./.github/steps/install_dependencies"
+        with:
+          target-platform: "webassembly"
+
+      - name: Build Sentry.CrashReporter
+        shell: bash
+        run: dotnet build -c Debug -f net9.0-browserwasm ./Sentry.CrashReporter/Sentry.CrashReporter.csproj
+
+      - name: Run Sentry.CrashReporter
+        shell: bash
+        run: dotnet run --no-build -c Debug -f net9.0-browserwasm --project ./Sentry.CrashReporter/Sentry.CrashReporter.csproj &
+
+      - name: Run UI Tests
+        run: dotnet test ./Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
 
   integration_test:
     name: Integration Tests
