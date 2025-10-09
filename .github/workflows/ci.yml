@@ -120,6 +120,7 @@ jobs:
         with:
           chrome-version: 141
           install-chromedriver: true
+          install-dependencies: true
 
       - run: dotnet dev-certs https --trust --verbose
 
