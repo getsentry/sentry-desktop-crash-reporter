@@ -20,7 +20,7 @@ env:
 
 jobs:
   smoke_test:
-    name: Smoke Test (Debug Build of Sentry.CrashReporter)
+    name: Smoke Tests
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -33,13 +33,12 @@ jobs:
         with:
           target-platform: "desktop"
 
-      # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
+      - name: Run Sentry.CrashReporter
+        shell: bash
+        run: dotnet run -f net9.0-browserwasm --project Sentry.CrashReporter &
 
-      - name: Build Sentry.CrashReporter (Debug)
-        shell: pwsh
-        run: msbuild ./Sentry.CrashReporter/Sentry.CrashReporter.csproj /r
+      - name: Run Smoke Tests
+        run: dotnet test ./Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
 
   release_build:
     strategy:
@@ -108,7 +107,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   integration_test:
-    name: Integration Test
+    name: Integration Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0

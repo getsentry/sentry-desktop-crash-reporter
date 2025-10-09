@@ -6,11 +6,7 @@ public class TestBase
 
     static TestBase()
     {
-        AppInitializer.TestEnvironment.AndroidAppName = Constants.AndroidAppName;
         AppInitializer.TestEnvironment.WebAssemblyDefaultUri = Constants.WebAssemblyDefaultUri;
-        AppInitializer.TestEnvironment.iOSAppName = Constants.iOSAppName;
-        AppInitializer.TestEnvironment.AndroidAppName = Constants.AndroidAppName;
-        AppInitializer.TestEnvironment.iOSDeviceNameOrId = Constants.iOSDeviceNameOrId;
         AppInitializer.TestEnvironment.CurrentPlatform = Constants.CurrentPlatform;
         AppInitializer.TestEnvironment.WebAssemblyBrowser = Constants.WebAssemblyBrowser;
 
