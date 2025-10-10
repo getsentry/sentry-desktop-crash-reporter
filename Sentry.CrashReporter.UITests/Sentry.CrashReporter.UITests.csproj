@@ -13,6 +13,7 @@
         <PackageReference Include="NUnit3TestAdapter"/>
         <PackageReference Include="Uno.UITest.Helpers"/>
         <PackageReference Include="Xamarin.UITest"/>
+        <PackageReference Include="coverlet.collector"/>
         <PackageReference Include="GitHubActionsTestLogger">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
