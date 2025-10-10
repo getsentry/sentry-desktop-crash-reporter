@@ -25,23 +25,27 @@ public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
                                 .Children(
                                     new IconLabel(FA.Bug)
                                         .Margin(8, 4)
+                                        .AutomationProperties(automationId: "exceptionText")
                                         .ToolTip(x => x.Binding(() => vm.Exception).Convert(e => e?.Value ?? "Exception"))
                                         .Text(x => x.Binding(() => vm.Exception).Convert(e => e?.Type ?? string.Empty))
                                         .Visibility(x => x.Binding(() => vm.Exception).Convert(ToVisibility)),
                                     new IconLabel(FA.Globe)
                                         .Margin(8, 4)
                                         .ToolTip("Release")
+                                        .AutomationProperties(automationId: "releaseText")
                                         .Text(x => x.Binding(() => vm.Release))
                                         .Visibility(x => x.Binding(() => vm.Release).Convert(ToVisibility)),
                                     new IconLabel()
                                         .Margin(8, 4)
                                         .Brand(x => x.Binding(() => vm.OsName).Convert(ToBrand))
                                         .ToolTip("Operating System")
+                                        .AutomationProperties(automationId: "osText")
                                         .Text(x => x.Binding(() => vm.OsPretty))
                                         .Visibility(x => x.Binding(() => vm.OsPretty).Convert(ToVisibility)),
                                     new IconLabel(FA.Wrench)
                                         .Margin(8, 4)
                                         .ToolTip("Environment")
+                                        .AutomationProperties(automationId: "environmentText")
                                         .Text(x => x.Binding(() => vm.Environment))
                                         .Visibility(x => x.Binding(() => vm.Environment).Convert(ToVisibility)))),
                     new Button()
