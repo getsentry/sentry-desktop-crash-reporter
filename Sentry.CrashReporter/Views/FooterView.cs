@@ -14,14 +14,17 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
                 .Children(
                     new IconLabel(FA.Copy)
                         .ToolTip("Event ID")
+                        .AutomationProperties(automationId: "eventIdText")
                         .Text(x => x.Binding(() => vm.ShortEventId))
                         .Visibility(x => x.Binding(() => vm.ShortEventId).Convert(ToVisibility))
                         .Grid(0),
                     new Button { Content = "Cancel" }
+                        .AutomationProperties(automationId: "cancelButton")
                         .Grid(2)
                         .Command(() => vm.CancelCommand)
                         .Background(Colors.Transparent),
                     new Button { Content = "Submit" }
+                        .AutomationProperties(automationId: "submitButton")
                         .Grid(3)
                         .Command(() => vm.SubmitCommand)
                         .Foreground(Colors.White)

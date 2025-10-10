@@ -22,6 +22,7 @@ public sealed class EventView : ReactiveUserControl<EventViewModel>
                         .Style(ThemeResource.Get<Style>("SubtitleTextBlockStyle")),
                     new Expander()
                         .Header("Tags")
+                        .AutomationProperties(automationId: "tagsExpander")
                         .HorizontalAlignment(HorizontalAlignment.Stretch)
                         .HorizontalContentAlignment(HorizontalAlignment.Stretch)
                         .IsEnabled(x => x.Binding(() => vm.Tags).Convert(IsNotNullOrEmpty))
@@ -29,6 +30,7 @@ public sealed class EventView : ReactiveUserControl<EventViewModel>
                             .Data(x => x.Binding(() => vm.Tags))),
                     new Expander()
                         .Header("Contexts")
+                        .AutomationProperties(automationId: "contextsExpander")
                         .HorizontalAlignment(HorizontalAlignment.Stretch)
                         .HorizontalContentAlignment(HorizontalAlignment.Stretch)
                         .IsEnabled(x => x.Binding(() => vm.Contexts).Convert(IsNotNullOrEmpty))
@@ -36,6 +38,7 @@ public sealed class EventView : ReactiveUserControl<EventViewModel>
                             .Data(x => x.Binding(() => vm.Contexts))),
                     new Expander()
                         .Header("Additional Data")
+                        .AutomationProperties(automationId: "extraExpander")
                         .HorizontalAlignment(HorizontalAlignment.Stretch)
                         .HorizontalContentAlignment(HorizontalAlignment.Stretch)
                         .IsEnabled(x => x.Binding(() => vm.Extra).Convert(IsNotNullOrEmpty))
@@ -44,6 +47,7 @@ public sealed class EventView : ReactiveUserControl<EventViewModel>
                             .Data(x => x.Binding(() => vm.Extra))),
                     new Expander()
                         .Header("SDK")
+                        .AutomationProperties(automationId: "sdkExpander")
                         .HorizontalAlignment(HorizontalAlignment.Stretch)
                         .HorizontalContentAlignment(HorizontalAlignment.Stretch)
                         .IsEnabled(x => x.Binding(() => vm.Sdk).Convert(IsNotNullOrEmpty))
@@ -51,6 +55,7 @@ public sealed class EventView : ReactiveUserControl<EventViewModel>
                             .Data(x => x.Binding(() => vm.Sdk))),
                     new Expander()
                         .Header("Attachments")
+                        .AutomationProperties(automationId: "attachmentsExpander")
                         .HorizontalAlignment(HorizontalAlignment.Stretch)
                         .HorizontalContentAlignment(HorizontalAlignment.Stretch)
                         .IsEnabled(x => x.Binding(() => vm.Attachments).Convert(IsNotNullOrEmpty))
@@ -71,6 +76,7 @@ public sealed class EventView : ReactiveUserControl<EventViewModel>
         {
             JsonObject json => json.Count > 0,
             List<EnvelopeItem> list => list.Count > 0,
+            List<Attachment> list => list.Count > 0,
             _ => obj is not null
         };
     }

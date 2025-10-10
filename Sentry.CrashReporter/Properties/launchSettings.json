@@ -10,7 +10,8 @@
   "profiles": {
     "Sentry.CrashReporter (Desktop)": {
       "commandName": "Project",
-      "compatibleTargetFramework": "desktop"
+      "compatibleTargetFramework": "desktop",
+      "commandLineArgs": "/home/jpnurmi/Projects/sentry/sentry-desktop-crash-reporter/Sentry.CrashReporter.Tests/data/inproc.envelope"
     },
     "Sentry.CrashReporter (WebAssembly)": {
       "commandName": "Project",
