@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "chromedriver": "^141.0.1",
+    "path": "^0.12.7",
+    "puppeteer": "^24.23.0"
+  }
+}

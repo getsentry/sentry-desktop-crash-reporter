@@ -5,5 +5,7 @@ riderModule.iml
 /_ReSharper.Caches/
 *.user
 .idea/
-/envelopes/
+/screenshots/
+TestResults
 .DS_Store
+/node_modules/

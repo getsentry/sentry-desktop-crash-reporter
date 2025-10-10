@@ -100,7 +100,7 @@ jobs:
 
       - name: Run Unit Tests
         shell: pwsh
-        run: dotnet test ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.SingleHit=true
+        run: dotnet test ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.SingleHit=true
 
       - name: Upload code coverage
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
@@ -109,18 +109,12 @@ jobs:
 
   ui_test:
     name: UI Tests
-    runs-on: windows-2022
+    runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
-
-      - uses: browser-actions/setup-chrome@b94431e051d1c52dcbe9a7092a4f10f827795416 # v2.1.0
-        id: setup-chrome
-        with:
-          chrome-version: 140
-          install-chromedriver: true
-          install-dependencies: true
 
       - name: Install Dependencies
         timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
@@ -128,20 +122,51 @@ jobs:
         with:
           target-platform: "webassembly"
 
-      - name: Build Sentry.CrashReporter (WASM)
-        run: dotnet build -c Debug -f net9.0-browserwasm ./Sentry.CrashReporter/Sentry.CrashReporter.csproj
+      - name: Setup Chrome
+        shell: bash
+        run: |
+          npm install --no-fund
+          chrome_path=$(node -e "console.log(require('puppeteer').executablePath())")
+          chromedriver_path=$(node -e "console.log(require('path').dirname(require('chromedriver').path))")
+          echo "UNO_UITEST_CHROME_BINARY_PATH=$chrome_path" >> $GITHUB_ENV
+          echo "UNO_UITEST_DRIVERPATH_CHROME=$chromedriver_path" >> $GITHUB_ENV
+
+      - name: Build Sentry.CrashReporter (WebAssembly, Release)
+        run: dotnet build -c Release -f net9.0-browserwasm -p:IsUiAutomationMappingEnabled=True Sentry.CrashReporter/Sentry.CrashReporter.csproj
+
+      - name: Build Sentry.CrashReporter.UITests (Release)
+        run: dotnet build --no-restore -c Release -f net9.0 Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
 
       - name: Run UI Tests
         shell: pwsh
+        env:
+          UNO_UITEST_PLATFORM: Browser
+          UNO_UITEST_TARGETURI: "http://localhost:5000"
+          UNO_UITEST_CHROME_CONTAINER_MODE: true
+          UNO_UITEST_SCREENSHOT_PATH: ${{ github.workspace }}/screenshots
         run: |
-          $env:UNO_UITEST_DRIVER_PATH = Split-Path -Path "${{ steps.setup-chrome.outputs.chromedriver-path }}"
-          $p = Start-Process -FilePath "dotnet" -ArgumentList "run --no-build -c Debug -f net9.0-browserwasm --project ./Sentry.CrashReporter/Sentry.CrashReporter.csproj" -PassThru
+          New-Item -ItemType Directory -Path $env:UNO_UITEST_SCREENSHOT_PATH -Force | Out-Null
+          $server = Start-Process -FilePath dotnet -ArgumentList "run --no-build -c Release -f net9.0-browserwasm --project Sentry.CrashReporter/Sentry.CrashReporter.csproj" -PassThru
           try {
-            dotnet test ./Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
+            dotnet test --no-build -c Release -f net9.0 -l GitHubActions -l trx Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.SingleHit=true
           }
           finally {
-            Stop-Process -Id $p.Id -Force
+            Stop-Process -Id $server.Id -Force
           }
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uitest-results
+          path: |
+            Sentry.CrashReporter.UITests/TestResults/
+            screenshots/
+
+      - name: Upload code coverage
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   integration_test:
     name: Integration Tests
