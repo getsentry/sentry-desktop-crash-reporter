@@ -148,16 +148,18 @@ jobs:
           New-Item -ItemType Directory -Path $env:UNO_UITEST_SCREENSHOT_PATH -Force | Out-Null
           $server = Start-Process -FilePath dotnet -ArgumentList "run --no-build -c Release -f net9.0-browserwasm --project Sentry.CrashReporter/Sentry.CrashReporter.csproj" -PassThru
           try {
-            dotnet test --no-build -c Release -f net9.0 -l GitHubActions -l trx Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.SingleHit=true
+            # TODO: --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.SingleHit=true
+            dotnet test --no-build -c Release -f net9.0 -l GitHubActions -l trx Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
           }
           finally {
             Stop-Process -Id $server.Id -Force
           }
 
-      - name: Upload code coverage
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+      # TODO:
+      # - name: Upload code coverage
+      #   uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload Test Results
         if: always()
@@ -167,6 +169,7 @@ jobs:
           path: |
             Sentry.CrashReporter.UITests/TestResults/
             screenshots/
+
   integration_test:
     name: Integration Tests
     runs-on: ubuntu-latest
