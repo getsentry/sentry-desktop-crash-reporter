@@ -34,31 +34,37 @@ public class UITests : TestBase
         App.WaitForElement(q => q.All().Class("EventView"));
 
         var tagsExpander = App.Marked("tagsExpander");
-        Assert.That(tagsExpander?.IsVisible(), Is.True);
-        tagsExpander!.SetExpanded(false);
-        App.Tap(tagsExpander);
-        App.WaitForElement(App.FindWithin(q => q.WithText("backend"), tagsExpander));
-        App.WaitForElement(App.FindWithin(q => q.WithText("inproc"), tagsExpander));
+        Assert.That(tagsExpander, Is.Not.Null);
+        Assert.That(tagsExpander!.IsVisible(), Is.True);
+        tagsExpander.Tap();
+        App.WaitForElement(q => tagsExpander.Unwrap(q).Text("backend"));
+        App.WaitForElement(q => tagsExpander.Unwrap(q).Text("inproc"));
 
         var contextsExpander = App.Marked("contextsExpander");
-        Assert.That(contextsExpander?.IsVisible(), Is.True);
-        contextsExpander!.SetExpanded(false);
-        App.Tap(contextsExpander);
-        App.WaitForElement(App.FindWithin(q => q.WithText("os.name"), contextsExpander));
-        App.WaitForElement(App.FindWithin(q => q.WithText("Linux"), contextsExpander));
+        Assert.That(contextsExpander, Is.Not.Null);
+        Assert.That(contextsExpander!.IsVisible(), Is.True);
+        contextsExpander.Tap();
+        App.WaitForElement(q => contextsExpander.Unwrap(q).Text("os.name"));
+        App.WaitForElement(q => contextsExpander.Unwrap(q).Text("Linux"));
+        App.WaitForElement(q => contextsExpander.Unwrap(q).Text("os.version"));
+        App.WaitForElement(q => contextsExpander.Unwrap(q).Text("6.14.0"));
 
         var extraExpander = App.Marked("extraExpander");
-        Assert.That(extraExpander?.IsCollapsed(), Is.True);
+        Assert.That(extraExpander, Is.Not.Null);
+        Assert.That(extraExpander!.IsCollapsed(), Is.True);
 
         var sdkExpander = App.Marked("sdkExpander");
-        Assert.That(sdkExpander?.IsVisible(), Is.True);
-        sdkExpander!.SetExpanded(false);
-        App.Tap(sdkExpander);
-        App.WaitForElement(App.FindWithin(q => q.WithText("name"), sdkExpander));
-        App.WaitForElement(App.FindWithin(q => q.WithText("sentry.native"), sdkExpander));
+        Assert.That(sdkExpander, Is.Not.Null);
+        Assert.That(sdkExpander!.IsVisible(), Is.True);
+        sdkExpander.Tap();
+        App.WaitForElement(q => sdkExpander.Unwrap(q).Text("name"));
+        App.WaitForElement(q => sdkExpander.Unwrap(q).Text("sentry.native"));
+        App.WaitForElement(q => sdkExpander.Unwrap(q).Text("packages[0].name"));
+        App.WaitForElement(q => sdkExpander.Unwrap(q).Text("github:getsentry/sentry-native"));
 
         var attachmentsExpander = App.Marked("attachmentsExpander");
-        Assert.That(attachmentsExpander?.IsCollapsed(), Is.True);
+        Assert.That(attachmentsExpander, Is.Not.Null);
+        Assert.That(attachmentsExpander!.IsCollapsed(), Is.True);
     }
 
     [Test]
@@ -68,12 +74,17 @@ public class UITests : TestBase
 
         var nameTextBox = App.Marked("nameTextBox");
         Assert.That(nameTextBox?.IsEnabled(), Is.True);
+        App.EnterText(nameTextBox, "John Doe");
 
         var emailTextBox = App.Marked("emailTextBox");
         Assert.That(emailTextBox?.IsEnabled(), Is.True);
+        App.EnterText(emailTextBox, "john.doe@example.com");
 
         var messageTextBox = App.Marked("messageTextBox");
         Assert.That(messageTextBox?.IsEnabled(), Is.True);
+        App.EnterText(messageTextBox, "It crashed!");
+
+        // TODO: submit
     }
 
     [Test]
@@ -98,5 +109,4 @@ internal static class QueryExtensions
     public static bool IsEnabled(this QueryEx query) => query.GetDependencyPropertyValue("IsEnabled")?.ToString() == "True";
     public static bool IsVisible(this QueryEx query) => query.GetDependencyPropertyValue("Visibility")?.ToString() == "Visible";
     public static bool IsCollapsed(this QueryEx query) => query.GetDependencyPropertyValue("Visibility")?.ToString() == "Collapsed";
-    public static void SetExpanded(this QueryEx query, bool value) => query.SetDependencyPropertyValue("IsExpanded", value ? "True" : "False");
 }
