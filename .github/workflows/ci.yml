@@ -151,9 +151,7 @@ jobs:
           UNO_UITEST_PLATFORM: Browser
           UNO_UITEST_TARGETURI: "http://localhost:5000"
           UNO_UITEST_CHROME_CONTAINER_MODE: true
-          UNO_UITEST_SCREENSHOT_PATH: ${{ github.workspace }}/Sentry.CrashReporter.UITests/TestResults/screenshots
         run: |
-          New-Item -ItemType Directory -Path $env:UNO_UITEST_SCREENSHOT_PATH -Force | Out-Null
           $server = Start-Process -FilePath dotnet -ArgumentList "run --no-build -c Release -f net9.0-browserwasm --project Sentry.CrashReporter/Sentry.CrashReporter.csproj --launch-profile ""Sentry.CrashReporter (WebAssembly)""" -PassThru
           try {
             dotnet test --no-build -c Release -f net9.0 -l GitHubActions -l trx Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
