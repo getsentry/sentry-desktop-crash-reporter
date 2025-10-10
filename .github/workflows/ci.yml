@@ -135,7 +135,7 @@ jobs:
         run: dotnet build -c Release -f net9.0-browserwasm -p:IsUiAutomationMappingEnabled=True Sentry.CrashReporter/Sentry.CrashReporter.csproj
 
       - name: Build Sentry.CrashReporter.UITests (Release)
-        run: dotnet build --no-restore -c Release -f net9.0 Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
+        run: dotnet build -c Release -f net9.0 Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
 
       - name: Run UI Tests
         shell: pwsh
