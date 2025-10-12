@@ -4,9 +4,13 @@ namespace Sentry.CrashReporter.Views;
 
 public sealed class FeedbackView : ReactiveUserControl<FeedbackViewModel>
 {
-    public FeedbackView()
+    public FeedbackView() : this(null)
     {
-        this.DataContext(new FeedbackViewModel(), (view, vm) => view
+    }
+
+    internal FeedbackView(FeedbackViewModel? dataContext)
+    {
+        this.DataContext(dataContext ?? new FeedbackViewModel(), (view, vm) => view
             .Content(new Grid()
                 .RowSpacing(8)
                 .RowDefinitions("Auto,Auto,Auto,*")
