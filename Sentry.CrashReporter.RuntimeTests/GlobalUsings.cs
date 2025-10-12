@@ -1,4 +1,5 @@
 global using System;
+global using System.Text.Json.Nodes;
 global using Microsoft.UI.Xaml;
 global using Microsoft.UI.Xaml.Automation.Peers;
 global using Microsoft.UI.Xaml.Automation.Provider;
