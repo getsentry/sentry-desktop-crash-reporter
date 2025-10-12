@@ -1,0 +1,10 @@
+global using System;
+global using Microsoft.UI.Xaml;
+global using Microsoft.UI.Xaml.Automation.Peers;
+global using Microsoft.UI.Xaml.Automation.Provider;
+global using Microsoft.UI.Xaml.Controls;
+global using Microsoft.VisualStudio.TestTools.UnitTesting;
+global using Moq;
+global using Sentry.CrashReporter.Controls;
+global using Uno.UI.Extensions;
+global using Uno.UI.RuntimeTests;
