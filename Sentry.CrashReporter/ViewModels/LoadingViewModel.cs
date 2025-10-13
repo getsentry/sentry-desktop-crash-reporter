@@ -1,21 +1,10 @@
-using Microsoft.UI.Dispatching;
 using Sentry.CrashReporter.Services;
 
 namespace Sentry.CrashReporter.ViewModels;
 
-public class LoadingViewModel : ILoadable
+public partial class LoadingViewModel : ReactiveObject, ILoadable
 {
-    private bool _isExecuting;
-
-    public bool IsExecuting
-    {
-        get => _isExecuting;
-        private set
-        {
-            _isExecuting = value;
-            IsExecutingChanged?.Invoke(this, EventArgs.Empty);
-        }
-    }
+    [Reactive] private bool _isExecuting;
 
     public event EventHandler? IsExecutingChanged;
 
@@ -23,12 +12,13 @@ public class LoadingViewModel : ILoadable
     {
         reporter ??= Ioc.Default.GetRequiredService<ICrashReporter>();
 
+        this.WhenAnyValue(x => x.IsExecuting)
+            .Subscribe(x => IsExecutingChanged?.Invoke(this, EventArgs.Empty));
+
         IsExecuting = true;
-        var dispatcherQueue = DispatcherQueue.GetForCurrentThread();
-        Task.Run(async () =>
-        {
-            await reporter.LoadAsync();
-            dispatcherQueue.TryEnqueue(() => IsExecuting = false);
-        });
+
+        Observable.FromAsync(() => reporter.LoadAsync().AsTask())
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(value => IsExecuting = false);
     }
 }
