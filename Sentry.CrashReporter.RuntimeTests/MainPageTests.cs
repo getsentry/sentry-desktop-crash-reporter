@@ -8,10 +8,7 @@ public class MainPageTests : RuntimeTestBase
     public async Task MainPage_IsLoaded()
     {
         // Arrange
-        var mockReporter = new Mock<ICrashReporter>();
-        var services = new ServiceCollection();
-        services.AddSingleton<ICrashReporter>(sp => mockReporter.Object);
-        App.Services = services.BuildServiceProvider();
+        _ = MockCrashReporter();
 
         // Act
         var page = new MainPage();

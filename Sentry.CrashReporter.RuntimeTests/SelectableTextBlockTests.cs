@@ -5,7 +5,7 @@ namespace Sentry.CrashReporter.RuntimeTests;
 public class SelectableTextBlockTests : RuntimeTestBase
 {
     [TestMethod]
-    public void IsTextSelectionEnabled()
+    public void SelectableTextBlock_IsTextSelectionEnabled()
     {
         // Act
         var textBlock = new SelectableTextBlock();

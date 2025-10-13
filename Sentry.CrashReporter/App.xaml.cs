@@ -28,9 +28,9 @@ public partial class App : Application
         return Services;
     }
 
-    public static IServiceProvider Services { get; internal set; } = Ioc.Default;
     public Window? MainWindow { get; private set; }
     protected IHost? Host { get; private set; }
+    public static IServiceProvider Services { get; internal set; } = Ioc.Default;
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {

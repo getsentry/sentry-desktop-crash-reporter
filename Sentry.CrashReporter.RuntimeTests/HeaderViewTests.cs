@@ -2,25 +2,22 @@ namespace Sentry.CrashReporter.RuntimeTests;
 
 [TestClass]
 [RunsOnUIThread]
-public class HeaderViewTests
+public class HeaderViewTests : RuntimeTestBase
 {
     [TestMethod]
     public void HeaderView_CanBeCreated()
     {
         // Arrange
-        var mockReporter = new Mock<ICrashReporter>();
-        var viewModel = new HeaderViewModel(mockReporter.Object);
+        _ = MockCrashReporter();
 
         // Act
-        var view = new HeaderView(viewModel);
+        var view = new HeaderView();
         var exceptionLabel = view.FindFirstDescendant<FrameworkElement>(d => d.Name == "exceptionLabel");
         var releaseLabel = view.FindFirstDescendant<FrameworkElement>(d => d.Name == "releaseLabel");
         var osLabel = view.FindFirstDescendant<FrameworkElement>(d => d.Name == "osLabel");
         var environmentLabel = view.FindFirstDescendant<FrameworkElement>(d => d.Name == "environmentLabel");
 
         // Assert
-        Assert.IsNotNull(view);
-
         Assert.IsNotNull(exceptionLabel);
         Assert.AreEqual(Visibility.Collapsed, exceptionLabel.Visibility);
 
@@ -35,7 +32,7 @@ public class HeaderViewTests
     }
 
     [TestMethod]
-    public void HeaderView_ReflectsViewModelData()
+    public void HeaderView_DisplaysData()
     {
         // Arrange
         var envelope = new Envelope(new JsonObject(), [
@@ -49,13 +46,10 @@ public class HeaderViewTests
                     { "environment", "production" }
                 }.ToJsonString()))
         ]);
-        var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns<CancellationToken>(ct => new ValueTask<Envelope?>(envelope));
+        _ = MockCrashReporter(envelope);
 
         // Act
-        var viewModel = new HeaderViewModel(mockReporter.Object);
-        var view = new HeaderView(viewModel);
+        var view = new HeaderView();
         var exceptionLabel = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "SIGSEGV");
         var releaseLabel = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "my-app@0.1.0");
         var osLabel = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "Windows 11");

@@ -5,26 +5,7 @@ namespace Sentry.CrashReporter.RuntimeTests;
 public class EnvelopeViewTests : RuntimeTestBase
 {
     [TestMethod]
-    public void EnvelopeView_CanBeCreated_With_EmptyViewModel()
-    {
-        // Arrange
-        var mockReporter = new Mock<ICrashReporter>();
-        var viewModel = new EnvelopeViewModel(mockReporter.Object);
-
-        // Act
-        var view = new EnvelopeView(viewModel);
-
-        // Assert
-        Assert.IsNotNull(view);
-        Assert.IsNotNull(viewModel);
-        Assert.IsTrue(string.IsNullOrEmpty(viewModel.FilePath));
-        Assert.IsTrue(string.IsNullOrEmpty(viewModel.FileName));
-        Assert.IsTrue(string.IsNullOrEmpty(viewModel.Directory));
-        Assert.IsNull(viewModel.Formatted);
-    }
-
-    [TestMethod]
-    public async Task EnvelopeView_DisplaysData_FromViewModel()
+    public async Task EnvelopeView_DisplaysData()
     {
         // Arrange
         var envelope = new Envelope(new JsonObject()
@@ -40,13 +21,10 @@ public class EnvelopeViewTests : RuntimeTestBase
                     { "platform", "native" }
                 }.ToJsonString())),
         ]);
-        var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns<CancellationToken>(ct => new ValueTask<Envelope?>(envelope));
+        _ = MockCrashReporter(envelope);
 
         // Act
-        var viewModel = new EnvelopeViewModel(mockReporter.Object);
-        var view = new EnvelopeView(viewModel);
+        var view = new EnvelopeView();
         UnitTestsUIContentHelper.EmbeddedTestRoot.SetContent(view);
         await UnitTestsUIContentHelper.WaitForLoaded(view);
         await UnitTestsUIContentHelper.WaitForIdle();

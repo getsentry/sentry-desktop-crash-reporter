@@ -13,7 +13,6 @@ global using ReactiveUI;
 global using Sentry.CrashReporter.Controls;
 global using Sentry.CrashReporter.Models;
 global using Sentry.CrashReporter.Services;
-global using Sentry.CrashReporter.ViewModels;
 global using Sentry.CrashReporter.Views;
 global using Uno.UI.Extensions;
 global using Uno.UI.RuntimeTests;

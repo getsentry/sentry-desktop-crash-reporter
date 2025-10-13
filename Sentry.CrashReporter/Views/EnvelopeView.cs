@@ -6,13 +6,9 @@ namespace Sentry.CrashReporter.Views;
 
 public sealed class EnvelopeView : ReactivePage<EnvelopeViewModel>
 {
-    public EnvelopeView() : this(null)
+    public EnvelopeView()
     {
-    }
-
-    internal EnvelopeView(EnvelopeViewModel? dataContext)
-    {
-        this.DataContext(dataContext ?? new EnvelopeViewModel(), (view, vm) => view
+        this.DataContext(new EnvelopeViewModel(), (view, vm) => view
             .Background(ThemeResource.Get<Brush>("ApplicationPageBackgroundThemeBrush"))
             .Content(new Grid()
                 .RowDefinitions("Auto,*")

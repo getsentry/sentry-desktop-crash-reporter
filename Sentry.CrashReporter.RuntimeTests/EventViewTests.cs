@@ -8,11 +8,10 @@ public class EventViewTests : RuntimeTestBase
     public void EventView_CanBeCreated()
     {
         // Arrange
-        var mockReporter = new Mock<ICrashReporter>();
-        var viewModel = new EventViewModel(mockReporter.Object);
+        _ = MockCrashReporter();
 
         // Act
-        var view = new EventView(viewModel);
+        var view = new EventView();
         var tagsExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Tags");
         var contextsExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Contexts");
         var extraExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Additional Data");
@@ -44,7 +43,7 @@ public class EventViewTests : RuntimeTestBase
     }
 
     [TestMethod]
-    public void EventView_ExpanderVisibilityAndEnabledState_ReflectsViewModelData()
+    public void EventView_ExpanderVisibilityAndEnabledState()
     {
         // Arrange
         var envelope = new Envelope(new JsonObject(), [
@@ -61,13 +60,10 @@ public class EventViewTests : RuntimeTestBase
                 new JsonObject { { "type", "attachment" }, { "filename", "test.txt" } },
                 [0x01, 0x02, 0x03])
         ]);
-        var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns<CancellationToken>(ct => new ValueTask<Envelope?>(envelope));
+        _ = MockCrashReporter(envelope);
 
         // Act
-        var viewModel = new EventViewModel(mockReporter.Object);
-        var view = new EventView(viewModel);
+        var view = new EventView();
 
         var tagsExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Tags");
         var tagKey = tagsExpander?.FindFirstDescendant<TextBlock>(tb => tb.Text == "t1");

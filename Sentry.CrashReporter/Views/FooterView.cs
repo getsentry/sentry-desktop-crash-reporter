@@ -5,13 +5,9 @@ namespace Sentry.CrashReporter.Views;
 
 public sealed class FooterView : ReactiveUserControl<FooterViewModel>
 {
-    public FooterView() : this(null)
+    public FooterView()
     {
-    }
-
-    internal FooterView(FooterViewModel? dataContext)
-    {
-        this.DataContext(dataContext ?? new FooterViewModel(), (view, vm) => view
+        this.DataContext(new FooterViewModel(), (view, vm) => view
             .Content(new Grid()
                 .ColumnSpacing(8)
                 .ColumnDefinitions("Auto,*,Auto,Auto")

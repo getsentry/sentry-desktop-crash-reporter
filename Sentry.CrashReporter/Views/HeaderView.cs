@@ -5,13 +5,9 @@ namespace Sentry.CrashReporter.Views;
 
 public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
 {
-    public HeaderView() : this(null)
+    public HeaderView()
     {
-    }
-
-    internal HeaderView(HeaderViewModel? dataContext)
-    {
-        this.DataContext(dataContext ?? new HeaderViewModel(), (view, vm) => view
+        this.DataContext(new HeaderViewModel(), (view, vm) => view
             .Content(new Grid()
                 .ColumnDefinitions("*,Auto")
                 .Children(

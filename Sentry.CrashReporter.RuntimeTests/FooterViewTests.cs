@@ -8,18 +8,15 @@ public class FooterViewTests : RuntimeTestBase
     public void FooterView_CanBeCreated()
     {
         // Arrange
-        var mockReporter = new Mock<ICrashReporter>();
-        var viewModel = new FooterViewModel(mockReporter.Object);
+        _ = MockCrashReporter();
 
         // Act
-        var view = new FooterView(viewModel);
+        var view = new FooterView();
         var eventIdLabel = view.FindFirstDescendant<FrameworkElement>(d => d.Name == "eventIdLabel");
         var cancelButton = view.FindFirstDescendant<Button>(d => d.Name == "cancelButton");
         var submitButton = view.FindFirstDescendant<Button>(d => d.Name == "submitButton");
 
         // Assert
-        Assert.IsNotNull(view);
-
         Assert.IsNotNull(eventIdLabel);
         Assert.AreEqual(Visibility.Collapsed, eventIdLabel.Visibility);
 
@@ -33,7 +30,7 @@ public class FooterViewTests : RuntimeTestBase
     }
 
     [TestMethod]
-    public void FooterView_ReflectsViewModelData()
+    public void FooterView_DisplaysData()
     {
         // Arrange
         var envelope = new Envelope(new JsonObject() { { "dsn", "https://foo@bar.com/123" }, { "event_id" , "12345678901234567890123456789012" } }, [
@@ -50,20 +47,15 @@ public class FooterViewTests : RuntimeTestBase
                     { "environment", "production" }
                 }.ToJsonString()))
         ]);
-        var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns<CancellationToken>(ct => new ValueTask<Envelope?>(envelope));
+        _ = MockCrashReporter(envelope);
 
         // Act
-        var viewModel = new FooterViewModel(mockReporter.Object);
-        var view = new FooterView(viewModel);
+        var view = new FooterView();
         var eventIdLabel = view.FindFirstDescendant<TextBlock>(tb => tb.Text.StartsWith("123456"));
         var cancelButton = view.FindFirstDescendant<Button>(b => b.Name == "cancelButton");
         var submitButton = view.FindFirstDescendant<Button>(b => b.Name == "submitButton");
 
         // Assert
-        Assert.IsNotNull(view);
-
         Assert.IsNotNull(eventIdLabel);
         Assert.AreEqual(Visibility.Visible, eventIdLabel.Visibility);
 

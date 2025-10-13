@@ -10,13 +10,9 @@ namespace Sentry.CrashReporter.Views;
 
 public sealed class EventView : ReactiveUserControl<EventViewModel>
 {
-    public EventView() : this(null)
+    public EventView()
     {
-    }
-
-    internal EventView(EventViewModel? dataContext)
-    {
-        this.DataContext(dataContext ?? new EventViewModel(), (view, vm) => view
+        this.DataContext(new EventViewModel(), (view, vm) => view
             .Content(new StackPanel()
                 .Orientation(Orientation.Vertical)
                 .Spacing(8)
