@@ -18,16 +18,17 @@ public partial class App : Application
         InitializeComponent();
     }
 
-    public static ServiceCollection ConfigureServices(StorageFile? file)
+    public static IServiceProvider ConfigureServices(StorageFile? file)
     {
         var services = new ServiceCollection();
         services.AddSingleton<HttpClient>();
         services.AddSingleton<ISentryClient, SentryClient>();
         services.AddSingleton<ICrashReporter>(sp => new Services.CrashReporter(file));
         Ioc.Default.ConfigureServices(services.BuildServiceProvider());
-        return services;
+        return Services;
     }
 
+    public static IServiceProvider Services { get; internal set; } = Ioc.Default;
     public Window? MainWindow { get; private set; }
     protected IHost? Host { get; private set; }
 

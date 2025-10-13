@@ -2,8 +2,6 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Nodes;
 
-[assembly: InternalsVisibleTo("Sentry.CrashReporter.Tests")]
-
 namespace Sentry.CrashReporter.Extensions;
 
 public static class JsonExtensions

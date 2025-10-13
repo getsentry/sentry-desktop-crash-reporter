@@ -19,7 +19,7 @@ public partial class EventViewModel : ReactiveObject
 
     public EventViewModel(ICrashReporter? reporter = null)
     {
-        reporter ??= Ioc.Default.GetRequiredService<ICrashReporter>();
+        reporter ??= App.Services.GetRequiredService<ICrashReporter>();
 
         _eventHelper = this.WhenAnyValue(x => x.Envelope)
             .Select(envelope => envelope?.TryGetEvent())

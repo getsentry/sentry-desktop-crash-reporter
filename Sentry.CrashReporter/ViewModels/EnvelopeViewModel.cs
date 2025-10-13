@@ -15,7 +15,7 @@ public partial class EnvelopeViewModel : ReactiveObject
 
     public EnvelopeViewModel(ICrashReporter? reporter = null)
     {
-        reporter ??= Ioc.Default.GetRequiredService<ICrashReporter>();
+        reporter ??= App.Services.GetRequiredService<ICrashReporter>();
         FilePath = reporter.FilePath;
 
         _eventIdHelper = this.WhenAnyValue(x => x.Envelope, e => e?.TryGetEventId())

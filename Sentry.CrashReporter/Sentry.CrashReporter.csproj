@@ -101,4 +101,8 @@
         <PackageReference Include="ReactiveUI.Uno.WinUI" />
     </ItemGroup>
 
+    <ItemGroup>
+        <InternalsVisibleTo Include="Sentry.CrashReporter.Tests" />
+        <InternalsVisibleTo Include="Sentry.CrashReporter.RuntimeTests" />
+    </ItemGroup>
 </Project>
