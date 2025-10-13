@@ -2,7 +2,7 @@ namespace Sentry.CrashReporter.RuntimeTests;
 
 [TestClass]
 [RunsOnUIThread]
-public class EnvelopeViewTests
+public class EnvelopeViewTests : RuntimeTestBase
 {
     [TestMethod]
     public void EnvelopeView_CanBeCreated_With_EmptyViewModel()
@@ -40,7 +40,6 @@ public class EnvelopeViewTests
                     { "platform", "native" }
                 }.ToJsonString())),
         ]);
-        RxApp.MainThreadScheduler = Scheduler.Immediate;
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
             .Returns<CancellationToken>(ct => new ValueTask<Envelope?>(envelope));
@@ -59,12 +58,5 @@ public class EnvelopeViewTests
 
         var content = view.FindFirstDescendant<TextBlock>(tb => tb.Text.Contains(""""platform": "native""""));
         Assert.IsNotNull(content);
-    }
-
-    [TestCleanup]
-    public async Task Cleanup()
-    {
-        UnitTestsUIContentHelper.EmbeddedTestRoot.SetContent(null);
-        await UnitTestsUIContentHelper.WaitForIdle();
     }
 }

@@ -2,13 +2,12 @@ namespace Sentry.CrashReporter.RuntimeTests;
 
 [TestClass]
 [RunsOnUIThread]
-public class MainPageTests
+public class MainPageTests : RuntimeTestBase
 {
     [TestMethod]
     public async Task MainPage_IsLoaded()
     {
         // Arrange
-        RxApp.MainThreadScheduler = Scheduler.Immediate;
         var mockReporter = new Mock<ICrashReporter>();
         var services = new ServiceCollection();
         services.AddSingleton<ICrashReporter>(sp => mockReporter.Object);
@@ -33,12 +32,5 @@ public class MainPageTests
         Assert.IsNotNull(eventView);
         Assert.IsNotNull(feedbackView);
         Assert.IsNotNull(footerView);
-    }
-
-    [TestCleanup]
-    public async Task Cleanup()
-    {
-        UnitTestsUIContentHelper.EmbeddedTestRoot.SetContent(null);
-        await UnitTestsUIContentHelper.WaitForIdle();
     }
 }

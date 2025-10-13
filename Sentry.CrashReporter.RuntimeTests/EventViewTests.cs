@@ -2,7 +2,7 @@ namespace Sentry.CrashReporter.RuntimeTests;
 
 [TestClass]
 [RunsOnUIThread]
-public class EventViewTests
+public class EventViewTests : RuntimeTestBase
 {
     [TestMethod]
     public void EventView_CanBeCreated()
@@ -61,7 +61,6 @@ public class EventViewTests
                 new JsonObject { { "type", "attachment" }, { "filename", "test.txt" } },
                 [0x01, 0x02, 0x03])
         ]);
-        RxApp.MainThreadScheduler = Scheduler.Immediate;
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
             .Returns<CancellationToken>(ct => new ValueTask<Envelope?>(envelope));

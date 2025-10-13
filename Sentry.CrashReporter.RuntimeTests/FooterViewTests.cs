@@ -2,7 +2,7 @@ namespace Sentry.CrashReporter.RuntimeTests;
 
 [TestClass]
 [RunsOnUIThread]
-public class FooterViewTests
+public class FooterViewTests : RuntimeTestBase
 {
     [TestMethod]
     public void FooterView_CanBeCreated()
@@ -50,7 +50,6 @@ public class FooterViewTests
                     { "environment", "production" }
                 }.ToJsonString()))
         ]);
-        RxApp.MainThreadScheduler = Scheduler.Immediate;
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
             .Returns<CancellationToken>(ct => new ValueTask<Envelope?>(envelope));

@@ -2,7 +2,7 @@ namespace Sentry.CrashReporter.RuntimeTests;
 
 [TestClass]
 [RunsOnUIThread]
-public class SelectableTextBlockTests
+public class SelectableTextBlockTests : RuntimeTestBase
 {
     [TestMethod]
     public void IsTextSelectionEnabled()

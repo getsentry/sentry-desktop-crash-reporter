@@ -2,7 +2,7 @@ namespace Sentry.CrashReporter.RuntimeTests;
 
 [TestClass]
 [RunsOnUIThread]
-public class JsonGridTests
+public class JsonGridTests : RuntimeTestBase
 {
     [TestMethod]
     public void JsonGrid_CanBeCreated()

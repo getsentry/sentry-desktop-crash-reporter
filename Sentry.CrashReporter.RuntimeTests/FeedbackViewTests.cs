@@ -2,7 +2,7 @@ namespace Sentry.CrashReporter.RuntimeTests;
 
 [TestClass]
 [RunsOnUIThread]
-public class FeedbackViewTests
+public class FeedbackViewTests : RuntimeTestBase
 {
     [TestMethod]
     public void FeedbackView_CanBeCreated()
@@ -60,7 +60,6 @@ public class FeedbackViewTests
     {
         // Arrange
         var envelope = new Envelope(new JsonObject { ["dsn"] = "https://foo@bar.com/123", ["event_id"] = "12345678901234567890123456789012" }, []);
-        RxApp.MainThreadScheduler = Scheduler.Immediate;
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>())).Returns<CancellationToken>(ct => new ValueTask<Envelope?>(envelope));
         var viewModel = new FeedbackViewModel(mockReporter.Object);
@@ -82,7 +81,6 @@ public class FeedbackViewTests
     {
         // Arrange
         var envelope = new Envelope(new JsonObject(), []);
-        RxApp.MainThreadScheduler = Scheduler.Immediate;
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>())).Returns<CancellationToken>(ct => new ValueTask<Envelope?>(envelope));
         var viewModel = new FeedbackViewModel(mockReporter.Object);

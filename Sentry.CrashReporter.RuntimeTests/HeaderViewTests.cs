@@ -49,7 +49,6 @@ public class HeaderViewTests
                     { "environment", "production" }
                 }.ToJsonString()))
         ]);
-        RxApp.MainThreadScheduler = Scheduler.Immediate;
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
             .Returns<CancellationToken>(ct => new ValueTask<Envelope?>(envelope));
