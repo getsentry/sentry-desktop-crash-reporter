@@ -17,7 +17,7 @@ public interface ICrashReporter
 
 public class CrashReporter(StorageFile? file = null, ISentryClient? client = null) : ICrashReporter
 {
-    private readonly ISentryClient _client = client ?? Ioc.Default.GetRequiredService<ISentryClient>();
+    private readonly ISentryClient _client = client ?? App.Services.GetRequiredService<ISentryClient>();
     private Envelope? _envelope;
     private Feedback? _feedback = ResolveFeedback();
 

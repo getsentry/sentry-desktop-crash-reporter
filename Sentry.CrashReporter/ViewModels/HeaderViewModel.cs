@@ -23,7 +23,7 @@ public partial class HeaderViewModel : ReactiveObject
 
     public HeaderViewModel(ICrashReporter? reporter = null)
     {
-        reporter ??= Ioc.Default.GetRequiredService<ICrashReporter>();
+        reporter ??= App.Services.GetRequiredService<ICrashReporter>();
 
         _eventHelper = this.WhenAnyValue(x => x.Envelope, e => e?.TryGetEvent())
             .ToProperty(this, x => x.Event);

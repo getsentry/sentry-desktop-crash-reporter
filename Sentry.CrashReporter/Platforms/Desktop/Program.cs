@@ -18,7 +18,7 @@ internal class Program
         App.ConfigureServices(file);
 
 #if INTEGRATION_TEST
-        var reporter = Ioc.Default.GetRequiredService<ICrashReporter>();
+        var reporter = App.Services.GetRequiredService<ICrashReporter>();
         await reporter.LoadAsync();
         await reporter.SubmitAsync();
 #else

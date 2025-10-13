@@ -10,7 +10,7 @@ public partial class LoadingViewModel : ReactiveObject, ILoadable
 
     public LoadingViewModel(ICrashReporter? reporter = null)
     {
-        reporter ??= Ioc.Default.GetRequiredService<ICrashReporter>();
+        reporter ??= App.Services.GetRequiredService<ICrashReporter>();
 
         this.WhenAnyValue(x => x.IsExecuting)
             .Subscribe(x => IsExecutingChanged?.Invoke(this, EventArgs.Empty));

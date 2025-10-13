@@ -14,7 +14,7 @@ public partial class FeedbackViewModel : ReactiveObject
 
     public FeedbackViewModel(ICrashReporter? reporter = null)
     {
-        reporter ??= Ioc.Default.GetRequiredService<ICrashReporter>();
+        reporter ??= App.Services.GetRequiredService<ICrashReporter>();
         if (reporter.Feedback != null)
         {
             Name = reporter.Feedback.Name;

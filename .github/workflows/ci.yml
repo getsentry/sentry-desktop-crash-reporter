@@ -124,3 +124,66 @@ jobs:
 
       - name: Run Integration Tests
         run: pwsh ./scripts/integration.Tests.ps1
+
+  runtime_test:
+    name: Runtime Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Install Dependencies
+        timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
+        uses: "./.github/steps/install_dependencies"
+        with:
+          target-platform: "desktop"
+
+      - name: Install Coverlet Tool
+        run: dotnet tool restore
+
+      - name: Build Sentry.CrashReporter.RuntimeTests.Host (Release)
+        run: dotnet build -c Release -f net9.0-desktop Sentry.CrashReporter.RuntimeTests.Host/Sentry.CrashReporter.RuntimeTests.Host.csproj
+
+      - name: Run Runtime Tests
+        env:
+          UNO_RUNTIME_TESTS_RUN_TESTS: '{}'
+          UNO_RUNTIME_TESTS_OUTPUT_PATH: Sentry.CrashReporter.RuntimeTests/TestResults/RuntimeTests.xml
+        run: |
+          xvfb-run -a dotnet tool run coverlet -- \
+            Sentry.CrashReporter.RuntimeTests.Host/bin/Release/net9.0-desktop/Sentry.CrashReporter.RuntimeTests.Host.dll \
+            --target dotnet \
+            --targetargs Sentry.CrashReporter.RuntimeTests.Host/bin/Release/net9.0-desktop/Sentry.CrashReporter.RuntimeTests.Host.dll \
+            --output Sentry.CrashReporter.RuntimeTests/TestResults/ \
+            --format cobertura \
+            --single-hit \
+            -v
+
+      - name: Process Test Results
+        if: always()
+        shell: pwsh
+        run: |
+          $filePath = 'Sentry.CrashReporter.RuntimeTests/TestResults/RuntimeTests.xml'
+          $content = Get-Content -Path $filePath -Raw
+          $content -replace 'encoding="utf-16"', 'encoding="utf-8"' | Set-Content -Path $filePath -Encoding utf8 -NoNewline
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Runtime-Test-Results
+          path: |
+            Sentry.CrashReporter.RuntimeTests/TestResults
+
+      - name: Report Test Results
+        uses: dorny/test-reporter@dc3a92680fcc15842eef52e8c4606ea7ce6bd3f3 # v2.1.1
+        if: ${{ !cancelled() }}
+        with:
+          name: Runtime Tests
+          path: Sentry.CrashReporter.RuntimeTests/TestResults/RuntimeTests.xml
+          reporter: dotnet-nunit
+
+      - name: Upload Code Coverage
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

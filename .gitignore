@@ -7,3 +7,5 @@ riderModule.iml
 .idea/
 /envelopes/
 .DS_Store
+TestResults/
+/coverage/

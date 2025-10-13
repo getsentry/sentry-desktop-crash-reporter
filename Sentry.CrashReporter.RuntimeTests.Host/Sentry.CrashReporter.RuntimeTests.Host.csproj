@@ -1,0 +1,27 @@
+<Project Sdk="Uno.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0-desktop</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <UnoSingleProject>true</UnoSingleProject>
+
+    <!-- Display name -->
+    <ApplicationTitle>Sentry.CrashReporter Runtime Tests Host</ApplicationTitle>
+    <!-- App Identifier -->
+    <ApplicationId>com.companyname.Sentry.CrashReporter.runtimetests.host</ApplicationId>
+    <!-- Versions -->
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+
+    <UnoFeatures>
+      CSharpMarkup;
+      SkiaRenderer;
+    </UnoFeatures>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Sentry.CrashReporter.RuntimeTests/Sentry.CrashReporter.RuntimeTests.csproj" />
+  </ItemGroup>
+</Project>
