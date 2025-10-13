@@ -1,1 +1,14 @@
+codecov:
+  notify:
+    wait_for_ci: true
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
 comment: false
+ignore:
+  - "Sentry.CrashReporter.*Tests*"
