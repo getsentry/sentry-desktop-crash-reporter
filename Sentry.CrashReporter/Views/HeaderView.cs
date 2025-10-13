@@ -5,9 +5,13 @@ namespace Sentry.CrashReporter.Views;
 
 public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
 {
-    public HeaderView()
+    public HeaderView() : this(null)
     {
-        this.DataContext(new HeaderViewModel(), (view, vm) => view
+    }
+
+    internal HeaderView(HeaderViewModel? dataContext)
+    {
+        this.DataContext(dataContext ?? new HeaderViewModel(), (view, vm) => view
             .Content(new Grid()
                 .ColumnDefinitions("*,Auto")
                 .Children(
@@ -25,22 +29,26 @@ public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
                                 .Children(
                                     new IconLabel(FA.Bug)
                                         .Margin(8, 4)
+                                        .Name("exceptionLabel")
                                         .ToolTip(x => x.Binding(() => vm.Exception).Convert(e => e?.Value ?? "Exception"))
                                         .Text(x => x.Binding(() => vm.Exception).Convert(e => e?.Type ?? string.Empty))
                                         .Visibility(x => x.Binding(() => vm.Exception).Convert(ToVisibility)),
                                     new IconLabel(FA.Globe)
                                         .Margin(8, 4)
+                                        .Name("releaseLabel")
                                         .ToolTip("Release")
                                         .Text(x => x.Binding(() => vm.Release))
                                         .Visibility(x => x.Binding(() => vm.Release).Convert(ToVisibility)),
                                     new IconLabel()
                                         .Margin(8, 4)
+                                        .Name("osLabel")
                                         .Brand(x => x.Binding(() => vm.OsName).Convert(ToBrand))
                                         .ToolTip("Operating System")
                                         .Text(x => x.Binding(() => vm.OsPretty))
                                         .Visibility(x => x.Binding(() => vm.OsPretty).Convert(ToVisibility)),
                                     new IconLabel(FA.Wrench)
                                         .Margin(8, 4)
+                                        .Name("environmentLabel")
                                         .ToolTip("Environment")
                                         .Text(x => x.Binding(() => vm.Environment))
                                         .Visibility(x => x.Binding(() => vm.Environment).Convert(ToVisibility)))),
