@@ -3,6 +3,7 @@ using Windows.Graphics;
 using Windows.Graphics.Display;
 using Windows.UI.ViewManagement;
 using Sentry.CrashReporter.Services;
+using Sentry.CrashReporter.ViewModels;
 using Sentry.CrashReporter.Views;
 
 namespace Sentry.CrashReporter;
@@ -32,7 +33,7 @@ public partial class App : Application
     protected IHost? Host { get; private set; }
     public static IServiceProvider Services { get; internal set; } = Ioc.Default;
 
-    protected override void OnLaunched(LaunchActivatedEventArgs args)
+    protected async override void OnLaunched(LaunchActivatedEventArgs args)
     {
         // Load WinUI Resources
         Resources.Build(r => r.Merged(
@@ -44,6 +45,7 @@ public partial class App : Application
 
         var builder = this.CreateBuilder(args)
             .Configure(host => host
+                .UseToolkitNavigation()
 #if DEBUG
                 // Switch to Development environment when running in DEBUG
                 .UseEnvironment(Environments.Development)
@@ -80,6 +82,7 @@ public partial class App : Application
                         .EmbeddedSource<App>()
                         .Section<AppConfig>()
                 )
+                .UseNavigation(RegisterRoutes)
             );
         MainWindow = builder.Window;
 
@@ -97,30 +100,27 @@ public partial class App : Application
 #if DEBUG
         MainWindow.UseStudio();
 #endif
-        // MainWindow.SetWindowIcon();
+        MainWindow.SetWindowIcon();
 
-        Host = builder.Build();
-
-        // Do not repeat app initialization when the Window already has content,
-        // just ensure that the window is active
-        if (MainWindow.Content is not Frame rootFrame)
-        {
-            // Create a Frame to act as the navigation context and navigate to the first page
-            rootFrame = new Frame();
-
-            // Place the frame in the current Window
-            MainWindow.Content = rootFrame;
-        }
-
-        if (rootFrame.Content == null)
-        {
-            // When the navigation stack isn't restored navigate to the first page,
-            // configuring the new page by passing required information as a navigation
-            // parameter
-            rootFrame.Navigate(typeof(MainPage), args.Arguments);
-        }
+        Host = await builder.NavigateAsync<ShellPage>();
 
         // Ensure the current window is active
         MainWindow.Activate();
+    }
+
+    private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
+    {
+        views.Register(
+            new ViewMap<ShellPage>(),
+            new ViewMap<MainPage, LoadingViewModel>()
+        );
+        routes.Register(
+            new RouteMap("", View: views.FindByView<ShellPage>(),
+                Nested:
+                [
+                    new ("Main", View: views.FindByView<MainPage>(), IsDefault: true),
+                ]
+            )
+        );
     }
 }

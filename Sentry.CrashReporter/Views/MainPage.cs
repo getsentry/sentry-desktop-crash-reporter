@@ -6,7 +6,7 @@ public sealed class MainPage : Page
 {
     public MainPage()
     {
-        this.DataContext(new LoadingViewModel(), (view, vm) => view
+        this.DataContext<LoadingViewModel>((view, vm) => view
             .NavigationCacheMode(NavigationCacheMode.Required)
             .Background(ThemeResource.Get<Brush>("ApplicationPageBackgroundThemeBrush"))
             .Content(new LoadingView()

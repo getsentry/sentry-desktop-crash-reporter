@@ -28,6 +28,7 @@
             Hosting;
             Toolkit;
             Logging;
+            Navigation;
             Mvvm;
             Configuration;
             ThemeService;
