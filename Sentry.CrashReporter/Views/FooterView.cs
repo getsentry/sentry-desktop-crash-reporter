@@ -5,24 +5,31 @@ namespace Sentry.CrashReporter.Views;
 
 public sealed class FooterView : ReactiveUserControl<FooterViewModel>
 {
-    public FooterView()
+    public FooterView() : this(null)
     {
-        this.DataContext(new FooterViewModel(), (view, vm) => view
+    }
+
+    internal FooterView(FooterViewModel? dataContext)
+    {
+        this.DataContext(dataContext ?? new FooterViewModel(), (view, vm) => view
             .Content(new Grid()
                 .ColumnSpacing(8)
                 .ColumnDefinitions("Auto,*,Auto,Auto")
                 .Children(
                     new IconLabel(FA.Copy)
                         .ToolTip("Event ID")
+                        .Name("eventIdLabel")
                         .Text(x => x.Binding(() => vm.ShortEventId))
                         .Visibility(x => x.Binding(() => vm.ShortEventId).Convert(ToVisibility))
                         .Grid(0),
                     new Button { Content = "Cancel" }
                         .Grid(2)
+                        .Name("cancelButton")
                         .Command(() => vm.CancelCommand)
                         .Background(Colors.Transparent),
                     new Button { Content = "Submit" }
                         .Grid(3)
+                        .Name("submitButton")
                         .Command(() => vm.SubmitCommand)
                         .Foreground(Colors.White)
                         .Background(ThemeResource.Get<Brush>("SystemAccentColorBrush")))));
