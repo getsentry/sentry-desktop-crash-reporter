@@ -5,13 +5,15 @@ namespace Sentry.CrashReporter.RuntimeTests;
 public class EventViewTests : RuntimeTestBase
 {
     [TestMethod]
-    public void EventView_CanBeCreated()
+    public async Task EventView_CanBeCreated()
     {
         // Arrange
         _ = MockCrashReporter();
 
         // Act
         var view = new EventView();
+        await LoadTestContent(view);
+
         var tagsExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Tags");
         var contextsExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Contexts");
         var extraExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Additional Data");
@@ -19,8 +21,6 @@ public class EventViewTests : RuntimeTestBase
         var attachmentsExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Attachments");
 
         // Assert
-        Assert.IsNotNull(view);
-
         Assert.IsNotNull(tagsExpander);
         Assert.IsFalse(tagsExpander.IsEnabled);
         Assert.AreEqual(Visibility.Visible, tagsExpander.Visibility);
@@ -43,7 +43,7 @@ public class EventViewTests : RuntimeTestBase
     }
 
     [TestMethod]
-    public void EventView_ExpanderVisibilityAndEnabledState()
+    public async Task EventView_ExpanderVisibilityAndEnabledState()
     {
         // Arrange
         var envelope = new Envelope(new JsonObject(), [
@@ -64,6 +64,7 @@ public class EventViewTests : RuntimeTestBase
 
         // Act
         var view = new EventView();
+        await LoadTestContent(view);
 
         var tagsExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Tags");
         var tagKey = tagsExpander?.FindFirstDescendant<TextBlock>(tb => tb.Text == "t1");

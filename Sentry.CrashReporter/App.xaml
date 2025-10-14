@@ -12,11 +12,13 @@
 
             <Color x:Key="SystemAccentColor">#362d59</Color>
             <SolidColorBrush x:Key="SystemAccentColorBrush" Color="{StaticResource SystemAccentColor}" />
-            <SolidColorBrush x:Key="ProgressRingForegroundThemeBrush"
-                             Color="{StaticResource SystemAccentColor}" />
+            <SolidColorBrush x:Key="ProgressRingForegroundThemeBrush" Color="{StaticResource SystemAccentColor}" />
+            <SolidColorBrush x:Key="SegmentedPillBackground" Color="{StaticResource SystemAccentColor}" />
+            <SolidColorBrush x:Key="SegmentedPillBackgroundPointerOver" Color="{StaticResource SystemAccentColor}" />
+            <SolidColorBrush x:Key="SegmentedPillBackgroundPressed" Color="{StaticResource SystemAccentColor}" />
+            <SolidColorBrush x:Key="SegmentedPillBackgroundDisabled" Color="{StaticResource SystemBaseLowColor}" />
             <SolidColorBrush x:Key="TextControlBorderBrush" Color="{StaticResource SystemBaseLowColor}" />
-            <SolidColorBrush x:Key="TextControlBorderBrushPointerOver"
-                             Color="{StaticResource SystemBaseLowColor}" />
+            <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource SystemBaseLowColor}" />
             <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{StaticResource SystemAccentColor}" />
             <SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="{StaticResource SystemBaseLowColor}" />
 
@@ -27,10 +29,8 @@
             <SolidColorBrush x:Key="ExpanderChevronPointerOverBackground" Color="Transparent" />
             <SolidColorBrush x:Key="ExpanderChevronPressedBackground" Color="Transparent" />
             <SolidColorBrush x:Key="ExpanderChevronForeground" Color="{ThemeResource SystemColorButtonFaceColor}" />
-            <SolidColorBrush x:Key="ExpanderChevronPointerOverForeground"
-                             Color="{ThemeResource SystemColorButtonFaceColor}" Opacity="0.6" />
-            <SolidColorBrush x:Key="ExpanderChevronPressedForeground"
-                             Color="{ThemeResource SystemColorButtonFaceColor}" Opacity="0.4" />
+            <SolidColorBrush x:Key="ExpanderChevronPointerOverForeground" Color="{ThemeResource SystemColorButtonFaceColor}" Opacity="0.6" />
+            <SolidColorBrush x:Key="ExpanderChevronPressedForeground" Color="{ThemeResource SystemColorButtonFaceColor}" Opacity="0.4" />
             <Style TargetType="Expander" BasedOn="{StaticResource DefaultExpanderStyle}">
                 <!-- ReSharper disable once Xaml.DependencyPropertyResolveError -->
                 <Setter Property="MinHeight" Value="{ThemeResource TextControlThemeMinHeight}" />

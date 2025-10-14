@@ -15,7 +15,14 @@ public class RuntimeTestBase
         await UnitTestsUIContentHelper.WaitForIdle();
     }
 
-    public static Mock<ICrashReporter> MockCrashReporter(Envelope? envelope = null)
+    protected static async Task LoadTestContent(FrameworkElement element)
+    {
+        UnitTestsUIContentHelper.EmbeddedTestRoot.SetContent(element);
+        await UnitTestsUIContentHelper.WaitForLoaded(element);
+        await UnitTestsUIContentHelper.WaitForIdle();
+    }
+
+    protected static Mock<ICrashReporter> MockCrashReporter(Envelope? envelope = null)
     {
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))

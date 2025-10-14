@@ -25,9 +25,7 @@ public class EnvelopeViewTests : RuntimeTestBase
 
         // Act
         var view = new EnvelopeView();
-        UnitTestsUIContentHelper.EmbeddedTestRoot.SetContent(view);
-        await UnitTestsUIContentHelper.WaitForLoaded(view);
-        await UnitTestsUIContentHelper.WaitForIdle();
+        await LoadTestContent(view);
 
         // Assert
         var header = view.FindFirstDescendant<TextBlock>(tb => tb.Text.Contains(""""dsn": "https://foo@bar.com/123"""") &&

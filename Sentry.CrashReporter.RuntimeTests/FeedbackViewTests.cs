@@ -5,20 +5,20 @@ namespace Sentry.CrashReporter.RuntimeTests;
 public class FeedbackViewTests : RuntimeTestBase
 {
     [TestMethod]
-    public void FeedbackView_CanBeCreated()
+    public async Task FeedbackView_CanBeCreated()
     {
         // Arrange
         _ = MockCrashReporter();
 
         // Act
         var view = new FeedbackView();
+        await LoadTestContent(view);
+        
         var nameTextBox = view.FindFirstDescendant<TextBox>(tb => tb.PlaceholderText == "Name");
         var emailTextBox = view.FindFirstDescendant<TextBox>(tb => tb.PlaceholderText == "Email");
         var messageTextBox = view.FindFirstDescendant<TextBox>(tb => tb.PlaceholderText == "Message");
 
         // Assert
-        Assert.IsNotNull(view);
-
         Assert.IsNotNull(nameTextBox);
         Assert.IsFalse(nameTextBox.IsEnabled);
 
@@ -30,12 +30,14 @@ public class FeedbackViewTests : RuntimeTestBase
     }
 
     [TestMethod]
-    public void FeedbackView_TextBoxesUpdate()
+    public async Task FeedbackView_TextBoxesUpdate()
     {
         // Arrange
         var mockReporter = MockCrashReporter();
 
         var view = new FeedbackView();
+        await LoadTestContent(view);
+
         var nameTextBox = view.FindFirstDescendant<TextBox>(tb => tb.PlaceholderText == "Name")!;
         var emailTextBox = view.FindFirstDescendant<TextBox>(tb => tb.PlaceholderText == "Email")!;
         var messageTextBox = view.FindFirstDescendant<TextBox>(tb => tb.PlaceholderText == "Message")!;
@@ -50,13 +52,15 @@ public class FeedbackViewTests : RuntimeTestBase
     }
 
     [TestMethod]
-    public void FeedbackView_IsEnabled_True()
+    public async Task FeedbackView_IsEnabled_True()
     {
         // Arrange
         var envelope = new Envelope(new JsonObject { ["dsn"] = "https://foo@bar.com/123", ["event_id"] = "12345678901234567890123456789012" }, []);
         _ = MockCrashReporter(envelope);
 
         var view = new FeedbackView();
+        await LoadTestContent(view);
+
         var nameTextBox = view.FindFirstDescendant<TextBox>(tb => tb.PlaceholderText == "Name")!;
         var emailTextBox = view.FindFirstDescendant<TextBox>(tb => tb.PlaceholderText == "Email")!;
         var messageTextBox = view.FindFirstDescendant<TextBox>(tb => tb.PlaceholderText == "Message")!;
@@ -68,13 +72,15 @@ public class FeedbackViewTests : RuntimeTestBase
     }
 
     [TestMethod]
-    public void FeedbackView_IsEnabled_False()
+    public async Task FeedbackView_IsEnabled_False()
     {
         // Arrange
         var envelope = new Envelope(new JsonObject(), []);
         _ = MockCrashReporter(envelope);
 
         var view = new FeedbackView();
+        await LoadTestContent(view);
+        
         var nameTextBox = view.FindFirstDescendant<TextBox>(tb => tb.PlaceholderText == "Name")!;
         var emailTextBox = view.FindFirstDescendant<TextBox>(tb => tb.PlaceholderText == "Email")!;
         var messageTextBox = view.FindFirstDescendant<TextBox>(tb => tb.PlaceholderText == "Message")!;

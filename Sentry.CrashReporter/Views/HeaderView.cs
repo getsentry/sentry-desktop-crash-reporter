@@ -48,24 +48,11 @@ public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
                                         .ToolTip("Environment")
                                         .Text(x => x.Binding(() => vm.Environment))
                                         .Visibility(x => x.Binding(() => vm.Environment).Convert(ToVisibility)))),
-                    new Button()
+                    new Image()
                         .Grid(1)
-                        .Padding(0)
-                        .IsTabStop(false)
-                        .Background(Colors.Transparent)
-                        .BorderBrush(Colors.Transparent)
-                        .VerticalAlignment(VerticalAlignment.Top)
-                        .Content(new Image()
-                            .Source(ThemeResource.Get<ImageSource>("SentryGlyphIcon"))
-                            .Width(68)
-                            .Height(60))
-                        .Resources(r => r
-                            .Add("ButtonBackgroundPointerOver", new SolidColorBrush(Colors.Transparent))
-                            .Add("ButtonBackgroundPressed", new SolidColorBrush(Colors.Transparent))
-                            .Add("ButtonBorderBrushPointerOver",
-                                new SolidColorBrush(Colors.Transparent))
-                            .Add("ButtonBorderBrushPressed", new SolidColorBrush(Colors.Transparent)))
-                        .Command(ReactiveCommand.Create(() => this.Navigator()?.NavigateViewAsync<EnvelopeView>(this))))));
+                        .Source(ThemeResource.Get<ImageSource>("SentryGlyphIcon"))
+                        .Width(68)
+                        .Height(60))));
     }
 
     private static Visibility ToVisibility(object? obj)

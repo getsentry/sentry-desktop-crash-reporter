@@ -112,7 +112,7 @@ public partial class App : Application
     {
         views.Register(
             new ViewMap<ShellPage>(),
-            new ViewMap<MainPage, LoadingViewModel>()
+            new ViewMap<MainPage, MainViewModel>()
         );
         routes.Register(
             new RouteMap("", View: views.FindByView<ShellPage>(),
