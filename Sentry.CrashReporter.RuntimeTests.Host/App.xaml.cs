@@ -1,54 +1,55 @@
 namespace Sentry.CrashReporter.RuntimeTests.Host;
 
+internal sealed partial class ShellPage : Page;
+internal sealed partial class UnitTestsPage : Page
+{
+    public UnitTestsPage()
+    {
+        this.Content(new UnitTestsControl());
+    }
+}
+
 public partial class App : Application
 {
     public App()
     {
-        this.InitializeComponent();
-
-        InitializeLogging();
+        InitializeComponent();
     }
 
-    protected override void OnLaunched(LaunchActivatedEventArgs args)
+    protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
         // Load WinUI Resources
         Resources.Build(r => r.Merged(
             new XamlControlsResources()));
 
-        var window = new Window();
-        window.Content = new UnitTestsControl();
-        window.Activate();
-    }
+        var builder = this.CreateBuilder(args)
+            .Configure(host => host
+                .UseToolkitNavigation()
+                .UseLogging((context, logBuilder) =>
+                {
+                    logBuilder
+                        .SetMinimumLevel(LogLevel.Information)
+                        .CoreLogLevel(LogLevel.Warning);
+                }, true)
+                .UseNavigation((views, routes) =>
+                {
+                    views.Register(
+                        new ViewMap<ShellPage>(),
+                        new ViewMap<UnitTestsPage>()
+                    );
+                    routes.Register(
+                        new RouteMap("", View: views.FindByView<ShellPage>(),
+                            Nested:
+                            [
+                                new RouteMap("Test", View: views.FindByView<UnitTestsPage>(), IsDefault: true),
+                            ]
+                        )
+                    );
+                })
+            );
 
-    public static void InitializeLogging()
-    {
-#if DEBUG
-        // Logging is disabled by default for release builds
-        var factory = LoggerFactory.Create(builder =>
-        {
-#if __WASM__
-            builder.AddProvider(new global::Uno.Extensions.Logging.WebAssembly.WebAssemblyConsoleLoggerProvider());
-#elif __IOS__
-            builder.AddProvider(new global::Uno.Extensions.Logging.OSLogLoggerProvider());
-            builder.AddConsole();
-#else
-            builder.AddConsole();
-#endif
+        await builder.NavigateAsync<ShellPage>();
 
-            // Exclude logs below this level
-            builder.SetMinimumLevel(LogLevel.Information);
-
-            // Default filters for Uno Platform namespaces
-            builder.AddFilter("Uno", LogLevel.Warning);
-            builder.AddFilter("Windows", LogLevel.Warning);
-            builder.AddFilter("Microsoft", LogLevel.Warning);
-        });
-
-        global::Uno.Extensions.LogExtensionPoint.AmbientLoggerFactory = factory;
-
-#if HAS_UNO
-        global::Uno.UI.Adapter.Microsoft.Extensions.Logging.LoggingAdapter.Initialize();
-#endif
-#endif
+        builder.Window.Activate();
     }
 }

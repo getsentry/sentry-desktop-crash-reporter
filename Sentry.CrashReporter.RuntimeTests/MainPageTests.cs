@@ -12,9 +12,8 @@ public class MainPageTests : RuntimeTestBase
 
         // Act
         var page = new MainPage();
-        UnitTestsUIContentHelper.EmbeddedTestRoot.SetContent(page);
-        await UnitTestsUIContentHelper.WaitForLoaded(page);
-        await UnitTestsUIContentHelper.WaitForIdle();
+        await LoadTestContent(page);
+
         var loadingView = page.FindFirstDescendant<LoadingView>();
         var progressRing = loadingView?.FindFirstDescendant<ProgressRing>();
         var headerView = loadingView?.FindFirstDescendant<HeaderView>();

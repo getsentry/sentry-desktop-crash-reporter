@@ -18,6 +18,7 @@
     <UnoFeatures>
       CSharpMarkup;
       SkiaRenderer;
+      Navigation;
     </UnoFeatures>
   </PropertyGroup>
 
