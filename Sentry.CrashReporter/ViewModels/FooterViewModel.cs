@@ -35,7 +35,11 @@ public partial class FooterViewModel : ReactiveObject
     }
 
     [ReactiveCommand(CanExecute = nameof(_canSubmit))]
-    private async Task Submit() => await _reporter.SubmitAsync().ContinueWith((_) => _window.Close());
+    private async Task Submit()
+    {
+        await _reporter.SubmitAsync();
+        _window.Close();
+    }
 
     [ReactiveCommand]
     private void Cancel() => _window.Close();
