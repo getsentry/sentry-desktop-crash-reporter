@@ -46,12 +46,6 @@ public class FontAwesomeIcon : FontIcon
 
     private void UpdateIcon()
     {
-        if (!DispatcherQueue.HasThreadAccess)
-        {
-            DispatcherQueue.TryEnqueue(UpdateIcon);
-            return;
-        }
-
         if (!string.IsNullOrEmpty(Brand))
         {
             FontFamily = BrandFontFamily;

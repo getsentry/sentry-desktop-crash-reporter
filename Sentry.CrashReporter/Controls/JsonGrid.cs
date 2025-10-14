@@ -43,12 +43,6 @@ public class JsonGrid : Grid
 
     private void UpdateGrid(JsonGridData? json)
     {
-        if (!DispatcherQueue.HasThreadAccess)
-        {
-            DispatcherQueue.TryEnqueue(() => UpdateGrid(json));
-            return;
-        }
-
         Children.Clear();
         RowDefinitions.Clear();
 
