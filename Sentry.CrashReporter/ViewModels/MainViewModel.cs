@@ -2,13 +2,14 @@ using Sentry.CrashReporter.Services;
 
 namespace Sentry.CrashReporter.ViewModels;
 
-public partial class LoadingViewModel : ReactiveObject, ILoadable
+public partial class MainViewModel : ReactiveObject, ILoadable
 {
     [Reactive] private bool _isExecuting;
+    [Reactive] private int _selectedIndex;
 
     public event EventHandler? IsExecutingChanged;
 
-    public LoadingViewModel(ICrashReporter? reporter = null)
+    public MainViewModel(ICrashReporter? reporter = null)
     {
         reporter ??= App.Services.GetRequiredService<ICrashReporter>();
 

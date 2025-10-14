@@ -94,6 +94,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="CommunityToolkit.WinUI.Controls.Segmented" />
         <PackageReference Include="KaitaiStruct.Runtime.CSharp"/>
         <PackageReference Include="ReactiveUI.SourceGenerators">
           <PrivateAssets>all</PrivateAssets>

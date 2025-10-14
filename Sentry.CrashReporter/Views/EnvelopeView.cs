@@ -11,35 +11,7 @@ public sealed class EnvelopeView : ReactivePage<EnvelopeViewModel>
         this.DataContext(new EnvelopeViewModel(), (view, vm) => view
             .Background(ThemeResource.Get<Brush>("ApplicationPageBackgroundThemeBrush"))
             .Content(new Grid()
-                .RowDefinitions("Auto,*")
                 .Children(
-                    new Grid()
-                        .Grid(row: 0)
-                        .ColumnDefinitions("Auto,*,Auto")
-                        .ColumnSpacing(16)
-                        .Children(
-                            new AppBarButton()
-                                .Grid(0)
-                                .ToolTip("Back")
-                                .Icon(new FontAwesomeIcon(FA.ArrowLeft))
-                                .LabelPosition(CommandBarLabelPosition.Collapsed)
-                                .Command(ReactiveCommand.Create(() => this.Navigator()?.NavigateBackAsync(this))),
-                            new StackPanel()
-                                .Grid(1)
-                                .VerticalAlignment(VerticalAlignment.Center)
-                                .Children(
-                                    new SelectableTextBlock()
-                                        .Style(ThemeResource.Get<Style>("SubtitleTextBlockStyle"))
-                                        .Text(x => x.Binding(() => vm.FileName)),
-                                    new SelectableTextBlock()
-                                        .Style(ThemeResource.Get<Style>("CaptionTextBlockStyle"))
-                                        .Text(x => x.Binding(() => vm.Directory))),
-                            new AppBarButton()
-                                .Grid(2)
-                                .ToolTip("Open")
-                                .Icon(new FontAwesomeIcon(FA.Share))
-                                .LabelPosition(CommandBarLabelPosition.Collapsed)
-                                .Command(() => vm.LaunchCommand)),
                     new ScrollViewer()
                         .Grid(row: 1)
                         .Content(new StackPanel()
@@ -59,6 +31,13 @@ public sealed class EnvelopeView : ReactivePage<EnvelopeViewModel>
                                             )
                                             .Content(new SelectableTextBlock()
                                                 .WithSourceCodePro()
-                                                .Text(x => x.Binding("Payload")))))))));
+                                                .Text(x => x.Binding("Payload")))))),
+                    new Button()
+                        .Grid(2)
+                        .ToolTip("Open")
+                        .VerticalAlignment(VerticalAlignment.Top)
+                        .HorizontalAlignment(HorizontalAlignment.Right)
+                        .Content(new FontAwesomeIcon(FA.Share))
+                        .Command(() => vm.LaunchCommand))));
     }
 }
