@@ -36,7 +36,7 @@ public class EnvelopeViewModelTests
     [Test]
     [TestCase("", false)]
     [TestCase("foo.envelope", true)]
-    public async Task CannotLaunch(string filePath, bool expectedCanLaunch)
+    public async Task CanLaunch(string filePath, bool expectedCanLaunch)
     {
         // Arrange
         Envelope? envelope = null;

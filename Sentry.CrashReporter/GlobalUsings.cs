@@ -12,3 +12,4 @@ global using ReactiveUI;
 global using ReactiveUI.Uno;
 global using ReactiveUI.SourceGenerators;
 global using System.Reactive.Linq;
+global using Windows.System;
