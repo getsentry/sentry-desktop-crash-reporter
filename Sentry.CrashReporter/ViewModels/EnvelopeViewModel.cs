@@ -36,42 +36,5 @@ public partial class EnvelopeViewModel : ReactiveObject
     public string? Directory => Path.GetDirectoryName(FilePath);
 
     [ReactiveCommand(CanExecute = nameof(_canLaunch))]
-    private void Launch()
-    {
-        var launched = false;
-        try
-        {
-            var process = Process.Start(new ProcessStartInfo
-            {
-                FileName = FilePath,
-                UseShellExecute = true
-            });
-            if (process?.WaitForExit(TimeSpan.FromSeconds(3)) == true)
-            {
-                launched = process.ExitCode == 0;
-            }
-        }
-        catch (Exception)
-        {
-            launched = false;
-        }
-
-        if (!launched)
-        {
-            if (OperatingSystem.IsMacOS())
-            {
-                // reveal in Finder
-                Process.Start("open", ["-R", FilePath!]);
-            }
-            else
-            {
-                // open directory
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = Directory,
-                    UseShellExecute = true
-                });
-            }
-        }
-    }
+    private async Task Launch() => await Launcher.LaunchUriAsync(new Uri(FilePath!, UriKind.Absolute));
 }
