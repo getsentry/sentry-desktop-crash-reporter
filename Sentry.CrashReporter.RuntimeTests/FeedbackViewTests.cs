@@ -33,7 +33,7 @@ public class FeedbackViewTests : RuntimeTestBase
     public async Task FeedbackView_TextBoxesUpdate()
     {
         // Arrange
-        var mockReporter = MockCrashReporter();
+        var (mockReporter, _) = MockCrashReporter();
 
         var view = new FeedbackView();
         await LoadTestContent(view);

@@ -68,5 +68,38 @@ public class FooterViewTests : RuntimeTestBase
         Assert.IsTrue(submitButton.IsEnabled);
     }
 
-    // TODO: add WindowService & test Cancel & Submit
+    [TestMethod]
+    public void FooterView_Submit_AndCloseWindow()
+    {
+        // Arrange
+        var envelope =
+            new Envelope(
+                new JsonObject()
+                    { { "dsn", "https://foo@bar.com/123" }, { "event_id", "12345678901234567890123456789012" } }, []);
+        var (mockReporter, mockWindow) = MockCrashReporter(envelope);
+
+        // Act
+        var view = new FooterView();
+        var submitButton = view.FindFirstDescendant<Button>(d => d.Name == "submitButton");
+        submitButton?.Command.Execute(null);
+
+        // Assert
+        mockReporter.Verify(x => x.SubmitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        mockWindow.Verify(x => x.Close(), Times.Once);
+    }
+
+    [TestMethod]
+    public void FooterView_Cancel_ClosesWindow()
+    {
+        // Arrange
+        var (_, mockWindow) = MockCrashReporter();
+
+        // Act
+        var view = new FooterView();
+        var cancelButton = view.FindFirstDescendant<Button>(b => b.Name == "cancelButton");
+        cancelButton?.Command.Execute(null);
+
+        // Assert
+        mockWindow.Verify(x => x.Close(), Times.Once);
+    }
 }
