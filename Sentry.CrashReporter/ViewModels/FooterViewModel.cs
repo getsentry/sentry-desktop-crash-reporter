@@ -5,15 +5,17 @@ namespace Sentry.CrashReporter.ViewModels;
 public partial class FooterViewModel : ReactiveObject
 {
     private readonly ICrashReporter _reporter;
+    private readonly IWindowService _window;
     [Reactive] private Envelope? _envelope;
     [ObservableAsProperty] private string? _dsn = string.Empty;
     [ObservableAsProperty] private string? _eventId = string.Empty;
     [ObservableAsProperty] private string? _shortEventId = string.Empty;
     private readonly IObservable<bool> _canSubmit;
 
-    public FooterViewModel(ICrashReporter? reporter = null)
+    public FooterViewModel(ICrashReporter? reporter = null, IWindowService? windowService = null)
     {
         _reporter = reporter ?? App.Services.GetRequiredService<ICrashReporter>();
+        _window = windowService ?? App.Services.GetRequiredService<IWindowService>();
 
         _dsnHelper = this.WhenAnyValue(x => x.Envelope,  e => e?.TryGetDsn())
             .ToProperty(this, x => x.Dsn);
@@ -33,16 +35,8 @@ public partial class FooterViewModel : ReactiveObject
     }
 
     [ReactiveCommand(CanExecute = nameof(_canSubmit))]
-    private async Task Submit()
-    {
-        await _reporter.SubmitAsync();
-
-        (Application.Current as App)?.MainWindow?.Close(); // TODO: cleanup
-    }
+    private async Task Submit() => await _reporter.SubmitAsync().ContinueWith((_) => _window.Close());
 
     [ReactiveCommand]
-    private void Cancel()
-    {
-        (Application.Current as App)?.MainWindow?.Close(); // TODO: cleanup
-    }
+    private void Cancel() => _window.Close();
 }
