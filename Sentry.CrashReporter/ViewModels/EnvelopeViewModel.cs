@@ -12,6 +12,7 @@ public partial class EnvelopeViewModel : ReactiveObject
     [ObservableAsProperty] private string? _eventId = string.Empty;
     [ObservableAsProperty] private FormattedEnvelope? _formatted;
     private readonly IObservable<bool> _canLaunch;
+    public string? FilePath { get; }
 
     public EnvelopeViewModel(ICrashReporter? reporter = null)
     {
@@ -31,10 +32,6 @@ public partial class EnvelopeViewModel : ReactiveObject
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(value => Envelope = value);
     }
-
-    public string? FilePath { get; }
-    public string? FileName => Path.GetFileName(FilePath);
-    public string? Directory => Path.GetDirectoryName(FilePath);
 
     [ReactiveCommand(CanExecute = nameof(_canLaunch))]
     private async Task Launch() => await Launcher.LaunchUriAsync(new Uri(FilePath!, UriKind.Absolute));
