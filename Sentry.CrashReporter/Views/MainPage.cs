@@ -30,7 +30,7 @@ public sealed class MainPage : Page
                             .Children(new TextBlock()
                                     .Grid(column: 0)
                                     .Style(ThemeResource.Get<Style>("SubtitleTextBlockStyle"))
-                                    .Text(x => x.Binding(() => vm.SelectedIndex).Convert(ConvertHeader)),
+                                    .Text(x => x.Binding(() => vm.Subtitle)),
                                 new Segmented()
                                     .Name(out var segmented)
                                     .Grid(column: 1)
@@ -63,11 +63,5 @@ public sealed class MainPage : Page
                                     .Visibility(Visibility.Collapsed)),
                         new FooterView()
                             .Grid(row: 3)))));
-    }
-
-    private static string ConvertHeader(int index)
-    {
-        string[] headers = ["Feedback (Optional)", "Event", "Envelope"];
-        return headers.ElementAtOrDefault(index) ?? string.Empty;
     }
 }
