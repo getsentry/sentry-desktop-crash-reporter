@@ -65,8 +65,7 @@ public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
                             .Add("ButtonBorderBrushPointerOver",
                                 new SolidColorBrush(Colors.Transparent))
                             .Add("ButtonBorderBrushPressed", new SolidColorBrush(Colors.Transparent)))
-                        .Command(ReactiveCommand.Create(() =>
-                            (Window.Current?.Content as Frame)?.Navigate(typeof(EnvelopeView)))))));
+                        .Command(ReactiveCommand.Create(() => this.Navigator()?.NavigateViewAsync<EnvelopeView>(this))))));
     }
 
     private static Visibility ToVisibility(object? obj)

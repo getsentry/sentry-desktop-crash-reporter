@@ -23,7 +23,7 @@ public sealed class EnvelopeView : ReactivePage<EnvelopeViewModel>
                                 .ToolTip("Back")
                                 .Icon(new FontAwesomeIcon(FA.ArrowLeft))
                                 .LabelPosition(CommandBarLabelPosition.Collapsed)
-                                .Command(ReactiveCommand.Create(() => (Window.Current?.Content as Frame)?.GoBack())),
+                                .Command(ReactiveCommand.Create(() => this.Navigator()?.NavigateBackAsync(this))),
                             new StackPanel()
                                 .Grid(1)
                                 .VerticalAlignment(VerticalAlignment.Center)
