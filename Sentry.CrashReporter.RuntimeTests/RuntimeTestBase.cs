@@ -22,16 +22,18 @@ public class RuntimeTestBase
         await UnitTestsUIContentHelper.WaitForIdle();
     }
 
-    protected static Mock<ICrashReporter> MockCrashReporter(Envelope? envelope = null)
+    protected static (Mock<ICrashReporter>, Mock<IWindowService>) MockCrashReporter(Envelope? envelope = null)
     {
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
             .Returns<CancellationToken>(ct => new ValueTask<Envelope?>(envelope));
+        var mockWindow = new Mock<IWindowService>();
 
         var services = new ServiceCollection();
         services.AddSingleton<ICrashReporter>(sp => mockReporter.Object);
+        services.AddSingleton<IWindowService>(sp => mockWindow.Object);
         App.Services = services.BuildServiceProvider();
 
-        return mockReporter;
+        return (mockReporter, mockWindow);
     }
 }

@@ -25,6 +25,7 @@ public partial class App : Application
         services.AddSingleton<HttpClient>();
         services.AddSingleton<ISentryClient, SentryClient>();
         services.AddSingleton<ICrashReporter>(sp => new Services.CrashReporter(file));
+        services.AddSingleton<IWindowService, WindowService>();
         Ioc.Default.ConfigureServices(services.BuildServiceProvider());
         return Services;
     }
