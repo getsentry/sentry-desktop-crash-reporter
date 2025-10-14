@@ -21,6 +21,11 @@ public static class Toast
             };
             parent.Children.Add(_toast);
         }
+        else if (!Equals(_toast.Parent, parent))
+        {
+            (_toast.Parent as Panel)?.Children.Remove(_toast);
+            parent.Children.Add(_toast);
+        }
 
         _toast.Title = title;
         _toast.Subtitle = subtitle;
@@ -44,6 +49,15 @@ public static class Toast
         }
         catch (OperationCanceledException)
         {
+        }
+    }
+
+    public static void Hide()
+    {
+        _hideCts?.Cancel();
+        if (_toast is not null)
+        {
+            _toast.IsOpen = false;
         }
     }
 }
