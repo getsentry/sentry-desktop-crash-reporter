@@ -94,12 +94,6 @@ public class IconLabel : StackPanel
 
     private void UpdateChildren()
     {
-        if (!DispatcherQueue.HasThreadAccess)
-        {
-            DispatcherQueue.TryEnqueue(UpdateChildren);
-            return;
-        }
-
         Children.Clear();
 
         var icon = Icon;

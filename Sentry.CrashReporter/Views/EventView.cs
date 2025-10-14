@@ -149,12 +149,6 @@ internal class AttachmentGrid : Grid
 
     private void UpdateGrid(List<Attachment>? data)
     {
-        if (!DispatcherQueue.HasThreadAccess)
-        {
-            DispatcherQueue.TryEnqueue(() => UpdateGrid(data));
-            return;
-        }
-
         Children.Clear();
         RowDefinitions.Clear();
 
