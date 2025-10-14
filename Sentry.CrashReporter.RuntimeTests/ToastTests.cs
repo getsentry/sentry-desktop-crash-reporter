@@ -28,4 +28,25 @@ public class ToastTests : RuntimeTestBase
 
         Assert.IsFalse(toast.IsOpen);
     }
+
+    [TestMethod]
+    public async Task Toast_Hide_ClosesOpenToast()
+    {
+        var panel = new StackPanel();
+        var button = new Button();
+        panel.Children.Add(button);
+        await LoadTestContent(panel);
+
+        var showTask = Toast.Show(panel, button, "Title", "Subtitle", duration: TimeSpan.FromSeconds(10));
+
+        var toast = panel.Children.OfType<TeachingTip>().FirstOrDefault();
+        Assert.IsNotNull(toast);
+        Assert.IsTrue(toast.IsOpen);
+
+        Toast.Hide();
+
+        Assert.IsFalse(toast.IsOpen);
+
+        await showTask;
+    }
 }
