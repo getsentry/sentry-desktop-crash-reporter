@@ -24,7 +24,8 @@ public partial class EnvelopeViewModel : ReactiveObject
         _formattedHelper = this.WhenAnyValue(x => x.Envelope, e => e?.Format())
             .ToProperty(this, x => x.Formatted);
 
-        _canLaunch = this.WhenAnyValue(x => x.FilePath, filePath => !string.IsNullOrWhiteSpace(filePath));
+        _canLaunch = this.WhenAnyValue(x => x.FilePath,
+            filePath => !string.IsNullOrWhiteSpace(filePath) && Uri.TryCreate(filePath, UriKind.Absolute, out _));
 
         Observable.FromAsync(() => reporter.LoadAsync().AsTask())
             .ObserveOn(RxApp.MainThreadScheduler)
