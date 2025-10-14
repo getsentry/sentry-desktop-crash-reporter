@@ -34,7 +34,7 @@ public partial class MainViewModel : ReactiveObject, ILoadable
     {
         return index switch
         {
-            0 => "Feedback (Optional)",
+            0 => "Feedback (optional)",
             1 => "Event",
             _ => string.IsNullOrEmpty(_fileName) ? "Envelope" : $"Envelope ({_fileName})",
         };
