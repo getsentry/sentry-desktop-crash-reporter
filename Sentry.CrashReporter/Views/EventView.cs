@@ -36,7 +36,6 @@ public sealed class EventView : ReactiveUserControl<EventViewModel>
                                 .Data(x => x.Binding(() => vm.Contexts))),
                         new Expander()
                             .Header("Additional Data")
-                            .IsExpanded(true)
                             .HorizontalAlignment(HorizontalAlignment.Stretch)
                             .HorizontalContentAlignment(HorizontalAlignment.Stretch)
                             .IsEnabled(x => x.Binding(() => vm.Extra).Convert(IsNotNullOrEmpty))
@@ -45,6 +44,7 @@ public sealed class EventView : ReactiveUserControl<EventViewModel>
                                 .Data(x => x.Binding(() => vm.Extra))),
                         new Expander()
                             .Header("SDK")
+                            .IsExpanded(true)
                             .HorizontalAlignment(HorizontalAlignment.Stretch)
                             .HorizontalContentAlignment(HorizontalAlignment.Stretch)
                             .IsEnabled(x => x.Binding(() => vm.Sdk).Convert(IsNotNullOrEmpty))
