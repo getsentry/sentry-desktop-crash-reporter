@@ -62,8 +62,6 @@ public sealed class EventView : ReactiveUserControl<EventViewModel>
         return obj switch
         {
             JsonObject json => json.Count > 0,
-            List<EnvelopeItem> list => list.Count > 0,
-            List<Attachment> list => list.Count > 0,
             _ => obj is not null
         };
     }
