@@ -168,12 +168,6 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
         return null;
     }
 
-    public Envelope WithItems(IEnumerable<(JsonObject Header, JsonObject Payload)> items)
-    {
-        var envelopeItems = items.Select(item => new EnvelopeItem(item.Header, Encoding.UTF8.GetBytes(item.Payload.ToJsonString())));
-        return new Envelope(Header, Items.Concat(envelopeItems).ToList());
-    }
-
     public FormattedEnvelope Format(JsonSerializerOptions? options = null)
     {
         options ??= new JsonSerializerOptions { WriteIndented = true };
