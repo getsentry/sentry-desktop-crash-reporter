@@ -1,4 +1,5 @@
 using Sentry.CrashReporter.Services;
+using Path = System.IO.Path;
 
 namespace Sentry.CrashReporter.ViewModels;
 
@@ -18,5 +19,12 @@ public partial class AttachmentViewModel : ReactiveObject
         Observable.FromAsync(() => reporter.LoadAsync().AsTask())
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(envelope => Envelope = envelope);
+    }
+
+    public async Task Launch(Attachment attachment)
+    {
+        string filePath = Path.Combine(Path.GetTempPath(), attachment.Filename);
+        await File.WriteAllBytesAsync(filePath, attachment.Data);
+        await Launcher.LaunchUriAsync(new Uri(filePath, UriKind.Absolute));
     }
 }
