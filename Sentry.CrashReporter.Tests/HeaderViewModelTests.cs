@@ -8,7 +8,7 @@ public class HeaderViewModelTests
         // Arrange
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(ValueTask.FromResult<Envelope?>(null));
+            .Returns(Task.FromResult<Envelope?>(null));
 
         // Act
         var viewModel = new HeaderViewModel(mockReporter.Object);
@@ -39,7 +39,7 @@ public class HeaderViewModelTests
             });
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(ValueTask.FromResult<Envelope?>(envelope));
+            .Returns(Task.FromResult<Envelope?>(envelope));
 
         // Act
         var viewModel = new HeaderViewModel(mockReporter.Object);

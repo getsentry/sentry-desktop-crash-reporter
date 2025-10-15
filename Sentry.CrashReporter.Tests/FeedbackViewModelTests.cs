@@ -50,7 +50,7 @@ public class FeedbackViewModelTests
             new List<EnvelopeItem>()
         );
         var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>())).Returns(ValueTask.FromResult<Envelope?>(envelope));
+        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>())).Returns(Task.FromResult<Envelope?>(envelope));
 
         // Act
         var viewModel = new FeedbackViewModel(mockReporter.Object);

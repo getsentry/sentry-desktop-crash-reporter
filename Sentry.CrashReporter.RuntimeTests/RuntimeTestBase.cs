@@ -26,7 +26,7 @@ public class RuntimeTestBase
     {
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns<CancellationToken>(ct => new ValueTask<Envelope?>(envelope));
+            .Returns(Task.FromResult(envelope));
         var mockWindow = new Mock<IWindowService>();
 
         var services = new ServiceCollection();
