@@ -99,11 +99,139 @@ public class EnvelopeTests
     }
 
     [Test]
+    public async Task ParseBreakpad_TryGetMinidump_ReturnsMinidump()
+    {
+        // Arrange
+        await using var file = File.OpenRead("data/breakpad.envelope");
+        var envelope = await Envelope.DeserializeAsync(file);
+
+        // Act
+        var minidump = envelope.TryGetMinidump();
+
+        // Assert
+        minidump.Should().NotBeNull();
+        minidump!.Streams.Should().NotBeEmpty();
+        minidump.Streams.Select(s => s.Data).OfType<Minidump.ExceptionStream>().Should().HaveCount(1);
+    }
+
+    [Test]
+    public async Task ParseInproc_TryGetMinidump_ReturnsNull()
+    {
+        // Arrange
+        await using var file = File.OpenRead("data/inproc.envelope");
+        var envelope = await Envelope.DeserializeAsync(file);
+
+        // Act
+        var minidump = envelope.TryGetMinidump();
+
+        // Assert
+        minidump.Should().BeNull();
+    }
+
+    [Test]
+    public async Task ParseEmpty_TryGetException_ReturnsNull()
+    {
+        // Arrange
+        await using var file = File.OpenRead("data/empty_headers_eof.envelope");
+        var envelope = await Envelope.DeserializeAsync(file);
+
+        // Act
+        var exception = envelope.TryGetException();
+
+        // Assert
+        exception.Should().BeNull();
+    }
+
+    [Test]
+    public async Task ParseInproc_TryGetException_ReturnsException()
+    {
+        // Arrange
+        await using var file = File.OpenRead("data/inproc.envelope");
+        var envelope = await Envelope.DeserializeAsync(file);
+
+        // Act
+        var exception = envelope.TryGetException();
+
+        // Assert
+        exception.Should().NotBeNull();
+        exception!.Type.Should().Be("SIGSEGV");
+        exception.Value.Should().Be("Segfault");
+    }
+
+    [Test]
+    public async Task ParseBreakpad_TryGetException_ReturnsException()
+    {
+        // Arrange
+        await using var file = File.OpenRead("data/breakpad.envelope");
+        var envelope = await Envelope.DeserializeAsync(file);
+
+        // Act
+        var exception = envelope.TryGetException();
+
+        // Assert
+        exception.Should().NotBeNull();
+        exception!.Type.Should().Be("EXCEPTION_ACCESS_VIOLATION");
+        exception.Value.Should().BeNull();
+    }
+
+    [Test]
+    public void Format_WithJsonPayload_IsPrettyPrinted()
+    {
+        // Arrange
+        var envelope = Envelope.FromJson(
+            new JsonObject { ["event_id"] = "dc6e5422-dd17-4467-921c-cf11121a373c" },
+            [
+                (
+                    new JsonObject { ["type"] = "event" },
+                    new JsonObject { ["message"] = "test" }
+                )
+            ]);
+
+        // Act
+        var formatted = envelope.Format();
+
+        // Assert
+        formatted.Header.Should().Be("""
+                                     {
+                                       "event_id": "dc6e5422-dd17-4467-921c-cf11121a373c"
+                                     }
+                                     """);
+        formatted.Items.Single().Payload.Should().Be("""
+                                                     {
+                                                       "message": "test"
+                                                     }
+                                                     """);
+    }
+
+    [Test]
+    public void Format_WithBinaryPayload_IsHexFormatted()
+    {
+        // Arrange
+        var header = new JsonObject { ["event_id"] = "dc6e5422-dd17-4467-921c-cf11121a373c" };
+        var itemHeader = new JsonObject { ["type"] = "attachment" };
+        var payload = Enumerable.Range(0, 100).Select(i => (byte)i).ToArray();
+        var envelope = new Envelope(header, [new EnvelopeItem(itemHeader, payload)]);
+
+        // Act
+        var formatted = envelope.Format();
+
+        // Assert
+        formatted.Header.Should().Be("""
+                                     {
+                                       "event_id": "dc6e5422-dd17-4467-921c-cf11121a373c"
+                                     }
+                                     """);
+        formatted.Items.Single().Payload.Should().Be("00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F...");
+    }
+
+    [Test]
     [TestCase("data/two_items.envelope")]
     [TestCase("data/two_empty_attachments.envelope")]
     [TestCase("data/implicit_length.envelope")]
     [TestCase("data/empty_headers_eof.envelope")]
     [TestCase("data/binary_attachment.envelope")]
+    [TestCase("data/breakpad.envelope")]
+    [TestCase("data/inproc.envelope")]
     public async Task Serialize(string filePath)
     {
         await using var file = File.OpenRead(filePath);
