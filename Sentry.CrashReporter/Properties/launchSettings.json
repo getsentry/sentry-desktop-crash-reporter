@@ -12,6 +12,16 @@
       "commandName": "Project",
       "compatibleTargetFramework": "desktop"
     },
+    "Sentry.CrashReporter (Desktop, inproc.envelope)": {
+      "commandName": "Project",
+      "compatibleTargetFramework": "desktop",
+      "commandLineArgs": "$(SolutionDir)/Sentry.CrashReporter.Tests/data/inproc.envelope"
+    },
+    "Sentry.CrashReporter (Desktop, breakpad.envelope)": {
+      "commandName": "Project",
+      "compatibleTargetFramework": "desktop",
+      "commandLineArgs": "$(SolutionDir)/Sentry.CrashReporter.Tests/data/breakpad.envelope"
+    },
     "Sentry.CrashReporter (WebAssembly)": {
       "commandName": "Project",
       "dotnetRunMessages": true,
