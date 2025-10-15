@@ -8,10 +8,6 @@ public class IconLabel : StackPanel
         DependencyProperty.Register(nameof(Icon), typeof(FrameworkElement), typeof(IconLabel),
             new PropertyMetadata(null, OnPropertyChanged));
 
-    public static readonly DependencyProperty SymbolProperty =
-        DependencyProperty.Register(nameof(Symbol), typeof(Symbol?), typeof(IconLabel),
-            new PropertyMetadata(null, OnPropertyChanged));
-
     public static readonly DependencyProperty SolidProperty =
         DependencyProperty.Register(nameof(Solid), typeof(string), typeof(IconLabel),
             new PropertyMetadata(null, OnPropertyChanged));
@@ -46,12 +42,6 @@ public class IconLabel : StackPanel
     {
         get => (FrameworkElement?)GetValue(IconProperty);
         set => SetValue(IconProperty, value);
-    }
-
-    public Symbol? Symbol
-    {
-        get => (Symbol?)GetValue(SymbolProperty);
-        set => SetValue(SymbolProperty, value);
     }
 
     public string? Solid
@@ -99,11 +89,7 @@ public class IconLabel : StackPanel
         var icon = Icon;
         if (icon is null)
         {
-            if (Symbol is { } symbol)
-            {
-                icon = new SymbolIcon(symbol);
-            }
-            else if (Solid is { } solid)
+            if (Solid is { } solid)
             {
                 icon = new FontAwesomeIcon().Solid(solid);
             }
