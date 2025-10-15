@@ -55,6 +55,9 @@ public class CrashReporter : ICrashReporter
         catch (Exception ex)
         {
             this.Log().LogError(ex, $"Failed to load envelope from {FilePath}");
+            // TODO: propagate error
+            // _envelope.SetException(ex);
+            _envelope.SetResult(null);
         }
     }
 
