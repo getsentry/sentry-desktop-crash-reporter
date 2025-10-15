@@ -10,7 +10,7 @@ public class FooterViewModelTests
         var mockReporter = new Mock<ICrashReporter>();
         var mockWindow = new Mock<IWindowService>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(ValueTask.FromResult(envelope));
+            .Returns(Task.FromResult(envelope));
 
         // Act
         var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object);
@@ -36,7 +36,7 @@ public class FooterViewModelTests
         var mockReporter = new Mock<ICrashReporter>();
         var mockWindow = new Mock<IWindowService>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(ValueTask.FromResult<Envelope?>(envelope));
+            .Returns(Task.FromResult<Envelope?>(envelope));
 
         // Act
         var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object);
@@ -54,7 +54,7 @@ public class FooterViewModelTests
         Envelope? envelope = null;
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(ValueTask.FromResult(envelope));
+            .Returns(Task.FromResult(envelope));
         var mockWindow = new Mock<IWindowService>();
 
         // Act
@@ -75,7 +75,7 @@ public class FooterViewModelTests
         );
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(ValueTask.FromResult<Envelope?>(envelope));
+            .Returns(Task.FromResult<Envelope?>(envelope));
         var mockWindow = new Mock<IWindowService>();
 
         // Act
@@ -96,7 +96,7 @@ public class FooterViewModelTests
         );
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(ValueTask.FromResult<Envelope?>(envelope));
+            .Returns(Task.FromResult<Envelope?>(envelope));
         var mockWindow = new Mock<IWindowService>();
 
         var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object);

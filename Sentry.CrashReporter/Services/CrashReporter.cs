@@ -10,31 +10,36 @@ public interface ICrashReporter
     string? Dsn { get; }
     string FilePath { get; }
     Feedback? Feedback { get; }
-    public ValueTask<Envelope?> LoadAsync(CancellationToken cancellationToken = default);
+    public Task<Envelope?> LoadAsync(CancellationToken cancellationToken = default);
     public Task SubmitAsync(CancellationToken cancellationToken = default);
     public void UpdateFeedback(Feedback? feedback);
 }
 
-public class CrashReporter(StorageFile? file = null, ISentryClient? client = null) : ICrashReporter
+public class CrashReporter : ICrashReporter
 {
-    private readonly ISentryClient _client = client ?? App.Services.GetRequiredService<ISentryClient>();
-    private Envelope? _envelope;
-    private Feedback? _feedback = ResolveFeedback();
+    private readonly ISentryClient _client;
+    private readonly TaskCompletionSource<Envelope?> _envelope = new();
+    private Feedback? _feedback;
 
-    public string? Dsn { get; private set; } = Environment.GetEnvironmentVariable("SENTRY_TEST_DSN");
-    public string FilePath { get => file?.Path ?? string.Empty; }
-    public Feedback? Feedback { get => _feedback; }
+    public string? Dsn { get; private set; }
+    public string FilePath { get; }
+    public Feedback? Feedback => _feedback;
 
-    public async ValueTask<Envelope?> LoadAsync(CancellationToken cancellationToken = default)
+    public CrashReporter(StorageFile? file = null, ISentryClient? client = null)
+    {
+        _client = client ?? App.Services.GetRequiredService<ISentryClient>();
+        _feedback = ResolveFeedback();
+        Dsn = Environment.GetEnvironmentVariable("SENTRY_TEST_DSN");
+        FilePath = file?.Path ?? string.Empty;
+        _ = InitAsync(file);
+    }
+
+    private async Task InitAsync(StorageFile? file, CancellationToken cancellationToken = default)
     {
         if (file is null)
         {
-            return null;
-        }
-
-        if (_envelope != null)
-        {
-            return _envelope;
+            _envelope.SetResult(null);
+            return;
         }
 
         try
@@ -44,30 +49,27 @@ public class CrashReporter(StorageFile? file = null, ISentryClient? client = nul
             var envelope = await Envelope.DeserializeAsync(stream, cancellationToken);
             stopwatch.Stop();
             this.Log().LogInformation($"Loaded {FilePath} in {stopwatch.ElapsedMilliseconds} ms.");
-            _envelope = envelope;
             Dsn ??= envelope.TryGetDsn();
-            return envelope;
+            _envelope.SetResult(envelope);
         }
         catch (Exception ex)
         {
             this.Log().LogError(ex, $"Failed to load envelope from {FilePath}");
+            // TODO: propagate error
+            // _envelope.SetException(ex);
+            _envelope.SetResult(null);
         }
-
-        return null;
     }
 
-    // private async Task<string> ComputeFileHashAsync(CancellationToken cancellationToken)
-    // {
-    //     await using var stream = File.OpenRead(filePath);
-    //     using var sha256 = SHA256.Create();
-    //     var hash = await sha256.ComputeHashAsync(stream, cancellationToken);
-    //     return Convert.ToHexString(hash);
-    // }
+    public Task<Envelope?> LoadAsync(CancellationToken cancellationToken = default)
+    {
+        return _envelope.Task;
+    }
 
     public async Task SubmitAsync(CancellationToken cancellationToken = default)
     {
         var envelope = await LoadAsync(cancellationToken) ?? throw new InvalidOperationException("No envelope to submit.");
-        var dsn = Dsn ?? envelope!.TryGetDsn()
+        var dsn = Dsn ?? envelope.TryGetDsn()
                   ?? throw new InvalidOperationException("Envelope does not contain a valid DSN.");
 
         await _client.SubmitEnvelopeAsync(dsn, envelope, cancellationToken);
@@ -85,7 +87,7 @@ public class CrashReporter(StorageFile? file = null, ISentryClient? client = nul
                                 ["contact_email"] = _feedback.Email,
                                 ["name"] = _feedback.Name,
                                 ["message"] = _feedback.Message,
-                                ["associated_event_id"] = _envelope!.TryGetEventId()?.Replace("-", "")
+                                ["associated_event_id"] = envelope.TryGetEventId()?.Replace("-", "")
                             }
                         }
                     })

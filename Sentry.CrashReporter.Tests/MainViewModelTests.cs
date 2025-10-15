@@ -3,13 +3,13 @@ namespace Sentry.CrashReporter.Tests;
 public class MainViewModelTests
 {
     [Test]
-    public async Task MainViewModel_IsExecuting()
+    public void MainViewModel_IsExecuting()
     {
         // Arrange
         var taskCompletionSource = new TaskCompletionSource<Envelope?>();
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(new ValueTask<Envelope?>(taskCompletionSource.Task));
+            .Returns(taskCompletionSource.Task);
 
         // Act
         var viewModel = new MainViewModel(mockReporter.Object);
@@ -25,7 +25,7 @@ public class MainViewModelTests
         var taskCompletionSource = new TaskCompletionSource<Envelope?>();
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(new ValueTask<Envelope?>(taskCompletionSource.Task));
+            .Returns(taskCompletionSource.Task);
 
         // Act
         var viewModel = new MainViewModel(mockReporter.Object);
