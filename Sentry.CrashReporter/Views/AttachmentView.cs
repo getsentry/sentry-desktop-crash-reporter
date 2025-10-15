@@ -112,6 +112,7 @@ internal class AttachmentGrid : Grid
                 .CornerRadius(new CornerRadius(0, 2, 2, 0))
                 .Padding(new Thickness(8, 2, 4, 2))
                 .Child(new Button()
+                    .ToolTip("Open")
                     .Content(new FontAwesomeIcon(FA.ArrowUpRightFromSquare).FontSize(12))
                     .Background(Colors.Transparent)
                     .BorderBrush(Colors.Transparent)
