@@ -1,3 +1,0 @@
-[submodule "modules/github-workflows"]
-	path = modules/github-workflows
-	url = https://github.com/getsentry/github-workflows
