@@ -20,17 +20,17 @@ public sealed class EventView : ReactiveUserControl<EventViewModel>
                     .Children(
                         new Expander()
                             .Header("Tags")
-                            .IsExpanded(true)
                             .HorizontalAlignment(HorizontalAlignment.Stretch)
                             .HorizontalContentAlignment(HorizontalAlignment.Stretch)
+                            .IsExpanded(x => x.Binding(() => vm.Tags).Convert(IsNotNullOrEmpty))
                             .IsEnabled(x => x.Binding(() => vm.Tags).Convert(IsNotNullOrEmpty))
                             .Content(new JsonGrid()
                                 .Data(x => x.Binding(() => vm.Tags))),
                         new Expander()
                             .Header("Contexts")
-                            .IsExpanded(true)
                             .HorizontalAlignment(HorizontalAlignment.Stretch)
                             .HorizontalContentAlignment(HorizontalAlignment.Stretch)
+                            .IsExpanded(x => x.Binding(() => vm.Contexts).Convert(IsNotNullOrEmpty))
                             .IsEnabled(x => x.Binding(() => vm.Contexts).Convert(IsNotNullOrEmpty))
                             .Content(new JsonGrid()
                                 .Data(x => x.Binding(() => vm.Contexts))),
@@ -44,9 +44,9 @@ public sealed class EventView : ReactiveUserControl<EventViewModel>
                                 .Data(x => x.Binding(() => vm.Extra))),
                         new Expander()
                             .Header("SDK")
-                            .IsExpanded(true)
                             .HorizontalAlignment(HorizontalAlignment.Stretch)
                             .HorizontalContentAlignment(HorizontalAlignment.Stretch)
+                            .IsExpanded(x => x.Binding(() => vm.Sdk).Convert(IsNotNullOrEmpty))
                             .IsEnabled(x => x.Binding(() => vm.Sdk).Convert(IsNotNullOrEmpty))
                             .Content(new JsonGrid()
                                 .Data(x => x.Binding(() => vm.Sdk))),
