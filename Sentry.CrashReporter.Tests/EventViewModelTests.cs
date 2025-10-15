@@ -21,7 +21,6 @@ public class EventViewModelTests
         Assert.That(viewModel.Contexts, Is.Null.Or.Empty);
         Assert.That(viewModel.Extra, Is.Null.Or.Empty);
         Assert.That(viewModel.Sdk, Is.Null.Or.Empty);
-        Assert.That(viewModel.Attachments, Is.Null.Or.Empty);
     }
 
     [Test]
@@ -39,13 +38,9 @@ public class EventViewModelTests
             new JsonObject { ["type"] = "event" },
             Encoding.UTF8.GetBytes(eventPayload.ToJsonString())
         );
-        var attachmentItem = new EnvelopeItem(
-            new JsonObject { ["type"] = "attachment", ["filename"] = "test.txt" },
-            Encoding.UTF8.GetBytes("attachment content")
-        );
         var envelope = new Envelope(
             new JsonObject(),
-            new List<EnvelopeItem> { eventItem, attachmentItem }
+            new List<EnvelopeItem> { eventItem }
         );
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
@@ -62,8 +57,5 @@ public class EventViewModelTests
         Assert.That(viewModel.Contexts?.ToJsonString(), Is.EqualTo("{\"context_key.inner_key\":\"context_value\"}"));
         Assert.That(viewModel.Extra?.ToJsonString(), Is.EqualTo("{\"extra_key\":\"extra_value\"}"));
         Assert.That(viewModel.Sdk?.ToJsonString(), Is.EqualTo("{\"name\":\"Sentry.Test\",\"version\":\"1.0\"}"));
-        Assert.That(viewModel.Attachments, Has.Count.EqualTo(1));
-        Assert.That(viewModel.Attachments![0].Filename, Is.EqualTo("test.txt"));
-        Assert.That(Encoding.UTF8.GetString(viewModel.Attachments[0].Data), Is.EqualTo("attachment content"));
     }
 }

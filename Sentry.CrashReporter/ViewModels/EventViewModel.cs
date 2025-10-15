@@ -4,8 +4,6 @@ using Sentry.CrashReporter.Services;
 
 namespace Sentry.CrashReporter.ViewModels;
 
-public record Attachment(string Filename, byte[] Data);
-
 public partial class EventViewModel : ReactiveObject
 {
     [Reactive] private Envelope? _envelope;
@@ -15,7 +13,6 @@ public partial class EventViewModel : ReactiveObject
     [ObservableAsProperty] private JsonObject? _contexts;
     [ObservableAsProperty] private JsonObject? _extra;
     [ObservableAsProperty] private JsonObject? _sdk;
-    [ObservableAsProperty] private List<Attachment>? _attachments;
 
     public EventViewModel(ICrashReporter? reporter = null)
     {
@@ -44,14 +41,6 @@ public partial class EventViewModel : ReactiveObject
         _sdkHelper = this.WhenAnyValue(x => x.Payload)
             .Select(payload => payload?.TryGetProperty("sdk")?.AsFlatObject())
             .ToProperty(this, x => x.Sdk);
-
-        _attachmentsHelper = this.WhenAnyValue(x => x.Envelope)
-            .Select(envelope => envelope?.Items
-                .Where(s => s.TryGetType() == "attachment")
-                .Select(s => new Attachment(s.Header.TryGetString("filename") ?? string.Empty, s.Payload))
-                .Where(a => !string.IsNullOrEmpty(a.Filename))
-                .ToList())
-            .ToProperty(this, x => x.Attachments);
 
         Observable.FromAsync(() => reporter.LoadAsync().AsTask())
             .ObserveOn(RxApp.MainThreadScheduler)

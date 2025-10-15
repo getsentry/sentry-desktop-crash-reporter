@@ -8,6 +8,7 @@ namespace Sentry.CrashReporter.Models;
 public record EnvelopeException(string? Type, string? Value);
 public record FormattedEnvelopeItem(string Header, string Payload);
 public record FormattedEnvelope(string Header, List<FormattedEnvelopeItem> Items);
+public record Attachment(string Filename, byte[] Data);
 
 public sealed class EnvelopeItem(JsonObject header, byte[] payload)
 {
@@ -145,6 +146,15 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
         }
 
         return Minidump.FromBytes(item.Payload);
+    }
+
+    public List<Attachment> TryGetAttachments()
+    {
+        return Items
+            .Where(s => s.TryGetType() == "attachment")
+            .Select(s => new Attachment(s.Header.TryGetString("filename") ?? string.Empty, s.Payload))
+            .Where(a => !string.IsNullOrEmpty(a.Filename))
+            .ToList();
     }
 
     public EnvelopeException? TryGetException()
