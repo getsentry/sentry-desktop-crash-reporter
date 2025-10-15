@@ -45,6 +45,12 @@ public sealed class MainPage : Page
                                             .ToolTip("Event")
                                             .Navigation(request: "event"),
                                         new SegmentedItem()
+                                            .Content(new FontAwesomeIcon(FA.Paperclip))
+                                            .ToolTip("Attachments")
+                                            .Visibility(x => x.Binding(() => vm.Attachments)
+                                                .Convert(a => (a?.Count ?? 0) > 0 ? Visibility.Visible : Visibility.Collapsed))
+                                            .Navigation(request: "attachment"),
+                                        new SegmentedItem()
                                             .Content(new FontAwesomeIcon(FA.Code))
                                             .ToolTip("Envelope")
                                             .Navigation(request: "envelope"))),
@@ -57,6 +63,9 @@ public sealed class MainPage : Page
                                     .Visibility(Visibility.Visible),
                                 new EventView()
                                     .Region(name: "event")
+                                    .Visibility(Visibility.Collapsed),
+                                new AttachmentView()
+                                    .Region(name: "attachment")
                                     .Visibility(Visibility.Collapsed),
                                 new EnvelopeView()
                                     .Region(name: "envelope")

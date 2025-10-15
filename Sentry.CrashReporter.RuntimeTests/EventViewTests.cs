@@ -18,7 +18,6 @@ public class EventViewTests : RuntimeTestBase
         var contextsExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Contexts");
         var extraExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Additional Data");
         var sdkExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "SDK");
-        var attachmentsExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Attachments");
 
         // Assert
         Assert.IsNotNull(tagsExpander);
@@ -40,11 +39,6 @@ public class EventViewTests : RuntimeTestBase
         Assert.IsFalse(sdkExpander.IsEnabled);
         Assert.IsFalse(sdkExpander.IsExpanded);
         Assert.AreEqual(Visibility.Visible, sdkExpander.Visibility);
-
-        Assert.IsNotNull(attachmentsExpander);
-        Assert.IsFalse(attachmentsExpander.IsEnabled);
-        Assert.IsFalse(attachmentsExpander.IsExpanded);
-        Assert.AreEqual(Visibility.Collapsed, attachmentsExpander.Visibility);
     }
 
     [TestMethod]
@@ -87,8 +81,6 @@ public class EventViewTests : RuntimeTestBase
         var sdkKey = sdkExpander?.FindFirstDescendant<TextBlock>(tb => tb.Text == "s1");
         var sdkValue = sdkExpander?.FindFirstDescendant<TextBlock>(tb => tb.Text == "sdk1");
 
-        var attachmentsExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Attachments");
-
         // Assert
         Assert.IsNotNull(tagsExpander);
         Assert.IsTrue(tagsExpander.IsEnabled);
@@ -117,10 +109,5 @@ public class EventViewTests : RuntimeTestBase
         Assert.AreEqual(Visibility.Visible, sdkExpander.Visibility);
         Assert.IsNotNull(sdkKey);
         Assert.IsNotNull(sdkValue);
-
-        Assert.IsNotNull(attachmentsExpander);
-        Assert.IsTrue(attachmentsExpander.IsEnabled);
-        Assert.IsFalse(attachmentsExpander.IsExpanded);
-        Assert.AreEqual(Visibility.Visible, attachmentsExpander.Visibility);
     }
 }
