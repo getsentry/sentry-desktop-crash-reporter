@@ -11,36 +11,15 @@ public class AttachmentView : ReactiveUserControl<AttachmentViewModel>
 {
     public AttachmentView()
     {
-        this.DataContext(new AttachmentViewModel(), (view, vm) => view
+        ViewModel = new AttachmentViewModel();
+        this.DataContext(ViewModel, (view, vm) => view
             .Content(new ScrollViewer()
                 .Content(new StackPanel()
                     .Orientation(Orientation.Vertical)
                     .Spacing(8)
                     .Children(new AttachmentGrid()
                         .Data(x => x.Binding(() => vm.Attachments))
-                        .OnPreview(a => _ = ShowPreview(a))))));
-    }
-
-    private async Task ShowPreview(Attachment attachment)
-    {
-        var bitmap = new BitmapImage();
-        using (var randomAccessStream = new InMemoryRandomAccessStream())
-        {
-            await randomAccessStream.WriteAsync(attachment.Data.AsBuffer());
-            randomAccessStream.Seek(0);
-
-            await bitmap.SetSourceAsync(randomAccessStream);
-        }
-
-        var dialog = new ContentDialog
-        {
-            Title = attachment.Filename,
-            Content = new Image { Source = bitmap, Stretch = Stretch.Uniform },
-            CloseButtonText = "Close",
-            XamlRoot = XamlRoot
-        };
-
-        await dialog.ShowAsync();
+                        .OnLaunch(a => _ = view.ViewModel?.Launch(a))))));
     }
 }
 
@@ -74,11 +53,11 @@ internal class AttachmentGrid : Grid
         set => SetValue(DataProperty, value);
     }
 
-    public event Action<Attachment>? Preview;
+    public event Action<Attachment>? Launch;
 
-    public AttachmentGrid OnPreview(Action<Attachment> handler)
+    public AttachmentGrid OnLaunch(Action<Attachment> handler)
     {
-        Preview += handler;
+        Launch += handler;
         return this;
     }
 
@@ -133,19 +112,16 @@ internal class AttachmentGrid : Grid
                 .CornerRadius(new CornerRadius(0, 2, 2, 0))
                 .Padding(new Thickness(8, 2, 4, 2))
                 .Child(new Button()
-                    .Content(new FontAwesomeIcon(FA.Eye).FontSize(12))
+                    .Content(new FontAwesomeIcon(FA.ArrowUpRightFromSquare).FontSize(12))
                     .Background(Colors.Transparent)
                     .BorderBrush(Colors.Transparent)
-                    .Resources(r => r
-                        .Add("ButtonBackgroundPointerOver", new SolidColorBrush(Colors.Transparent))
+                    .Resources(r => r.Add("ButtonBackgroundPointerOver", new SolidColorBrush(Colors.Transparent))
                         .Add("ButtonBackgroundPressed", new SolidColorBrush(Colors.Transparent))
                         .Add("ButtonBackgroundDisabled", new SolidColorBrush(Colors.Transparent))
-                        .Add("ButtonBorderBrushPointerOver",
-                            new SolidColorBrush(Colors.Transparent))
+                        .Add("ButtonBorderBrushPointerOver", new SolidColorBrush(Colors.Transparent))
                         .Add("ButtonBorderBrushPressed", new SolidColorBrush(Colors.Transparent))
                         .Add("ButtonBorderBrushDisabled", new SolidColorBrush(Colors.Transparent)))
-                    .Command(ReactiveCommand.Create(() => Preview?.Invoke(item),
-                        Observable.Return(item.Filename.EndsWith(".png") || item.Filename.EndsWith(".jpg"))))));
+                    .Command(ReactiveCommand.Create(() => Launch?.Invoke(item)))));
 
             row++;
         }
