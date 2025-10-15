@@ -21,13 +21,13 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
                     new Button { Content = "Cancel" }
                         .Grid(2)
                         .Name("cancelButton")
-                        .Command(() => vm.CancelCommand)
+                        .Command(x => x.Binding(() => vm.CancelCommand))
                         .Background(Colors.Transparent),
                     new Button { Content = "Submit" }
                         .Grid(3)
                         .Name("submitButton")
                         .AutomationProperties(automationId: "submitButton")
-                        .Command(() => vm.SubmitCommand)
+                        .Command(x => x.Binding(() => vm.SubmitCommand))
                         .Foreground(Colors.White)
                         .Background(ThemeResource.Get<Brush>("SystemAccentColorBrush")))));
     }

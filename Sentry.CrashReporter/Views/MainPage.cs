@@ -12,7 +12,7 @@ public sealed class MainPage : Page
             .NavigationCacheMode(NavigationCacheMode.Required)
             .Background(ThemeResource.Get<Brush>("ApplicationPageBackgroundThemeBrush"))
             .Content(new LoadingView()
-                .Source(() => vm)
+                .Source(x => x.Binding(() => vm))
                 .LoadingContent(new ProgressRing()
                     .Width(72)
                     .Height(72))
