@@ -1,7 +1,4 @@
 using Uno.UI.Hosting;
-#if INTEGRATION_TEST
-using Sentry.CrashReporter.Services;
-#endif
 
 namespace Sentry.CrashReporter;
 
@@ -17,11 +14,6 @@ internal class Program
         }
         App.ConfigureServices(file);
 
-#if INTEGRATION_TEST
-        var reporter = App.Services.GetRequiredService<ICrashReporter>();
-        await reporter.LoadAsync();
-        await reporter.SubmitAsync();
-#else
         var host = UnoPlatformHostBuilder.Create()
             .App(() => new App())
             .UseX11()
@@ -31,6 +23,5 @@ internal class Program
             .Build();
 
         await host.RunAsync();
-#endif
     }
 }

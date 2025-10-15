@@ -45,10 +45,6 @@
         <DefineConstants>$(DefineConstants);USE_UITESTS</DefineConstants>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(IntegrationTest)'=='True'">
-        <DefineConstants>$(DefineConstants);INTEGRATION_TEST</DefineConstants>
-    </PropertyGroup>
-
     <ItemGroup Condition="$(TargetFramework.Contains('browserwasm'))">
         <Content Include="../Sentry.CrashReporter.Tests/data/inproc.envelope" />
     </ItemGroup>
