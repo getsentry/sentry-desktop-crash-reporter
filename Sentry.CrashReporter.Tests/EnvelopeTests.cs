@@ -129,6 +129,52 @@ public class EnvelopeTests
     }
 
     [Test]
+    public async Task ParseEmpty_TryGetException_ReturnsNull()
+    {
+        // Arrange
+        await using var file = File.OpenRead("data/empty_headers_eof.envelope");
+        var envelope = await Envelope.DeserializeAsync(file);
+
+        // Act
+        var exception = envelope.TryGetException();
+
+        // Assert
+        exception.Should().BeNull();
+    }
+
+    [Test]
+    public async Task ParseInproc_TryGetException_ReturnsException()
+    {
+        // Arrange
+        await using var file = File.OpenRead("data/inproc.envelope");
+        var envelope = await Envelope.DeserializeAsync(file);
+
+        // Act
+        var exception = envelope.TryGetException();
+
+        // Assert
+        exception.Should().NotBeNull();
+        exception!.Type.Should().Be("SIGSEGV");
+        exception.Value.Should().Be("Segfault");
+    }
+
+    [Test]
+    public async Task ParseBreakpad_TryGetException_ReturnsException()
+    {
+        // Arrange
+        await using var file = File.OpenRead("data/breakpad.envelope");
+        var envelope = await Envelope.DeserializeAsync(file);
+
+        // Act
+        var exception = envelope.TryGetException();
+
+        // Assert
+        exception.Should().NotBeNull();
+        exception!.Type.Should().Be("EXCEPTION_ACCESS_VIOLATION");
+        exception.Value.Should().BeNull();
+    }
+
+    [Test]
     public void Format_WithJsonPayload_IsPrettyPrinted()
     {
         // Arrange
