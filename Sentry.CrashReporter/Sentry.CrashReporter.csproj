@@ -92,6 +92,7 @@
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.WinUI.Controls.Segmented" />
         <PackageReference Include="KaitaiStruct.Runtime.CSharp"/>
+        <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
         <PackageReference Include="ReactiveUI.SourceGenerators">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
