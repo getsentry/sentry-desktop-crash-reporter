@@ -1,4 +1,5 @@
 using Sentry.CrashReporter.Controls;
+using Sentry.CrashReporter.Converters;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.ViewModels;
 
@@ -48,7 +49,7 @@ public sealed class MainPage : Page
                                             .Content(new FontAwesomeIcon(FA.Paperclip))
                                             .ToolTip("Attachments")
                                             .Visibility(x => x.Binding(() => vm.Attachments)
-                                                .Convert(a => (a?.Count ?? 0) > 0 ? Visibility.Visible : Visibility.Collapsed))
+                                                .Convert(BindingConverter.ToVisibility))
                                             .Navigation(request: "attachment"),
                                         new SegmentedItem()
                                             .Content(new FontAwesomeIcon(FA.Code))

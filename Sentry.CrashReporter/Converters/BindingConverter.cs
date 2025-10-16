@@ -6,6 +6,11 @@ namespace Sentry.CrashReporter.Converters;
 // TODO: implement IBindingConvertor?
 public static class BindingConverter
 {
+    public static bool ToEnabled(object? obj)
+    {
+        return !IsNullOrEmpty(obj);
+    }
+
     public static Visibility ToVisibility(object? obj)
     {
         return IsNullOrEmpty(obj) ? Visibility.Collapsed : Visibility.Visible;

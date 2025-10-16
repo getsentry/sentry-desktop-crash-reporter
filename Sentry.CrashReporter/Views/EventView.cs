@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using Windows.Storage.Streams;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Sentry.CrashReporter.Controls;
+using Sentry.CrashReporter.Converters;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.ViewModels;
 
@@ -22,47 +23,33 @@ public sealed class EventView : ReactiveUserControl<EventViewModel>
                             .Header("Tags")
                             .HorizontalAlignment(HorizontalAlignment.Stretch)
                             .HorizontalContentAlignment(HorizontalAlignment.Stretch)
-                            .IsExpanded(x => x.Binding(() => vm.Tags).Convert(IsNotNullOrEmpty))
-                            .IsEnabled(x => x.Binding(() => vm.Tags).Convert(IsNotNullOrEmpty))
+                            .IsExpanded(x => x.Binding(() => vm.Tags).Convert(BindingConverter.ToEnabled))
+                            .IsEnabled(x => x.Binding(() => vm.Tags).Convert(BindingConverter.ToEnabled))
                             .Content(new JsonGrid()
                                 .Data(x => x.Binding(() => vm.Tags))),
                         new Expander()
                             .Header("Contexts")
                             .HorizontalAlignment(HorizontalAlignment.Stretch)
                             .HorizontalContentAlignment(HorizontalAlignment.Stretch)
-                            .IsExpanded(x => x.Binding(() => vm.Contexts).Convert(IsNotNullOrEmpty))
-                            .IsEnabled(x => x.Binding(() => vm.Contexts).Convert(IsNotNullOrEmpty))
+                            .IsExpanded(x => x.Binding(() => vm.Contexts).Convert(BindingConverter.ToEnabled))
+                            .IsEnabled(x => x.Binding(() => vm.Contexts).Convert(BindingConverter.ToEnabled))
                             .Content(new JsonGrid()
                                 .Data(x => x.Binding(() => vm.Contexts))),
                         new Expander()
                             .Header("Additional Data")
                             .HorizontalAlignment(HorizontalAlignment.Stretch)
                             .HorizontalContentAlignment(HorizontalAlignment.Stretch)
-                            .IsEnabled(x => x.Binding(() => vm.Extra).Convert(IsNotNullOrEmpty))
-                            .Visibility(x => x.Binding(() => vm.Extra).Convert(ToVisibility))
+                            .IsEnabled(x => x.Binding(() => vm.Extra).Convert(BindingConverter.ToEnabled))
+                            .Visibility(x => x.Binding(() => vm.Extra).Convert(BindingConverter.ToVisibility))
                             .Content(new JsonGrid()
                                 .Data(x => x.Binding(() => vm.Extra))),
                         new Expander()
                             .Header("SDK")
                             .HorizontalAlignment(HorizontalAlignment.Stretch)
                             .HorizontalContentAlignment(HorizontalAlignment.Stretch)
-                            .IsExpanded(x => x.Binding(() => vm.Sdk).Convert(IsNotNullOrEmpty))
-                            .IsEnabled(x => x.Binding(() => vm.Sdk).Convert(IsNotNullOrEmpty))
+                            .IsExpanded(x => x.Binding(() => vm.Sdk).Convert(BindingConverter.ToEnabled))
+                            .IsEnabled(x => x.Binding(() => vm.Sdk).Convert(BindingConverter.ToEnabled))
                             .Content(new JsonGrid()
                                 .Data(x => x.Binding(() => vm.Sdk)))))));
-    }
-
-    private static Visibility ToVisibility(object? obj)
-    {
-        return IsNotNullOrEmpty(obj) ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private static bool IsNotNullOrEmpty(object? obj)
-    {
-        return obj switch
-        {
-            JsonObject json => json.Count > 0,
-            _ => obj is not null
-        };
     }
 }
