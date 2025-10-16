@@ -5,7 +5,7 @@ public interface ISentryClient
     public Task SubmitEnvelopeAsync(string dsn, Envelope envelope, CancellationToken cancellationToken = default);
 }
 
-public class SentryClient(HttpClient httpClient) : ISentryClient
+public class SentryClient(IHttpClientFactory httpClientFactory) : ISentryClient
 {
     public async Task SubmitEnvelopeAsync(string dsn, Envelope envelope, CancellationToken cancellationToken = default)
     {
@@ -30,6 +30,7 @@ public class SentryClient(HttpClient httpClient) : ISentryClient
         {
             Content = new StreamContent(stream)
         };
+        using var httpClient = httpClientFactory.CreateClient(nameof(SentryClient));
         using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 

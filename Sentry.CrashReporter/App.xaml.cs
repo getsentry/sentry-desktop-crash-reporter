@@ -1,7 +1,9 @@
+using System.Net;
 using Windows.Foundation;
 using Windows.Graphics;
 using Windows.Graphics.Display;
 using Windows.UI.ViewManagement;
+using Microsoft.Extensions.Http.Resilience;
 using Sentry.CrashReporter.Services;
 using Sentry.CrashReporter.ViewModels;
 using Sentry.CrashReporter.Views;
@@ -22,12 +24,26 @@ public partial class App : Application
     public static IServiceProvider ConfigureServices(StorageFile? file)
     {
         var services = new ServiceCollection();
-        services.AddSingleton<HttpClient>();
+        services.AddHttpClient()
+            .ConfigureHttpClientDefaults(b => b.AddStandardResilienceHandler(ConfigureResilience));
         services.AddSingleton<ISentryClient, SentryClient>();
         services.AddSingleton<ICrashReporter>(sp => new Services.CrashReporter(file));
         services.AddSingleton<IWindowService, WindowService>();
         Ioc.Default.ConfigureServices(services.BuildServiceProvider());
         return Services;
+    }
+
+    public static void ConfigureResilience(HttpStandardResilienceOptions options)
+    {
+        options.Retry.MaxRetryAttempts = 3; // default
+        options.Retry.Delay = TimeSpan.FromSeconds(2); // default
+        options.Retry.ShouldHandle = args => ValueTask.FromResult(
+            args.Outcome.Exception is HttpRequestException ||
+            (args.Outcome.Result?.StatusCode >= HttpStatusCode.InternalServerError) ||
+            args.Outcome.Result?.StatusCode == HttpStatusCode.BadGateway ||
+            args.Outcome.Result?.StatusCode == HttpStatusCode.ServiceUnavailable ||
+            args.Outcome.Result?.StatusCode == HttpStatusCode.GatewayTimeout ||
+            args.Outcome.Result?.StatusCode == HttpStatusCode.RequestTimeout);
     }
 
     public Window? MainWindow { get; private set; }
