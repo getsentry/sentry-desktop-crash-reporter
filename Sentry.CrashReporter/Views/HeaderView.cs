@@ -1,4 +1,5 @@
 using Sentry.CrashReporter.Controls;
+using Sentry.CrashReporter.Converters;
 using Sentry.CrashReporter.ViewModels;
 
 namespace Sentry.CrashReporter.Views;
@@ -28,46 +29,31 @@ public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
                                         .Name("exceptionLabel")
                                         .ToolTip(x => x.Binding(() => vm.Exception).Convert(e => e?.Value ?? "Exception"))
                                         .Text(x => x.Binding(() => vm.Exception).Convert(e => e?.Type ?? string.Empty))
-                                        .Visibility(x => x.Binding(() => vm.Exception).Convert(ToVisibility)),
+                                        .Visibility(x => x.Binding(() => vm.Exception).Convert(e => BindingConverter.ToVisibility(e?.Type))),
                                     new IconLabel(FA.Globe)
                                         .Margin(8, 4)
                                         .Name("releaseLabel")
                                         .ToolTip("Release")
                                         .Text(x => x.Binding(() => vm.Release))
-                                        .Visibility(x => x.Binding(() => vm.Release).Convert(ToVisibility)),
+                                        .Visibility(x => x.Binding(() => vm.Release).Convert(BindingConverter.ToVisibility)),
                                     new IconLabel()
                                         .Margin(8, 4)
                                         .Name("osLabel")
                                         .Brand(x => x.Binding(() => vm.OsName).Convert(ToBrand))
                                         .ToolTip("Operating System")
                                         .Text(x => x.Binding(() => vm.OsPretty))
-                                        .Visibility(x => x.Binding(() => vm.OsPretty).Convert(ToVisibility)),
+                                        .Visibility(x => x.Binding(() => vm.OsPretty).Convert(BindingConverter.ToVisibility)),
                                     new IconLabel(FA.Wrench)
                                         .Margin(8, 4)
                                         .Name("environmentLabel")
                                         .ToolTip("Environment")
                                         .Text(x => x.Binding(() => vm.Environment))
-                                        .Visibility(x => x.Binding(() => vm.Environment).Convert(ToVisibility)))),
+                                        .Visibility(x => x.Binding(() => vm.Environment).Convert(BindingConverter.ToVisibility)))),
                     new Image()
                         .Grid(1)
                         .Source(ThemeResource.Get<ImageSource>("SentryGlyphIcon"))
                         .Width(68)
                         .Height(60))));
-    }
-
-    private static Visibility ToVisibility(object? obj)
-    {
-        return IsNotNullOrEmpty(obj) ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private static bool IsNotNullOrEmpty(object? obj)
-    {
-        return obj switch
-        {
-            EnvelopeException e => !string.IsNullOrEmpty(e.Type),
-            string s => !string.IsNullOrEmpty(s),
-            _ => obj is not null
-        };
     }
 
     private static string ToBrand(string? value)

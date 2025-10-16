@@ -1,4 +1,5 @@
 using Sentry.CrashReporter.Controls;
+using Sentry.CrashReporter.Converters;
 using Sentry.CrashReporter.ViewModels;
 
 namespace Sentry.CrashReporter.Views;
@@ -16,7 +17,7 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
                         .ToolTip("Event ID")
                         .Name("eventIdLabel")
                         .Text(x => x.Binding(() => vm.ShortEventId))
-                        .Visibility(x => x.Binding(() => vm.ShortEventId).Convert(ToVisibility))
+                        .Visibility(x => x.Binding(() => vm.ShortEventId).Convert(BindingConverter.ToVisibility))
                         .Grid(0),
                     new Button { Content = "Cancel" }
                         .Grid(2)
@@ -30,10 +31,5 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
                         .Command(x => x.Binding(() => vm.SubmitCommand))
                         .Foreground(Colors.White)
                         .Background(ThemeResource.Get<Brush>("SystemAccentColorBrush")))));
-    }
-
-    private static Visibility ToVisibility(string? obj)
-    {
-        return string.IsNullOrEmpty(obj) ? Visibility.Collapsed : Visibility.Visible;
     }
 }
