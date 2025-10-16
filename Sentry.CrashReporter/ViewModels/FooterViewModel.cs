@@ -2,6 +2,14 @@ using Sentry.CrashReporter.Services;
 
 namespace Sentry.CrashReporter.ViewModels;
 
+public enum FooterStatus
+{
+    Empty,
+    Normal,
+    Busy,
+    Error
+}
+
 public partial class FooterViewModel : ReactiveObject
 {
     private readonly ICrashReporter _reporter;
@@ -10,7 +18,10 @@ public partial class FooterViewModel : ReactiveObject
     [ObservableAsProperty] private string? _dsn = string.Empty;
     [ObservableAsProperty] private string? _eventId = string.Empty;
     [ObservableAsProperty] private string? _shortEventId = string.Empty;
+    [ObservableAsProperty] private bool _isSubmitting;
     private readonly IObservable<bool> _canSubmit;
+    [Reactive] private string? _errorMessage;
+    [ObservableAsProperty] private FooterStatus _status;
 
     public FooterViewModel(ICrashReporter? reporter = null, IWindowService? windowService = null)
     {
@@ -29,6 +40,22 @@ public partial class FooterViewModel : ReactiveObject
 
         _canSubmit = this.WhenAnyValue(x => x.Dsn, dsn => !string.IsNullOrWhiteSpace(dsn));
 
+        _isSubmittingHelper = this.WhenAnyObservable(x => x.SubmitCommand.IsExecuting)
+            .ToProperty(this, x => x.IsSubmitting);
+
+        _statusHelper = this.WhenAnyValue(
+                x => x.EventId,
+                x => x.IsSubmitting,
+                x => x.ErrorMessage,
+                (eventId, isSubmitting, errorMessage) =>
+                {
+                    if (isSubmitting) return FooterStatus.Busy;
+                    if (!string.IsNullOrEmpty(errorMessage)) return FooterStatus.Error;
+                    if (!string.IsNullOrEmpty(eventId)) return FooterStatus.Normal;
+                    return FooterStatus.Empty;
+                })
+            .ToProperty(this, x => x.Status);
+
         Observable.FromAsync(() => _reporter.LoadAsync().AsTask())
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(value => Envelope = value);
@@ -37,8 +64,16 @@ public partial class FooterViewModel : ReactiveObject
     [ReactiveCommand(CanExecute = nameof(_canSubmit))]
     private async Task Submit()
     {
-        await _reporter.SubmitAsync();
-        _window.Close();
+        ErrorMessage = null;
+        try
+        {
+            await _reporter.SubmitAsync();
+            _window.Close();
+        }
+        catch (Exception e)
+        {
+            ErrorMessage = e.Message;
+        }
     }
 
     [ReactiveCommand]

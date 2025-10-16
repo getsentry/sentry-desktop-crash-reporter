@@ -24,9 +24,17 @@ public class IconLabel : StackPanel
         DependencyProperty.Register(nameof(Text), typeof(string), typeof(IconLabel),
             new PropertyMetadata(null, OnPropertyChanged));
 
+    public static readonly DependencyProperty TextWrappingProperty =
+        DependencyProperty.Register(nameof(TextWrapping), typeof(TextWrapping), typeof(IconLabel),
+            new PropertyMetadata(TextWrapping.NoWrap, OnPropertyChanged));
+
     public static readonly DependencyProperty IsTextSelectionEnabledProperty =
         DependencyProperty.Register(nameof(IsTextSelectionEnabled), typeof(bool), typeof(IconLabel),
             new PropertyMetadata(true, OnPropertyChanged));
+
+    public static readonly DependencyProperty ForegroundProperty =
+        DependencyProperty.Register(nameof(Foreground), typeof(Brush), typeof(IconLabel),
+            new PropertyMetadata(null, OnPropertyChanged));
 
     public IconLabel(string? icon = null)
     {
@@ -68,10 +76,22 @@ public class IconLabel : StackPanel
         set => SetValue(TextProperty, value);
     }
 
+    public TextWrapping TextWrapping
+    {
+        get => (TextWrapping)GetValue(TextWrappingProperty);
+        set => SetValue(TextWrappingProperty, value);
+    }
+
     public bool IsTextSelectionEnabled
     {
         get => (bool)GetValue(IsTextSelectionEnabledProperty);
         set => SetValue(IsTextSelectionEnabledProperty, value);
+    }
+
+    public Brush? Foreground
+    {
+        get => (Brush?)GetValue(ForegroundProperty);
+        set => SetValue(ForegroundProperty, value);
     }
 
     private static void OnPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -103,7 +123,10 @@ public class IconLabel : StackPanel
         {
             icon.HorizontalAlignment = HorizontalAlignment.Center;
             icon.VerticalAlignment = VerticalAlignment.Center;
-
+            if (icon is IconElement ie && Foreground is not null)
+            {
+                ie.Foreground = Foreground;
+            }
             icon.PointerPressed += (_, _) =>
             {
                 var dataPackage = new DataPackage();
@@ -116,10 +139,16 @@ public class IconLabel : StackPanel
 
         if (Text is not null)
         {
-            Children.Add(new SelectableTextBlock()
+            var textBlock = new SelectableTextBlock()
                 .Text(Text)
+                .TextWrapping(TextWrapping)
                 .VerticalAlignment(VerticalAlignment.Center)
-                .IsTextSelectionEnabled(IsTextSelectionEnabled));
+                .IsTextSelectionEnabled(IsTextSelectionEnabled);
+            if (Foreground is not null)
+            {
+                textBlock.Foreground(Foreground);
+            }
+            Children.Add(textBlock);
         }
 
         ToolTipService.SetToolTip(this, ToolTip);

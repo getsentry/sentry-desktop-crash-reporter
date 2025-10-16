@@ -1,3 +1,5 @@
+using System.Reactive.Threading.Tasks;
+
 namespace Sentry.CrashReporter.Tests;
 
 public class FooterViewModelTests
@@ -19,6 +21,7 @@ public class FooterViewModelTests
         Assert.That(viewModel.Dsn, Is.Null.Or.Empty);
         Assert.That(viewModel.EventId, Is.Null.Or.Empty);
         Assert.That(viewModel.ShortEventId, Is.Null.Or.Empty);
+        Assert.That(viewModel.Status, Is.EqualTo(FooterStatus.Empty));
     }
 
     [Test]
@@ -45,6 +48,63 @@ public class FooterViewModelTests
         Assert.That(viewModel.Dsn, Is.EqualTo("https://foo@bar.com/123"));
         Assert.That(viewModel.EventId, Is.EqualTo("12345678-90ab-cdef-1234-567890abcdef"));
         Assert.That(viewModel.ShortEventId, Is.EqualTo("12345678"));
+        Assert.That(viewModel.Status, Is.EqualTo(FooterStatus.Normal));
+    }
+
+    [Test]
+    public async Task Status_is_busy_while_submitting()
+    {
+        // Arrange
+        var envelope = new Envelope(
+            new JsonObject { ["dsn"] = "https://foo@bar.com/123" },
+            new List<EnvelopeItem>()
+        );
+        var mockReporter = new Mock<ICrashReporter>();
+        var tcs = new TaskCompletionSource<object?>();
+        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult<Envelope?>(envelope));
+        mockReporter.Setup(x => x.SubmitAsync(It.IsAny<CancellationToken>()))
+            .Returns(tcs.Task);
+        var mockWindow = new Mock<IWindowService>();
+
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object);
+        await viewModel.SubmitCommand.CanExecute.FirstAsync();
+
+        // Act
+        var task = viewModel.SubmitCommand.Execute().ToTask();
+
+        // Assert
+        Assert.That(viewModel.Status, Is.EqualTo(FooterStatus.Busy));
+
+        // Cleanup
+        tcs.SetResult(null);
+        await task;
+    }
+
+    [Test]
+    public async Task Status_is_error_when_submit_fails()
+    {
+        // Arrange
+        var envelope = new Envelope(
+            new JsonObject { ["dsn"] = "https://foo@bar.com/123" },
+            new List<EnvelopeItem>()
+        );
+        var mockReporter = new Mock<ICrashReporter>();
+        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult<Envelope?>(envelope));
+        mockReporter.Setup(x => x.SubmitAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Failure"));
+        var mockWindow = new Mock<IWindowService>();
+
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object);
+        await viewModel.SubmitCommand.CanExecute.FirstAsync();
+
+        // Act
+        await viewModel.SubmitCommand.Execute();
+
+        // Assert
+        Assert.That(viewModel.Status, Is.EqualTo(FooterStatus.Error));
+        Assert.That(viewModel.ErrorMessage, Is.EqualTo("Failure"));
     }
 
     [Test]

@@ -8,28 +8,52 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
 {
     public FooterView()
     {
-        this.DataContext(new FooterViewModel(), (view, vm) => view
+        ViewModel = new FooterViewModel();
+        this.DataContext(ViewModel, (view, vm) => view
             .Content(new Grid()
                 .ColumnSpacing(8)
-                .ColumnDefinitions("Auto,*,Auto,Auto")
+                .ColumnDefinitions("*,Auto,Auto")
                 .Children(
-                    new IconLabel(FA.Copy)
-                        .ToolTip("Event ID")
-                        .Name("eventIdLabel")
-                        .Text(x => x.Binding(() => vm.ShortEventId))
-                        .Visibility(x => x.Binding(() => vm.ShortEventId).Convert(BindingConverter.ToVisibility))
-                        .Grid(0),
-                    new Button { Content = "Cancel" }
-                        .Grid(2)
+                    new ContentControl()
+                        .Grid(0)
+                        .Content(x => x.Binding(() => vm.Status).Convert(status => BuildStatusLabel(vm, status).Name("statusLabel"))),
+                    new Button()
+                        .Grid(1)
+                        .Content("Cancel")
                         .Name("cancelButton")
                         .Command(x => x.Binding(() => vm.CancelCommand))
                         .Background(Colors.Transparent),
-                    new Button { Content = "Submit" }
-                        .Grid(3)
+                    new Button()
+                        .Grid(2)
+                        .Content("Submit")
                         .Name("submitButton")
                         .AutomationProperties(automationId: "submitButton")
                         .Command(x => x.Binding(() => vm.SubmitCommand))
                         .Foreground(Colors.White)
                         .Background(ThemeResource.Get<Brush>("SystemAccentColorBrush")))));
+    }
+
+    FrameworkElement BuildStatusLabel(FooterViewModel vm, FooterStatus status)
+    {
+        return status switch
+        {
+            FooterStatus.Normal => new IconLabel(FA.Copy)
+                .ToolTip("Event ID")
+                .Text(x => x.Binding(() => vm.ShortEventId)),
+            FooterStatus.Busy => new IconLabel()
+                .Icon(new ProgressRing()
+                    .IsActive(true)
+                    .Width(20)
+                    .Height(20))
+                .IsTextSelectionEnabled(false)
+                .Text("Please wait. Submitting the report..."),
+            FooterStatus.Error => new IconLabel(FA.CircleExclamation)
+                .TextWrapping(TextWrapping.Wrap)
+                .VerticalAlignment(VerticalAlignment.Center)
+                .Text(x => x.Binding(() => vm.ErrorMessage))
+                .Foreground(ThemeResource.Get<Brush>("SystemErrorTextColor")),
+            _ => new Control()
+                .Visibility(Visibility.Collapsed),
+        };
     }
 }
