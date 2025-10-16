@@ -9,6 +9,7 @@ public sealed class MainPage : Page
     public MainPage()
     {
         this.DataContext<MainViewModel>((view, vm) => view
+            .KeyboardAccelerators(GetKeyboardAccelerators())
             .NavigationCacheMode(NavigationCacheMode.Required)
             .Background(ThemeResource.Get<Brush>("ApplicationPageBackgroundThemeBrush"))
             .Content(new LoadingView()
@@ -72,5 +73,28 @@ public sealed class MainPage : Page
                                     .Visibility(Visibility.Collapsed)),
                         new FooterView()
                             .Grid(row: 3)))));
+    }
+
+    private static KeyboardAccelerator[] GetKeyboardAccelerators()
+    {
+        var accelerators = new List<KeyboardAccelerator>();
+
+        // https://github.com/unoplatform/uno/issues/20332
+        if (OperatingSystem.IsMacOS())
+        {
+            var closeAccelerator = new KeyboardAccelerator
+            {
+                Key = VirtualKey.Q,
+                Modifiers = VirtualKeyModifiers.Windows
+            };
+            closeAccelerator.Invoked += (_, ev) =>
+            {
+                ev.Handled = true;
+                ((App)Application.Current)?.MainWindow?.Close();
+            };
+            accelerators.Add(closeAccelerator);
+        }
+
+        return accelerators.ToArray();
     }
 }
