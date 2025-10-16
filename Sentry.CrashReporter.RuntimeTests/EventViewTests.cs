@@ -42,6 +42,54 @@ public class EventViewTests : RuntimeTestBase
     }
 
     [TestMethod]
+    public async Task EventView_Empty()
+    {
+        // Arrange
+        var envelope = new Envelope(new JsonObject(), [
+            new EnvelopeItem(
+                new JsonObject { { "type", "event" } },
+                System.Text.Encoding.UTF8.GetBytes(new JsonObject
+                {
+                    { "tags", new JsonObject() },
+                    { "contexts", new JsonObject() },
+                    { "extra", new JsonObject() },
+                    { "sdk", new JsonObject() }
+                }.ToJsonString())),
+        ]);
+        _ = MockCrashReporter(envelope);
+
+        // Act
+        var view = new EventView();
+        await LoadTestContent(view);
+
+        var tagsExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Tags");
+        var contextsExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Contexts");
+        var extraExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Additional Data");
+        var sdkExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "SDK");
+
+        // Assert
+        Assert.IsNotNull(tagsExpander);
+        Assert.IsFalse(tagsExpander.IsEnabled);
+        Assert.IsFalse(tagsExpander.IsExpanded);
+        Assert.AreEqual(Visibility.Visible, tagsExpander.Visibility);
+
+        Assert.IsNotNull(contextsExpander);
+        Assert.IsFalse(contextsExpander.IsEnabled);
+        Assert.IsFalse(contextsExpander.IsExpanded);
+        Assert.AreEqual(Visibility.Visible, contextsExpander.Visibility);
+
+        Assert.IsNotNull(extraExpander);
+        Assert.IsFalse(extraExpander.IsEnabled);
+        Assert.IsFalse(extraExpander.IsExpanded);
+        Assert.AreEqual(Visibility.Collapsed, extraExpander.Visibility);
+
+        Assert.IsNotNull(sdkExpander);
+        Assert.IsFalse(sdkExpander.IsEnabled);
+        Assert.IsFalse(sdkExpander.IsExpanded);
+        Assert.AreEqual(Visibility.Visible, sdkExpander.Visibility);
+    }
+
+    [TestMethod]
     public async Task EventView_ExpanderVisibilityAndEnabledState()
     {
         // Arrange
@@ -55,9 +103,6 @@ public class EventViewTests : RuntimeTestBase
                     { "extra", new JsonObject { { "e1", "extra1" } } },
                     { "sdk", new JsonObject { { "s1", "sdk1" } } }
                 }.ToJsonString())),
-            new EnvelopeItem(
-                new JsonObject { { "type", "attachment" }, { "filename", "test.txt" } },
-                [0x01, 0x02, 0x03])
         ]);
         _ = MockCrashReporter(envelope);
 
