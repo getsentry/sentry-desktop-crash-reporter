@@ -33,6 +33,7 @@ public class SentryClientTests
         await using var file = File.OpenRead(filePath);
         var envelope = await Envelope.DeserializeAsync(file);
         var dsn = envelope.TryGetDsn()!;
+        var expectedContent = await File.ReadAllTextAsync(filePath);
 
         var requestContent = "";
         _messageHandler.Protected()
@@ -45,12 +46,7 @@ public class SentryClientTests
 
         await _client.SubmitEnvelopeAsync(dsn, envelope);
 
-        var expected = await File.ReadAllTextAsync(filePath);
-
-        var requestLines = requestContent.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-        var expectedLines = expected.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-
-        Assert.That(requestLines, Is.EqualTo(expectedLines));
+        Assert.That(requestContent.RemoveBlankLines(), Is.EqualTo(expectedContent.RemoveBlankLines()));
     }
 
     [Test]
@@ -60,20 +56,26 @@ public class SentryClientTests
         await using var file = File.OpenRead(filePath);
         var envelope = await Envelope.DeserializeAsync(file);
         var dsn = envelope.TryGetDsn()!;
+        var expectedContent = await File.ReadAllTextAsync(filePath);
 
-        var attemptCount = 0;
+        var requestContents = new List<string>();
         _messageHandler.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .Callback<HttpRequestMessage, CancellationToken>((_, _) =>
+            .Callback<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
             {
-                attemptCount++;
+                var content = request.Content!.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
+                requestContents.Add(content);
             })
             .ThrowsAsync(new HttpRequestException("Network error"));
 
         var exception = Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
 
         Assert.That(exception!.Message, Is.EqualTo("Network error"));
-        Assert.That(attemptCount, Is.EqualTo(4)); // 1 initial + 3 retries
+        Assert.That(requestContents, Has.Count.EqualTo(4)); // 1 initial + 3 retries
+        foreach (var requestContent in requestContents)
+        {
+            Assert.That(requestContent.RemoveBlankLines(), Is.EqualTo(expectedContent.RemoveBlankLines()));
+        }
     }
 
     [Test]
@@ -83,13 +85,15 @@ public class SentryClientTests
         await using var file = File.OpenRead(filePath);
         var envelope = await Envelope.DeserializeAsync(file);
         var dsn = envelope.TryGetDsn()!;
+        var expectedContent = await File.ReadAllTextAsync(filePath);
 
-        var attemptCount = 0;
+        var requestContents = new List<string>();
         _messageHandler.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .Callback<HttpRequestMessage, CancellationToken>((_, _) =>
+            .Callback<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
             {
-                attemptCount++;
+                var content = request.Content!.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
+                requestContents.Add(content);
             })
             .ReturnsAsync(() => new HttpResponseMessage
             {
@@ -99,7 +103,11 @@ public class SentryClientTests
 
         Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
 
-        Assert.That(attemptCount, Is.EqualTo(4)); // 1 initial + 3 retries
+        Assert.That(requestContents, Has.Count.EqualTo(4)); // 1 initial + 3 retries
+        foreach (var requestContent in requestContents)
+        {
+            Assert.That(requestContent.RemoveBlankLines(), Is.EqualTo(expectedContent.RemoveBlankLines()));
+        }
     }
 
     [Test]
@@ -109,13 +117,15 @@ public class SentryClientTests
         await using var file = File.OpenRead(filePath);
         var envelope = await Envelope.DeserializeAsync(file);
         var dsn = envelope.TryGetDsn()!;
+        var expectedContent = await File.ReadAllTextAsync(filePath);
 
-        var attemptCount = 0;
+        var requestContents = new List<string>();
         _messageHandler.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .Callback<HttpRequestMessage, CancellationToken>((_, _) =>
+            .Callback<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
             {
-                attemptCount++;
+                var content = request.Content!.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
+                requestContents.Add(content);
             })
             .ReturnsAsync(() => new HttpResponseMessage
             {
@@ -124,7 +134,11 @@ public class SentryClientTests
             });
 
         Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
-        Assert.That(attemptCount, Is.EqualTo(4)); // 1 initial + 3 retries
+        Assert.That(requestContents, Has.Count.EqualTo(4)); // 1 initial + 3 retries
+        foreach (var requestContent in requestContents)
+        {
+            Assert.That(requestContent.RemoveBlankLines(), Is.EqualTo(expectedContent.RemoveBlankLines()));
+        }
     }
 
     [Test]
@@ -134,13 +148,15 @@ public class SentryClientTests
         await using var file = File.OpenRead(filePath);
         var envelope = await Envelope.DeserializeAsync(file);
         var dsn = envelope.TryGetDsn()!;
+        var expectedContent = await File.ReadAllTextAsync(filePath);
 
-        var attemptCount = 0;
+        var requestContents = new List<string>();
         _messageHandler.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .Callback<HttpRequestMessage, CancellationToken>((_, _) =>
+            .Callback<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
             {
-                attemptCount++;
+                var content = request.Content!.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
+                requestContents.Add(content);
             })
             .ReturnsAsync(() => new HttpResponseMessage
             {
@@ -150,7 +166,11 @@ public class SentryClientTests
 
         Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
 
-        Assert.That(attemptCount, Is.EqualTo(4)); // 1 initial + 3 retries
+        Assert.That(requestContents, Has.Count.EqualTo(4)); // 1 initial + 3 retries
+        foreach (var requestContent in requestContents)
+        {
+            Assert.That(requestContent.RemoveBlankLines(), Is.EqualTo(expectedContent.RemoveBlankLines()));
+        }
     }
 
     [Test]
@@ -160,19 +180,22 @@ public class SentryClientTests
         await using var file = File.OpenRead(filePath);
         var envelope = await Envelope.DeserializeAsync(file);
         var dsn = envelope.TryGetDsn()!;
+        var expectedContent = await File.ReadAllTextAsync(filePath);
 
-        var attemptCount = 0;
+        var requestContents = new List<string>();
         _messageHandler.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .Callback<HttpRequestMessage, CancellationToken>((_, _) =>
+            .Callback<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
             {
-                attemptCount++;
+                var content = request.Content!.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
+                requestContents.Add(content);
             })
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.BadRequest });
 
         Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
 
-        Assert.That(attemptCount, Is.EqualTo(1)); // No retries for client errors
+        Assert.That(requestContents, Has.Count.EqualTo(1)); // No retries for client errors
+        Assert.That(requestContents[0].RemoveBlankLines(), Is.EqualTo(expectedContent.RemoveBlankLines()));
     }
 
     [Test]
@@ -182,19 +205,22 @@ public class SentryClientTests
         await using var file = File.OpenRead(filePath);
         var envelope = await Envelope.DeserializeAsync(file);
         var dsn = envelope.TryGetDsn()!;
+        var expectedContent = await File.ReadAllTextAsync(filePath);
 
-        var attemptCount = 0;
+        var requestContents = new List<string>();
         _messageHandler.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .Callback<HttpRequestMessage, CancellationToken>((_, _) =>
+            .Callback<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
             {
-                attemptCount++;
+                var content = request.Content!.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
+                requestContents.Add(content);
             })
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.NotFound });
 
         Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
 
-        Assert.That(attemptCount, Is.EqualTo(1)); // No retries for client errors
+        Assert.That(requestContents, Has.Count.EqualTo(1)); // No retries for client errors
+        Assert.That(requestContents[0].RemoveBlankLines(), Is.EqualTo(expectedContent.RemoveBlankLines()));
     }
 
     [Test]
@@ -204,13 +230,20 @@ public class SentryClientTests
         await using var file = File.OpenRead(filePath);
         var envelope = await Envelope.DeserializeAsync(file);
         var dsn = envelope.TryGetDsn()!;
+        var expectedContent = await File.ReadAllTextAsync(filePath);
 
+        var requestContents = new List<string>();
         var attemptCount = 0;
         _messageHandler.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .Returns<HttpRequestMessage, CancellationToken>((_, _) =>
+            .Callback<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
             {
                 attemptCount++;
+                var content = request.Content!.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
+                requestContents.Add(content);
+            })
+            .Returns<HttpRequestMessage, CancellationToken>((_, _) =>
+            {
                 // Fail the first two attempts, succeed on the third
                 if (attemptCount < 3)
                 {
@@ -222,7 +255,11 @@ public class SentryClientTests
         // Should not throw - succeeds on third attempt
         await _client.SubmitEnvelopeAsync(dsn, envelope);
 
-        Assert.That(attemptCount, Is.EqualTo(3)); // 1 initial + 2 retries before success
+        Assert.That(requestContents, Has.Count.EqualTo(3)); // 1 initial + 2 retries before success
+        foreach (var requestContent in requestContents)
+        {
+            Assert.That(requestContent.RemoveBlankLines(), Is.EqualTo(expectedContent.RemoveBlankLines()));
+        }
     }
 
     [Test]
@@ -232,6 +269,7 @@ public class SentryClientTests
         await using var file = File.OpenRead(filePath);
         var envelope = await Envelope.DeserializeAsync(file);
         var dsn = envelope.TryGetDsn()!;
+        var expectedContent = await File.ReadAllTextAsync(filePath);
 
         var requestContents = new List<string>();
         var attemptCount = 0;
@@ -257,7 +295,17 @@ public class SentryClientTests
         await _client.SubmitEnvelopeAsync(dsn, envelope);
 
         Assert.That(requestContents, Has.Count.EqualTo(2));
-        Assert.That(requestContents[0], Is.EqualTo(requestContents[1])); // Content should be identical across retries
-        Assert.That(requestContents[0], Is.Not.Empty);
+        foreach (var requestContent in requestContents)
+        {
+            Assert.That(requestContent.RemoveBlankLines(), Is.EqualTo(expectedContent.RemoveBlankLines()));
+        }
+    }
+}
+
+internal static class TestExtensions
+{
+    public static string RemoveBlankLines(this string str)
+    {
+        return string.Join('\n', str.Split('\n', StringSplitOptions.RemoveEmptyEntries));
     }
 }
