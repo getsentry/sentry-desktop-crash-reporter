@@ -4,6 +4,7 @@ using Windows.Graphics;
 using Windows.Graphics.Display;
 using Windows.UI.ViewManagement;
 using Microsoft.Extensions.Http.Resilience;
+using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.Services;
 using Sentry.CrashReporter.ViewModels;
 using Sentry.CrashReporter.Views;
@@ -118,6 +119,8 @@ public partial class App : Application
         MainWindow.UseStudio();
 #endif
         MainWindow.SetWindowIcon();
+
+        MainWindow.UseSystemTheme();
 
         Host = await builder.NavigateAsync<ShellPage>();
 
