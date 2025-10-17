@@ -8,18 +8,19 @@ public static class BindingConverter
 {
     public static bool ToEnabled(object? obj)
     {
-        return !IsNullOrEmpty(obj);
+        return !IsFalsy(obj);
     }
 
     public static Visibility ToVisibility(object? obj)
     {
-        return IsNullOrEmpty(obj) ? Visibility.Collapsed : Visibility.Visible;
+        return IsFalsy(obj) ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    private static bool IsNullOrEmpty(object? obj)
+    private static bool IsFalsy(object? obj)
     {
         return obj switch
         {
+            bool b => !b,
             string s => string.IsNullOrEmpty(s),
             IList { Count: 0 } => true,
             JsonArray { Count: 0 } => true, 

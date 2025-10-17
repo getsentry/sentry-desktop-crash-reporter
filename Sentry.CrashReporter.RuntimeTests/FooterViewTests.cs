@@ -5,66 +5,122 @@ namespace Sentry.CrashReporter.RuntimeTests;
 public class FooterViewTests : RuntimeTestBase
 {
     [TestMethod]
-    public void FooterView_CanBeCreated()
+    public async Task FooterView_Empty()
     {
         // Arrange
         _ = MockCrashReporter();
 
         // Act
         var view = new FooterView();
-        var eventIdLabel = view.FindFirstDescendant<FrameworkElement>(d => d.Name == "eventIdLabel");
-        var cancelButton = view.FindFirstDescendant<Button>(d => d.Name == "cancelButton");
-        var submitButton = view.FindFirstDescendant<Button>(d => d.Name == "submitButton");
-
+        await LoadTestContent(view);
+    
         // Assert
-        Assert.IsNotNull(eventIdLabel);
-        Assert.AreEqual(Visibility.Collapsed, eventIdLabel.Visibility);
-
+        var statusLabel = view.FindFirstDescendant<FrameworkElement>("statusLabel");
+        Assert.IsNotNull(statusLabel);
+        Assert.AreEqual(Visibility.Collapsed, statusLabel.Visibility);
+    
+        var cancelButton = view.FindFirstDescendant<Button>("cancelButton");
         Assert.IsNotNull(cancelButton);
-        Assert.AreEqual(Visibility.Visible, cancelButton.Visibility);
         Assert.IsTrue(cancelButton.IsEnabled);
-
+    
+        var submitButton = view.FindFirstDescendant<Button>("submitButton");
         Assert.IsNotNull(submitButton);
-        Assert.AreEqual(Visibility.Visible, submitButton.Visibility);
         Assert.IsFalse(submitButton.IsEnabled);
     }
 
     [TestMethod]
-    public void FooterView_DisplaysData()
+    public async Task FooterView_Normal()
     {
         // Arrange
-        var envelope = new Envelope(new JsonObject() { { "dsn", "https://foo@bar.com/123" }, { "event_id" , "12345678901234567890123456789012" } }, [
-            new EnvelopeItem(
-                new JsonObject { { "type", "event" } },
-                System.Text.Encoding.UTF8.GetBytes(new JsonObject
-                {
-                    {
-                        "exception",
-                        new JsonObject { { "values", new JsonArray { new JsonObject { { "type", "SIGSEGV" } } } } }
-                    },
-                    { "release", "my-app@0.1.0" },
-                    { "contexts", new JsonObject { { "os", new JsonObject { { "name", "Windows 11" } } } } },
-                    { "environment", "production" }
-                }.ToJsonString()))
-        ]);
+        var envelope = new Envelope(new JsonObject { { "dsn", "https://foo@bar.com/123" }, { "event_id" , "12345678901234567890123456789012" } }, []);
         _ = MockCrashReporter(envelope);
 
         // Act
         var view = new FooterView();
-        var eventIdLabel = view.FindFirstDescendant<TextBlock>(tb => tb.Text.StartsWith("123456"));
-        var cancelButton = view.FindFirstDescendant<Button>(b => b.Name == "cancelButton");
-        var submitButton = view.FindFirstDescendant<Button>(b => b.Name == "submitButton");
+        await LoadTestContent(view);
 
         // Assert
+        var statusLabel = view.FindFirstDescendant<FrameworkElement>("statusLabel");
+        Assert.IsNotNull(statusLabel);
+        Assert.AreEqual(Visibility.Visible, statusLabel.Visibility);
+    
+        var eventIdLabel = statusLabel.FindFirstDescendant<TextBlock>(tb => tb.Text.StartsWith("123456"));
         Assert.IsNotNull(eventIdLabel);
         Assert.AreEqual(Visibility.Visible, eventIdLabel.Visibility);
 
+        var cancelButton = view.FindFirstDescendant<Button>("cancelButton");
         Assert.IsNotNull(cancelButton);
-        Assert.AreEqual(Visibility.Visible, cancelButton.Visibility);
         Assert.IsTrue(cancelButton.IsEnabled);
 
+        var submitButton = view.FindFirstDescendant<Button>("submitButton");
         Assert.IsNotNull(submitButton);
-        Assert.AreEqual(Visibility.Visible, submitButton.Visibility);
+        Assert.IsTrue(submitButton.IsEnabled);
+    }
+
+    [TestMethod]
+    public async Task FooterView_Submitting()
+    {
+        // Arrange
+        var envelope = new Envelope(new JsonObject { { "dsn", "https://foo@bar.com/123" }, { "event_id" , "12345678901234567890123456789012" } }, []);
+        var (mockReporter, _) = MockCrashReporter(envelope);
+        var tcs = new TaskCompletionSource();
+        mockReporter.Setup(r => r.SubmitAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
+
+        // Act
+        var view = new FooterView();
+        await LoadTestContent(view);
+        view.FindFirstDescendant<Button>("submitButton")?.Command.Execute(null);
+        await Task.Yield();
+
+        // Assert
+        var statusLabel = view.FindFirstDescendant<FrameworkElement>("statusLabel");
+        Assert.IsNotNull(statusLabel);
+        Assert.AreEqual(Visibility.Visible, statusLabel.Visibility);
+
+        var progressRing = statusLabel.FindFirstDescendant<ProgressRing>();
+        Assert.IsNotNull(progressRing);
+        Assert.IsTrue(progressRing.IsActive);
+
+        var cancelButton = view.FindFirstDescendant<Button>("cancelButton");
+        Assert.IsNotNull(cancelButton);
+        Assert.IsTrue(cancelButton.IsEnabled);
+
+        var submitButton = view.FindFirstDescendant<Button>("submitButton");
+        Assert.IsNotNull(submitButton);
+        Assert.IsFalse(submitButton.IsEnabled);
+
+        // Cleanup
+        tcs.SetResult();
+    }
+
+    [TestMethod]
+    public async Task FooterView_Error()
+    {
+        // Arrange
+        var envelope = new Envelope(new JsonObject { { "dsn", "https://foo@bar.com/123" }, { "event_id" , "12345678901234567890123456789012" } }, []);
+        var (mockReporter, _) = MockCrashReporter(envelope);
+        mockReporter.Setup(r => r.SubmitAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Something went wrong"));
+
+        // Act
+        var view = new FooterView();
+        await LoadTestContent(view);
+        view.FindFirstDescendant<Button>("submitButton")?.Command.Execute(null);
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        // Assert
+        var statusLabel = view.FindFirstDescendant<FrameworkElement>("statusLabel");
+        Assert.IsNotNull(statusLabel);
+
+        var errorLabel = statusLabel.FindFirstDescendant<TextBlock>(tb => tb.Text == "Something went wrong");
+        Assert.IsNotNull(errorLabel);
+        Assert.AreEqual(Visibility.Visible, statusLabel.Visibility);
+
+        var cancelButton = view.FindFirstDescendant<Button>("cancelButton");
+        Assert.IsNotNull(cancelButton);
+        Assert.IsTrue(cancelButton.IsEnabled);
+
+        var submitButton = view.FindFirstDescendant<Button>("submitButton");
+        Assert.IsNotNull(submitButton);
         Assert.IsTrue(submitButton.IsEnabled);
     }
 
@@ -72,15 +128,12 @@ public class FooterViewTests : RuntimeTestBase
     public void FooterView_Submit_AndCloseWindow()
     {
         // Arrange
-        var envelope =
-            new Envelope(
-                new JsonObject()
-                    { { "dsn", "https://foo@bar.com/123" }, { "event_id", "12345678901234567890123456789012" } }, []);
+        var envelope = new Envelope(new JsonObject { { "dsn", "https://foo@bar.com/123" }, { "event_id", "12345678901234567890123456789012" } }, []);
         var (mockReporter, mockWindow) = MockCrashReporter(envelope);
 
         // Act
         var view = new FooterView();
-        var submitButton = view.FindFirstDescendant<Button>(d => d.Name == "submitButton");
+        var submitButton = view.FindFirstDescendant<Button>("submitButton");
         submitButton?.Command.Execute(null);
 
         // Assert
@@ -96,7 +149,7 @@ public class FooterViewTests : RuntimeTestBase
 
         // Act
         var view = new FooterView();
-        var cancelButton = view.FindFirstDescendant<Button>(b => b.Name == "cancelButton");
+        var cancelButton = view.FindFirstDescendant<Button>("cancelButton");
         cancelButton?.Command.Execute(null);
 
         // Assert
