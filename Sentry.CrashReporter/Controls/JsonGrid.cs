@@ -64,7 +64,8 @@ public class JsonGrid : Grid
                 .Background(row % 2 == 0 ? evenBrush : oddBrush)
                 .CornerRadius(new CornerRadius(2, 0, 0, 2))
                 .Padding(new Thickness(4, 2, 8, 2))
-                .Child(new SelectableTextBlock()
+                .Child(new TextBlock()
+                    .WithTextSelection()
                     .WithSourceCodePro()
                     .Text(kvp.Key)));
 
@@ -73,7 +74,8 @@ public class JsonGrid : Grid
                 .Background(row % 2 == 0 ? evenBrush : oddBrush)
                 .CornerRadius(new CornerRadius(0, 2, 2, 0))
                 .Padding(new Thickness(8, 2, 4, 2))
-                .Child(new SelectableTextBlock()
+                .Child(new TextBlock()
+                    .WithTextSelection()
                     .WithSourceCodePro()
                     .Text(kvp.Value?.ToString() ?? string.Empty)
                     .TextWrapping(TextWrapping.Wrap)));
