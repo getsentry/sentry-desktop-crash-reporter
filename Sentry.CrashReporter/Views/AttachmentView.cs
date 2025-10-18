@@ -93,7 +93,8 @@ internal class AttachmentGrid : Grid
                 .Background(row % 2 == 0 ? evenBrush : oddBrush)
                 .CornerRadius(new CornerRadius(2, 0, 0, 2))
                 .Padding(new Thickness(4, 2, 8, 2))
-                .Child(new SelectableTextBlock()
+                .Child(new TextBlock()
+                    .WithTextSelection()
                     .WithSourceCodePro()
                     .Text(item.Filename)));
 
@@ -102,7 +103,8 @@ internal class AttachmentGrid : Grid
                 .Background(row % 2 == 0 ? evenBrush : oddBrush)
                 .CornerRadius(new CornerRadius(2, 0, 0, 2))
                 .Padding(new Thickness(4, 2, 8, 2))
-                .Child(new SelectableTextBlock()
+                .Child(new TextBlock()
+                    .WithTextSelection()
                     .WithSourceCodePro()
                     .Text(ToHumanReadableSize(item.Data.Length))));
 

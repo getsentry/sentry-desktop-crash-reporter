@@ -29,8 +29,8 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
                         .Name("submitButton")
                         .AutomationProperties(automationId: "submitButton")
                         .Command(x => x.Binding(() => vm.SubmitCommand))
-                        .Foreground(Colors.White)
-                        .Background(ThemeResource.Get<Brush>("SystemAccentColorBrush")))));
+                        .Style(StaticResource.Get<Style>("AccentButtonStyle"))
+                        .CornerRadius(ThemeResource.Get<CornerRadius>("ControlCornerRadius")))));
     }
 
     FrameworkElement BuildStatusLabel(FooterViewModel vm, FooterStatus status)

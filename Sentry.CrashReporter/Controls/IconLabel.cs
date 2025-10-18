@@ -1,4 +1,5 @@
 using Windows.ApplicationModel.DataTransfer;
+using Sentry.CrashReporter.Extensions;
 
 namespace Sentry.CrashReporter.Controls;
 
@@ -139,11 +140,11 @@ public class IconLabel : StackPanel
 
         if (Text is not null)
         {
-            var textBlock = new SelectableTextBlock()
+            var textBlock = new TextBlock()
                 .Text(Text)
                 .TextWrapping(TextWrapping)
                 .VerticalAlignment(VerticalAlignment.Center)
-                .IsTextSelectionEnabled(IsTextSelectionEnabled);
+                .WithTextSelection(IsTextSelectionEnabled);
             if (Foreground is not null)
             {
                 textBlock.Foreground(Foreground);

@@ -10,17 +10,19 @@
                 <ResourceDictionary Source="ms-appx:///Styles/Images.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <Color x:Key="SystemAccentColor">#362d59</Color>
+            <Color x:Key="SystemAccentColor">#8866FF</Color>
+            <Color x:Key="SystemAccentColorLight1">#9C7FFF</Color>
+            <Color x:Key="SystemAccentColorLight2">#7554FF</Color>
+            <Color x:Key="SystemAccentColorLight3">#B08CFF</Color>
+            <Color x:Key="SystemAccentColorDark1">#7554FF</Color>
+            <Color x:Key="SystemAccentColorDark2">#5A3FCC</Color>
+            <Color x:Key="SystemAccentColorDark3">#3F2B99</Color>
+
             <SolidColorBrush x:Key="SystemAccentColorBrush" Color="{StaticResource SystemAccentColor}" />
-            <SolidColorBrush x:Key="ProgressRingForegroundThemeBrush" Color="{StaticResource SystemAccentColor}" />
-            <SolidColorBrush x:Key="SegmentedPillBackground" Color="{StaticResource SystemAccentColor}" />
-            <SolidColorBrush x:Key="SegmentedPillBackgroundPointerOver" Color="{StaticResource SystemAccentColor}" />
-            <SolidColorBrush x:Key="SegmentedPillBackgroundPressed" Color="{StaticResource SystemAccentColor}" />
-            <SolidColorBrush x:Key="SegmentedPillBackgroundDisabled" Color="{StaticResource SystemBaseLowColor}" />
-            <SolidColorBrush x:Key="TextControlBorderBrush" Color="{StaticResource SystemBaseLowColor}" />
-            <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource SystemBaseLowColor}" />
-            <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{StaticResource SystemAccentColor}" />
-            <SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="{StaticResource SystemBaseLowColor}" />
+            <SolidColorBrush x:Key="AccentButtonForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#FFFFFF" Opacity="0.9" />
+            <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#FFFFFF" Opacity="0.75" />
 
             <!-- ReSharper disable Xaml.LanguageLevel -->
             <x:Double x:Key="ExpanderChevronButtonSize">20</x:Double>

@@ -16,7 +16,8 @@ public sealed class EnvelopeView : ReactivePage<EnvelopeViewModel>
                         .Grid(row: 1)
                         .Content(new StackPanel()
                             .Children(
-                                new SelectableTextBlock()
+                                new TextBlock()
+                                    .WithTextSelection()
                                     .WithSourceCodePro()
                                     .Text(x => x.Binding(() => vm.Formatted?.Header)),
                                 new ItemsControl()
@@ -25,11 +26,13 @@ public sealed class EnvelopeView : ReactivePage<EnvelopeViewModel>
                                         new Expander()
                                             .HorizontalAlignment(HorizontalAlignment.Stretch)
                                             .HorizontalContentAlignment(HorizontalAlignment.Stretch)
-                                            .Header(new SelectableTextBlock()
+                                            .Header(new TextBlock()
+                                                .WithTextSelection()
                                                 .WithSourceCodePro()
                                                 .Text(x => x.Binding("Header"))
                                             )
-                                            .Content(new SelectableTextBlock()
+                                            .Content(new TextBlock()
+                                                .WithTextSelection()
                                                 .WithSourceCodePro()
                                                 .Text(x => x.Binding("Payload")))))),
                     new Button()

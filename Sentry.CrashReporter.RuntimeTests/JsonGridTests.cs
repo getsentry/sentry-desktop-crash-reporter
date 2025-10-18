@@ -35,7 +35,7 @@ public class JsonGridTests : RuntimeTestBase
         var borders = grid.Children.OfType<Border>().ToList();
         Assert.AreEqual(4, borders.Count);
 
-        var textBlocks = borders.Select(b => b.Child).OfType<SelectableTextBlock>().ToList();
+        var textBlocks = borders.Select(b => b.Child).OfType<TextBlock>().ToList();
         Assert.AreEqual(4, textBlocks.Count);
 
         Assert.AreEqual("key", textBlocks[0].Text);
@@ -59,7 +59,7 @@ public class JsonGridTests : RuntimeTestBase
         Assert.AreEqual(1, grid.RowDefinitions.Count);
         Assert.AreEqual(2, grid.Children.Count);
 
-        var textBlocks = grid.Children.OfType<Border>().Select(b => b.Child).OfType<SelectableTextBlock>().ToList();
+        var textBlocks = grid.Children.OfType<Border>().Select(b => b.Child).OfType<TextBlock>().ToList();
         Assert.AreEqual(2, textBlocks.Count);
 
         Assert.AreEqual("key", textBlocks[0].Text);
