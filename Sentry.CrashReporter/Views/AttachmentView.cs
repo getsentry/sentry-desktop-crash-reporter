@@ -1,9 +1,7 @@
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Storage.Streams;
-using Microsoft.UI.Xaml.Media.Imaging;
 using Sentry.CrashReporter.Controls;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.ViewModels;
+using CommunityConverters = CommunityToolkit.Common.Converters;
 
 namespace Sentry.CrashReporter.Views;
 
@@ -106,7 +104,7 @@ internal class AttachmentGrid : Grid
                 .Child(new TextBlock()
                     .WithTextSelection()
                     .WithSourceCodePro()
-                    .Text(ToHumanReadableSize(item.Data.Length))));
+                    .Text(CommunityConverters.ToFileSizeString(item.Data.Length))));
 
             Children.Add(new Border()
                 .Grid(row: row, column: 2)
@@ -128,19 +126,5 @@ internal class AttachmentGrid : Grid
 
             row++;
         }
-    }
-
-    private static string ToHumanReadableSize(long bytes)
-    {
-        string[] sizes = { "B", "KiB", "MiB", "GiB", "TiB" };
-        double len = bytes;
-        var order = 0;
-        while (len >= 1024 && order < sizes.Length - 1)
-        {
-            order++;
-            len /= 1024;
-        }
-
-        return $"{len:0.#} {sizes[order]}";
     }
 }

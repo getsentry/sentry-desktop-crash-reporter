@@ -1,5 +1,5 @@
+using CommunityToolkit.WinUI.Converters;
 using Sentry.CrashReporter.Controls;
-using Sentry.CrashReporter.Converters;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.ViewModels;
 
@@ -7,6 +7,8 @@ namespace Sentry.CrashReporter.Views;
 
 public sealed class MainPage : Page
 {
+    private static readonly CollectionVisibilityConverter ToVisibility = new();
+
     public MainPage()
     {
         this.DataContext<MainViewModel>((view, vm) => view
@@ -53,7 +55,7 @@ public sealed class MainPage : Page
                                                     .Content(new FontAwesomeIcon(FA.Paperclip))
                                                     .ToolTip("Attachments")
                                                     .Visibility(x => x.Binding(() => vm.Attachments)
-                                                        .Convert(BindingConverter.ToVisibility))
+                                                        .Converter(ToVisibility))
                                                     .Navigation(request: "attachment"),
                                                 new SegmentedItem()
                                                     .Content(new FontAwesomeIcon(FA.Code))

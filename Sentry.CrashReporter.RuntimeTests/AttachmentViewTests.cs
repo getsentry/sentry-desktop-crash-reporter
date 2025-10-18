@@ -34,11 +34,11 @@ public class AttachmentViewTests : RuntimeTestBase
         await LoadTestContent(view);
 
         var filenameA = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "a.bin");
-        var sizeA = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "3 B");
+        var sizeA = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "3 bytes");
 
         var filenameB = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "b.bin");
-        var sizeB = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "6 B");
-        
+        var sizeB = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "6 bytes");
+
         // Assert
         Assert.IsNotNull(filenameA);
         Assert.IsNotNull(sizeA);
