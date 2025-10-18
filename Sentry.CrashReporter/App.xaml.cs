@@ -1,8 +1,4 @@
 using System.Net;
-using Windows.Foundation;
-using Windows.Graphics;
-using Windows.Graphics.Display;
-using Windows.UI.ViewManagement;
 using Microsoft.Extensions.Http.Resilience;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.Services;
@@ -105,27 +101,15 @@ public partial class App : Application
         MainWindow = builder.Window;
 
         MainWindow.Title = "Sentry Crash Reporter";
-
-#if !__WASM__
-        var scale = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
-        MainWindow.AppWindow.Resize(new SizeInt32
-            { Width = (int)Math.Round(900 * scale), Height = (int)Math.Round(600 * scale) });
-
-        var view = ApplicationView.GetForCurrentView();
-        view.SetPreferredMinSize(new Size(600, 400));
-#endif
-
+        MainWindow.Resize(900, 600);
+        MainWindow.SetPreferredMinSize(600, 400);
+        MainWindow.UseSystemTheme();
 #if DEBUG
         MainWindow.UseStudio();
 #endif
         MainWindow.SetWindowIcon();
 
-        MainWindow.UseSystemTheme();
-
         Host = await builder.NavigateAsync<ShellPage>();
-
-        // Ensure the current window is active
-        MainWindow.Activate();
     }
 
     private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
