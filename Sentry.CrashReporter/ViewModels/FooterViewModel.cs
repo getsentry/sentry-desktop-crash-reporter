@@ -63,7 +63,7 @@ public partial class FooterViewModel : ReactiveObject
         ErrorMessage = null;
         try
         {
-            await _reporter.SubmitAsync();
+            await _reporter.SubmitAsync(_envelope!);
             _window.Close();
         }
         catch (Exception e)

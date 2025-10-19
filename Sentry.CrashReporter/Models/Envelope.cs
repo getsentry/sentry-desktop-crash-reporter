@@ -207,7 +207,7 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
     }
 
     public static async Task<Envelope> FromStorageFileAsync(
-        StorageFile storageFile,
+        IStorageFile storageFile,
         CancellationToken cancellationToken = default)
     {
         await using var stream = await storageFile.OpenStreamForReadAsync();

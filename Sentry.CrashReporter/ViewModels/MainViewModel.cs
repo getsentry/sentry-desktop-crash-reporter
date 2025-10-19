@@ -35,7 +35,7 @@ public partial class MainViewModel : ReactiveObject, ILoadable
 
         IsExecuting = true;
 
-        Observable.FromAsync(() => reporter.LoadAsync().AsTask())
+        Observable.FromAsync(() => reporter.LoadAsync())
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(value =>
             {
