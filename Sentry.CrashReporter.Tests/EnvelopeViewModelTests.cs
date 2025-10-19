@@ -5,13 +5,8 @@ public class EnvelopeViewModelTests
     [Test]
     public void Defaults()
     {
-        // Arrange
-        var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Envelope?>(null));
-
         // Act
-        var viewModel = new EnvelopeViewModel(mockReporter.Object);
+        var viewModel = new EnvelopeViewModel();
 
         // Assert
         Assert.That(viewModel.Envelope, Is.Null);
@@ -22,12 +17,12 @@ public class EnvelopeViewModelTests
     {
         // Arrange
         var envelope = new Envelope(new JsonObject(), new List<EnvelopeItem>());
-        var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Envelope?>(envelope));
 
         // Act
-        var viewModel = new EnvelopeViewModel(mockReporter.Object);
+        var viewModel = new EnvelopeViewModel
+        {
+            Envelope = envelope
+        };
 
         // Assert
         Assert.That(viewModel.Envelope, Is.EqualTo(envelope));
@@ -39,14 +34,16 @@ public class EnvelopeViewModelTests
     public async Task CanLaunch(string filePath, bool expectedCanLaunch)
     {
         // Arrange
-        Envelope? envelope = null;
-        var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.FilePath).Returns(filePath);
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult(envelope));
+        var envelope = new Envelope(new JsonObject(), [])
+        {
+            FilePath = filePath
+        };
 
         // Act
-        var viewModel = new EnvelopeViewModel(mockReporter.Object);
+        var viewModel = new EnvelopeViewModel
+        {
+            Envelope = envelope
+        };
         var canLaunch = await viewModel.LaunchCommand.CanExecute.FirstOrDefaultAsync();
 
         // Assert

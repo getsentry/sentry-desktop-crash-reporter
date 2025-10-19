@@ -33,9 +33,5 @@ public partial class FeedbackViewModel : ReactiveObject
 
         this.WhenAnyValue(x => x.Name, x => x.Email, x => x.Message)
             .Subscribe(_ => reporter.UpdateFeedback(new Feedback(Name, Email, Message)));
-
-        Observable.FromAsync(() => reporter.LoadAsync().AsTask())
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe(value => Envelope = value);
     }
 }

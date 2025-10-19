@@ -5,13 +5,8 @@ public class EventViewModelTests
     [Test]
     public void Defaults()
     {
-        // Arrange
-        var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Envelope?>(null));
-
         // Act
-        var viewModel = new EventViewModel(mockReporter.Object);
+        var viewModel = new EventViewModel();
 
         // Assert
         Assert.That(viewModel.Envelope, Is.Null.Or.Empty);
@@ -42,12 +37,12 @@ public class EventViewModelTests
             new JsonObject(),
             new List<EnvelopeItem> { eventItem }
         );
-        var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Envelope?>(envelope));
 
         // Act
-        var viewModel = new EventViewModel(mockReporter.Object);
+        var viewModel = new EventViewModel
+        {
+            Envelope = envelope
+        };
 
         // Assert
         Assert.That(viewModel.Envelope, Is.EqualTo(envelope));

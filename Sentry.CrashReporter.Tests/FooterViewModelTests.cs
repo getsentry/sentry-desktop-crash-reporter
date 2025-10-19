@@ -8,11 +8,8 @@ public class FooterViewModelTests
     public void Defaults()
     {
         // Arrange
-        Envelope? envelope = null;
         var mockReporter = new Mock<ICrashReporter>();
         var mockWindow = new Mock<IWindowService>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult(envelope));
 
         // Act
         var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object);
@@ -38,11 +35,12 @@ public class FooterViewModelTests
         );
         var mockReporter = new Mock<ICrashReporter>();
         var mockWindow = new Mock<IWindowService>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Envelope?>(envelope));
 
         // Act
-        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object);
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object)
+        {
+            Envelope = envelope
+        };
 
         // Assert
         Assert.That(viewModel.Dsn, Is.EqualTo("https://foo@bar.com/123"));
@@ -61,13 +59,14 @@ public class FooterViewModelTests
         );
         var mockReporter = new Mock<ICrashReporter>();
         var tcs = new TaskCompletionSource<object?>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Envelope?>(envelope));
         mockReporter.Setup(x => x.SubmitAsync(It.IsAny<CancellationToken>()))
             .Returns(tcs.Task);
         var mockWindow = new Mock<IWindowService>();
 
-        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object);
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object)
+        {
+            Envelope = envelope
+        };
         await viewModel.SubmitCommand.CanExecute.FirstAsync();
 
         // Act
@@ -90,13 +89,14 @@ public class FooterViewModelTests
             new List<EnvelopeItem>()
         );
         var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Envelope?>(envelope));
         mockReporter.Setup(x => x.SubmitAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Failure"));
         var mockWindow = new Mock<IWindowService>();
 
-        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object);
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object)
+        {
+            Envelope = envelope
+        };
         await viewModel.SubmitCommand.CanExecute.FirstAsync();
 
         // Act
@@ -111,10 +111,7 @@ public class FooterViewModelTests
     public async Task CannotSubmit()
     {
         // Arrange
-        Envelope? envelope = null;
         var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult(envelope));
         var mockWindow = new Mock<IWindowService>();
 
         // Act
@@ -134,12 +131,13 @@ public class FooterViewModelTests
             new List<EnvelopeItem>()
         );
         var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Envelope?>(envelope));
         var mockWindow = new Mock<IWindowService>();
 
         // Act
-        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object);
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object)
+        {
+            Envelope = envelope
+        };
         var canSubmit = await viewModel.SubmitCommand.CanExecute.FirstOrDefaultAsync();
 
         // Assert
@@ -155,11 +153,12 @@ public class FooterViewModelTests
             new List<EnvelopeItem>()
         );
         var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Envelope?>(envelope));
         var mockWindow = new Mock<IWindowService>();
 
-        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object);
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object)
+        {
+            Envelope = envelope
+        };
         await viewModel.SubmitCommand.CanExecute.FirstAsync();
 
         // Act

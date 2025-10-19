@@ -16,7 +16,7 @@ public class CrashReporterTests
 
         // Assert
         Assert.That(envelope, Is.Not.Null);
-        Assert.That(reporter.FilePath, Is.EqualTo(filePath));
+        Assert.That(envelope!.FilePath, Is.EqualTo(filePath));
     }
 
     [Test]
@@ -31,7 +31,6 @@ public class CrashReporterTests
 
         // Assert
         Assert.That(envelope, Is.Null);
-        Assert.That(reporter.FilePath, Is.Empty);
     }
 
     [Test]

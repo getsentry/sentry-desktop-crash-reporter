@@ -18,6 +18,7 @@ public class MainViewModelTests
         Assert.That(viewModel.SelectedIndex, Is.EqualTo(0));
         Assert.That(viewModel.Subtitle, Is.EqualTo("Feedback (optional)"));
         Assert.That(viewModel.Attachments, Is.Null.Or.Empty);
+        mockReporter.Verify(r => r.LoadAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -34,6 +35,7 @@ public class MainViewModelTests
 
         // Assert
         Assert.That(viewModel.IsExecuting, Is.True);
+        mockReporter.Verify(r => r.LoadAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -52,6 +54,7 @@ public class MainViewModelTests
 
         // Assert
         Assert.That(viewModel.IsExecuting, Is.False);
+        mockReporter.Verify(r => r.LoadAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -63,17 +66,22 @@ public class MainViewModelTests
     public void MainViewModel_ResolveSubtitle(int index, string filePath, string expectedSubtitle)
     {
         // Arrange
+        var envelope = new Envelope(new JsonObject(), [])
+        {
+            FilePath = filePath
+        };
         var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.FilePath).Returns(filePath);
-    
+
         // Act
         var viewModel = new MainViewModel(mockReporter.Object)
         {
-            SelectedIndex = index
+            SelectedIndex = index,
+            Envelope = envelope
         };
 
         // Assert
         Assert.That(viewModel.Subtitle, Is.EqualTo(expectedSubtitle));
+        mockReporter.Verify(r => r.LoadAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -108,5 +116,6 @@ public class MainViewModelTests
         Assert.That(viewModel.Attachments[0].Data, Is.EqualTo(attachment1.Data));
         Assert.That(viewModel.Attachments[1].Filename, Is.EqualTo(attachment2.Filename));
         Assert.That(viewModel.Attachments[1].Data, Is.EqualTo(attachment2.Data));
+        mockReporter.Verify(r => r.LoadAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

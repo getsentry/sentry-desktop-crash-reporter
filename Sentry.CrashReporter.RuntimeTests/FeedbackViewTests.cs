@@ -58,7 +58,7 @@ public class FeedbackViewTests : RuntimeTestBase
         var envelope = new Envelope(new JsonObject { ["dsn"] = "https://foo@bar.com/123", ["event_id"] = "12345678901234567890123456789012" }, []);
         _ = MockCrashReporter(envelope);
 
-        var view = new FeedbackView();
+        var view = new FeedbackView().Envelope(envelope);
         await LoadTestContent(view);
 
         var nameTextBox = view.FindFirstDescendant<TextBox>(tb => tb.PlaceholderText == "Name")!;
@@ -78,7 +78,7 @@ public class FeedbackViewTests : RuntimeTestBase
         var envelope = new Envelope(new JsonObject(), []);
         _ = MockCrashReporter(envelope);
 
-        var view = new FeedbackView();
+        var view = new FeedbackView().Envelope(envelope);
         await LoadTestContent(view);
         
         var nameTextBox = view.FindFirstDescendant<TextBox>(tb => tb.PlaceholderText == "Name")!;

@@ -5,13 +5,8 @@ public class AttachmentViewModelTests
     [Test]
     public void Defaults()
     {
-        // Arrange
-        var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Envelope?>(null));
-
         // Act
-        var viewModel = new AttachmentViewModel(mockReporter.Object);
+        var viewModel = new AttachmentViewModel();
 
         // Assert
         Assert.That(viewModel.Envelope, Is.Null.Or.Empty);
@@ -33,12 +28,12 @@ public class AttachmentViewModelTests
             new JsonObject(),
             new List<EnvelopeItem> { eventItem, attachmentItem }
         );
-        var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Envelope?>(envelope));
 
         // Act
-        var viewModel = new AttachmentViewModel(mockReporter.Object);
+        var viewModel = new AttachmentViewModel
+        {
+            Envelope = envelope
+        };
 
         // Assert
         Assert.That(viewModel.Envelope, Is.EqualTo(envelope));

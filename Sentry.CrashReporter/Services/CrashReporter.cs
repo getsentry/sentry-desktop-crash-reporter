@@ -8,7 +8,6 @@ public record Feedback(string? Name, string? Email, string Message);
 public interface ICrashReporter
 {
     string? Dsn { get; }
-    string FilePath { get; }
     Feedback? Feedback { get; }
     public Task<Envelope?> LoadAsync(CancellationToken cancellationToken = default);
     public Task SubmitAsync(CancellationToken cancellationToken = default);
@@ -22,7 +21,6 @@ public class CrashReporter : ICrashReporter
     private Feedback? _feedback;
 
     public string? Dsn { get; private set; }
-    public string FilePath { get; }
     public Feedback? Feedback => _feedback;
 
     public CrashReporter(StorageFile? file = null, ISentryClient? client = null)
@@ -30,7 +28,6 @@ public class CrashReporter : ICrashReporter
         _client = client ?? App.Services.GetRequiredService<ISentryClient>();
         _feedback = ResolveFeedback();
         Dsn = Environment.GetEnvironmentVariable("SENTRY_TEST_DSN");
-        FilePath = file?.Path ?? string.Empty;
         _ = InitAsync(file);
     }
 
@@ -45,16 +42,15 @@ public class CrashReporter : ICrashReporter
         try
         {
             var stopwatch = Stopwatch.StartNew();
-            await using var stream = await file.OpenStreamForReadAsync();
-            var envelope = await Envelope.DeserializeAsync(stream, cancellationToken);
+            var envelope = await Envelope.FromStorageFileAsync(file, cancellationToken);
             stopwatch.Stop();
-            this.Log().LogInformation($"Loaded {FilePath} in {stopwatch.ElapsedMilliseconds} ms.");
+            this.Log().LogInformation($"Loaded {file.Path} in {stopwatch.ElapsedMilliseconds} ms.");
             Dsn ??= envelope.TryGetDsn();
             _envelope.SetResult(envelope);
         }
         catch (Exception ex)
         {
-            this.Log().LogError(ex, $"Failed to load envelope from {FilePath}");
+            this.Log().LogError(ex, $"Failed to load envelope from {file.Path}");
             // TODO: propagate error
             // _envelope.SetException(ex);
             _envelope.SetResult(null);

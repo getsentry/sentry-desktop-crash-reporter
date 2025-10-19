@@ -108,6 +108,7 @@ public sealed class EnvelopeItem(JsonObject header, byte[] payload)
 
 public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> items)
 {
+    public string? FilePath { get; internal set; }
     public JsonObject Header { get; } = header;
     public IReadOnlyList<EnvelopeItem> Items { get; } = items;
 
@@ -203,6 +204,25 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
         {
             await item.SerializeAsync(stream, cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    public static async Task<Envelope> FromStorageFileAsync(
+        StorageFile storageFile,
+        CancellationToken cancellationToken = default)
+    {
+        await using var stream = await storageFile.OpenStreamForReadAsync();
+        var envelope = await DeserializeAsync(stream, cancellationToken);
+        envelope.FilePath = storageFile.Path;
+        return envelope;
+    }
+
+    public static async Task<Envelope> FromFileStreamAsync(
+        FileStream fileStream,
+        CancellationToken cancellationToken = default)
+    {
+        var envelope = await DeserializeAsync(fileStream, cancellationToken);
+        envelope.FilePath = fileStream.Name;
+        return envelope;
     }
 
     public static async Task<Envelope> DeserializeAsync(

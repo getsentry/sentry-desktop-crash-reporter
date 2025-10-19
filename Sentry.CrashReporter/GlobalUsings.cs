@@ -12,4 +12,5 @@ global using ReactiveUI;
 global using ReactiveUI.Uno;
 global using ReactiveUI.SourceGenerators;
 global using System.Reactive.Linq;
+global using Uno.Disposables;
 global using Windows.System;

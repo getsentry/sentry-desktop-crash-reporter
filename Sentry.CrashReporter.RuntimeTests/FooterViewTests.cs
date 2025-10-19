@@ -36,7 +36,7 @@ public class FooterViewTests : RuntimeTestBase
         _ = MockCrashReporter(envelope);
 
         // Act
-        var view = new FooterView();
+        var view = new FooterView().Envelope(envelope);
         await LoadTestContent(view);
 
         // Assert
@@ -67,7 +67,7 @@ public class FooterViewTests : RuntimeTestBase
         mockReporter.Setup(r => r.SubmitAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
 
         // Act
-        var view = new FooterView();
+        var view = new FooterView().Envelope(envelope);
         await LoadTestContent(view);
         view.FindFirstDescendant<Button>("submitButton")?.Command.Execute(null);
         await Task.Yield();
@@ -102,7 +102,7 @@ public class FooterViewTests : RuntimeTestBase
         mockReporter.Setup(r => r.SubmitAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Something went wrong"));
 
         // Act
-        var view = new FooterView();
+        var view = new FooterView().Envelope(envelope);
         await LoadTestContent(view);
         view.FindFirstDescendant<Button>("submitButton")?.Command.Execute(null);
         await UnitTestsUIContentHelper.WaitForIdle();
@@ -132,7 +132,7 @@ public class FooterViewTests : RuntimeTestBase
         var (mockReporter, mockWindow) = MockCrashReporter(envelope);
 
         // Act
-        var view = new FooterView();
+        var view = new FooterView().Envelope(envelope);
         var submitButton = view.FindFirstDescendant<Button>("submitButton");
         submitButton?.Command.Execute(null);
 

@@ -1,6 +1,5 @@
 using System.Text.Json.Nodes;
 using Sentry.CrashReporter.Extensions;
-using Sentry.CrashReporter.Services;
 
 namespace Sentry.CrashReporter.ViewModels;
 
@@ -14,10 +13,8 @@ public partial class EventViewModel : ReactiveObject
     [ObservableAsProperty] private JsonObject? _extra;
     [ObservableAsProperty] private JsonObject? _sdk;
 
-    public EventViewModel(ICrashReporter? reporter = null)
+    public EventViewModel()
     {
-        reporter ??= App.Services.GetRequiredService<ICrashReporter>();
-
         _eventHelper = this.WhenAnyValue(x => x.Envelope)
             .Select(envelope => envelope?.TryGetEvent())
             .ToProperty(this, x => x.Event);
@@ -41,9 +38,5 @@ public partial class EventViewModel : ReactiveObject
         _sdkHelper = this.WhenAnyValue(x => x.Payload)
             .Select(payload => payload?.TryGetProperty("sdk")?.AsFlatObject())
             .ToProperty(this, x => x.Sdk);
-
-        Observable.FromAsync(() => reporter.LoadAsync().AsTask())
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe(envelope => Envelope = envelope);
     }
 }

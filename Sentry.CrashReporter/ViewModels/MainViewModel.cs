@@ -11,24 +11,27 @@ public partial class MainViewModel : ReactiveObject, ILoadable
     [Reactive] private int _selectedIndex;
     [ObservableAsProperty] private string _subtitle = string.Empty;
     [ObservableAsProperty] private List<Attachment>? _attachments;
-    private readonly string? _fileName;
+    [ObservableAsProperty] private string? _fileName = string.Empty;
 
     public event EventHandler? IsExecutingChanged;
 
     public MainViewModel(ICrashReporter? reporter = null)
     {
         reporter ??= App.Services.GetRequiredService<ICrashReporter>();
-        _fileName = Path.GetFileName(reporter.FilePath);
 
         this.WhenAnyValue(x => x.IsExecuting)
             .Subscribe(x => IsExecutingChanged?.Invoke(this, EventArgs.Empty));
 
-        _subtitleHelper = this.WhenAnyValue(x => x.SelectedIndex, ResolveSubtitle)
+        _subtitleHelper = this.WhenAnyValue(x => x.SelectedIndex, y => y.FileName, ResolveSubtitle)
             .ToProperty(this, x => x.Subtitle);
 
         _attachmentsHelper = this.WhenAnyValue(x => x.Envelope)
             .Select(envelope => envelope?.TryGetAttachments())
             .ToProperty(this, x => x.Attachments);
+
+        _fileNameHelper = this.WhenAnyValue(x => x.Envelope)
+            .Select(envelope => Path.GetFileName(envelope?.FilePath))
+            .ToProperty(this, x => x.FileName);
 
         IsExecuting = true;
 
@@ -41,14 +44,14 @@ public partial class MainViewModel : ReactiveObject, ILoadable
             });
     }
 
-    private string ResolveSubtitle(int index)
+    private static string ResolveSubtitle(int index, string? fileName)
     {
         return index switch
         {
             0 => "Feedback (optional)",
             1 => "Event",
             2 => "Attachments",
-            _ => string.IsNullOrEmpty(_fileName) ? "Envelope" : $"Envelope ({_fileName})",
+            _ => string.IsNullOrEmpty(fileName) ? "Envelope" : $"Envelope ({fileName})",
         };
     }
 }

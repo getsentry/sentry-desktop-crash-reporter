@@ -30,7 +30,8 @@ public sealed class MainPage : Page
                             .RowDefinitions("Auto,Auto,*,Auto")
                             .Children(
                                 new HeaderView()
-                                    .Grid(row: 0),
+                                    .Grid(row: 0)
+                                    .Envelope(x => x.Binding(() => vm.Envelope)),
                                 new Grid()
                                     .Grid(row: 1)
                                     .ColumnDefinitions("*,Auto")
@@ -67,18 +68,23 @@ public sealed class MainPage : Page
                                     .Children(
                                         new FeedbackView()
                                             .Region(name: "feedback")
-                                            .Visibility(Visibility.Visible),
+                                            .Visibility(Visibility.Visible)
+                                            .Envelope(x => x.Binding(() => vm.Envelope)),
                                         new EventView()
                                             .Region(name: "event")
-                                            .Visibility(Visibility.Collapsed),
+                                            .Visibility(Visibility.Collapsed)
+                                            .Envelope(x => x.Binding(() => vm.Envelope)),
                                         new AttachmentView()
                                             .Region(name: "attachment")
-                                            .Visibility(Visibility.Collapsed),
+                                            .Visibility(Visibility.Collapsed)
+                                            .Envelope(x => x.Binding(() => vm.Envelope)),
                                         new EnvelopeView()
                                             .Region(name: "envelope")
-                                            .Visibility(Visibility.Collapsed)),
+                                            .Visibility(Visibility.Collapsed)
+                                            .Envelope(x => x.Binding(() => vm.Envelope))),
                                 new FooterView()
-                                    .Grid(row: 3))))));
+                                    .Grid(row: 3)
+                                    .Envelope(x => x.Binding(() => vm.Envelope)))))));
     }
 
     private static KeyboardAccelerator[] GetKeyboardAccelerators()

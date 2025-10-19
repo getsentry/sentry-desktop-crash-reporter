@@ -17,7 +17,6 @@ public class FeedbackViewModelTests
         Assert.That(viewModel.Name, Is.Null.Or.Empty);
         Assert.That(viewModel.Email, Is.Null.Or.Empty);
         Assert.That(viewModel.Message, Is.Null.Or.Empty);
-        mockReporter.Verify(r => r.LoadAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -35,7 +34,6 @@ public class FeedbackViewModelTests
         Assert.That(viewModel.Name, Is.EqualTo(feedback.Name));
         Assert.That(viewModel.Email, Is.EqualTo(feedback.Email));
         Assert.That(viewModel.Message, Is.EqualTo(feedback.Message));
-        mockReporter.Verify(r => r.LoadAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -50,10 +48,12 @@ public class FeedbackViewModelTests
             new List<EnvelopeItem>()
         );
         var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>())).Returns(Task.FromResult<Envelope?>(envelope));
 
         // Act
-        var viewModel = new FeedbackViewModel(mockReporter.Object);
+        var viewModel = new FeedbackViewModel(mockReporter.Object)
+        {
+            Envelope = envelope
+        };
 
         // Assert
         Assert.That(viewModel.IsEnabled, Is.EqualTo(expectedEnabled));
