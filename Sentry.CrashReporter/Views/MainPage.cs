@@ -1,5 +1,6 @@
 using CommunityToolkit.WinUI.Converters;
 using Sentry.CrashReporter.Controls;
+using Sentry.CrashReporter.Converters;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.ViewModels;
 
@@ -8,6 +9,16 @@ namespace Sentry.CrashReporter.Views;
 public sealed class MainPage : Page
 {
     private static readonly CollectionVisibilityConverter ToVisibility = new();
+    private static readonly EmptyObjectToObjectConverter ErrorToVisible = new()
+    {
+        EmptyValue = Visibility.Collapsed,
+        NotEmptyValue = Visibility.Visible
+    };
+    private static readonly EmptyObjectToObjectConverter ErrorToCollapsed = new()
+    {
+        EmptyValue = Visibility.Visible,
+        NotEmptyValue = Visibility.Collapsed
+    };
 
     public MainPage()
     {
@@ -42,6 +53,7 @@ public sealed class MainPage : Page
                                         new Segmented()
                                             .Name(out var segmented)
                                             .Grid(column: 1)
+                                            .Visibility(x => x.Binding(() => vm.Error).Converter(ErrorToCollapsed))
                                             .SelectedIndex(x => x.Binding(() => vm.SelectedIndex).TwoWay())
                                             .Items(
                                                 new SegmentedItem()
@@ -63,25 +75,31 @@ public sealed class MainPage : Page
                                                     .ToolTip("Envelope")
                                                     .Navigation(request: "envelope"))),
                                 new Grid()
-                                    .Region(attached: true, navigator: "Visibility")
                                     .Grid(row: 2)
                                     .Children(
-                                        new FeedbackView()
-                                            .Region(name: "feedback")
-                                            .Visibility(Visibility.Visible)
-                                            .Envelope(x => x.Binding(() => vm.Envelope)),
-                                        new EventView()
-                                            .Region(name: "event")
-                                            .Visibility(Visibility.Collapsed)
-                                            .Envelope(x => x.Binding(() => vm.Envelope)),
-                                        new AttachmentView()
-                                            .Region(name: "attachment")
-                                            .Visibility(Visibility.Collapsed)
-                                            .Envelope(x => x.Binding(() => vm.Envelope)),
-                                        new EnvelopeView()
-                                            .Region(name: "envelope")
-                                            .Visibility(Visibility.Collapsed)
-                                            .Envelope(x => x.Binding(() => vm.Envelope))),
+                                        new ErrorView()
+                                            .Error(x => x.Binding(() => vm.Error))
+                                            .Visibility(x => x.Binding(() => vm.Error).Converter(ErrorToVisible)),
+                                        new Grid()
+                                            .Region(attached: true, navigator: "Visibility")
+                                            .Visibility(x => x.Binding(() => vm.Error).Converter(ErrorToCollapsed))
+                                            .Children(
+                                                new FeedbackView()
+                                                    .Region(name: "feedback")
+                                                    .Visibility(Visibility.Visible)
+                                                    .Envelope(x => x.Binding(() => vm.Envelope)),
+                                                new EventView()
+                                                    .Region(name: "event")
+                                                    .Visibility(Visibility.Collapsed)
+                                                    .Envelope(x => x.Binding(() => vm.Envelope)),
+                                                new AttachmentView()
+                                                    .Region(name: "attachment")
+                                                    .Visibility(Visibility.Collapsed)
+                                                    .Envelope(x => x.Binding(() => vm.Envelope)),
+                                                new EnvelopeView()
+                                                    .Region(name: "envelope")
+                                                    .Visibility(Visibility.Collapsed)
+                                                    .Envelope(x => x.Binding(() => vm.Envelope)))),
                                 new FooterView()
                                     .Grid(row: 3)
                                     .Envelope(x => x.Binding(() => vm.Envelope)))))));

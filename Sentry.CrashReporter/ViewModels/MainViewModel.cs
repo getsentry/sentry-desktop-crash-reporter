@@ -9,6 +9,7 @@ public partial class MainViewModel : ReactiveObject, ILoadable
     [Reactive] private Envelope? _envelope;
     [Reactive] private bool _isExecuting;
     [Reactive] private int _selectedIndex;
+    [Reactive] private Exception? _error;
     [ObservableAsProperty] private string _subtitle = string.Empty;
     [ObservableAsProperty] private List<Attachment>? _attachments;
     [ObservableAsProperty] private string? _fileName = string.Empty;
@@ -22,7 +23,7 @@ public partial class MainViewModel : ReactiveObject, ILoadable
         this.WhenAnyValue(x => x.IsExecuting)
             .Subscribe(x => IsExecutingChanged?.Invoke(this, EventArgs.Empty));
 
-        _subtitleHelper = this.WhenAnyValue(x => x.SelectedIndex, y => y.FileName, ResolveSubtitle)
+        _subtitleHelper = this.WhenAnyValue(x => x.SelectedIndex, x => x.FileName, x => x.Error, ResolveSubtitle)
             .ToProperty(this, x => x.Subtitle);
 
         _attachmentsHelper = this.WhenAnyValue(x => x.Envelope)
@@ -37,20 +38,28 @@ public partial class MainViewModel : ReactiveObject, ILoadable
 
         Observable.FromAsync(() => reporter.LoadAsync())
             .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe(value =>
-            {
-                Envelope = value;
-                IsExecuting = false;
-            });
+            .Subscribe(
+                onNext: value =>
+                {
+                    Envelope = value;
+                    Error = null;
+                    IsExecuting = false;
+                },
+                onError: ex =>
+                {
+                    Error = ex;
+                    IsExecuting = false;
+                });
     }
 
-    private static string ResolveSubtitle(int index, string? fileName)
+    private static string ResolveSubtitle(int index, string? fileName, Exception? error)
     {
-        return index switch
+        return (error, index) switch
         {
-            0 => "Feedback (optional)",
-            1 => "Event",
-            2 => "Attachments",
+            (not null, _) => "Something went wrong",
+            (_, 0) => "Feedback (optional)",
+            (_, 1) => "Event",
+            (_, 2) => "Attachments",
             _ => string.IsNullOrEmpty(fileName) ? "Envelope" : $"Envelope ({fileName})",
         };
     }

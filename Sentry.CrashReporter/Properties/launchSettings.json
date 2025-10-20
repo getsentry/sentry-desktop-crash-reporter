@@ -22,6 +22,11 @@
       "compatibleTargetFramework": "desktop",
       "commandLineArgs": "$(SolutionDir)/Sentry.CrashReporter.Tests/data/breakpad.envelope"
     },
+    "Sentry.CrashReporter (Desktop, invalid.envelope)": {
+      "commandName": "Project",
+      "compatibleTargetFramework": "desktop",
+      "commandLineArgs": "$(SolutionDir)/Sentry.CrashReporter.Tests/data/invalid.envelope"
+    },
     "Sentry.CrashReporter (WebAssembly)": {
       "commandName": "Project",
       "dotnetRunMessages": true,
