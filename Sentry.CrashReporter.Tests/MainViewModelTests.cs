@@ -50,7 +50,7 @@ public class MainViewModelTests
         // Act
         var viewModel = new MainViewModel(mockReporter.Object);
         taskCompletionSource.SetResult(null);
-        await Task.Yield();
+        await Task.Delay(TimeSpan.FromMilliseconds(1));
 
         // Assert
         Assert.That(viewModel.IsExecuting, Is.False);

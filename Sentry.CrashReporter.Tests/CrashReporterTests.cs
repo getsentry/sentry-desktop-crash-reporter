@@ -23,9 +23,9 @@ public class CrashReporterTests
     public async Task LoadAsync_Null()
     {
         // Arrange
-        var file = new Mock<IStorageFile>();
+        App.Services = new NullServiceProvider();
         var client = new Mock<ISentryClient>();
-        var reporter = new Services.CrashReporter(file.Object, client.Object);
+        var reporter = new Services.CrashReporter(null, client.Object);
 
         // Act
         var envelope = await reporter.LoadAsync();
@@ -106,4 +106,9 @@ public class CrashReporterTests
         // Assert
         Assert.That(ex?.Message, Does.Match(@"\bDSN\b"));
     }
+}
+
+internal class NullServiceProvider : IServiceProvider
+{
+    public object? GetService(Type serviceType) => null;
 }
