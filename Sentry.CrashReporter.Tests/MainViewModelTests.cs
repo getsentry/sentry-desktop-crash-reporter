@@ -50,7 +50,7 @@ public class MainViewModelTests
         // Act
         var viewModel = new MainViewModel(mockReporter.Object);
         taskCompletionSource.SetResult(null);
-        await Task.Yield();
+        await Task.Delay(TimeSpan.FromMilliseconds(1));
 
         // Assert
         Assert.That(viewModel.IsExecuting, Is.False);
@@ -116,6 +116,24 @@ public class MainViewModelTests
         Assert.That(viewModel.Attachments[0].Data, Is.EqualTo(attachment1.Data));
         Assert.That(viewModel.Attachments[1].Filename, Is.EqualTo(attachment2.Filename));
         Assert.That(viewModel.Attachments[1].Data, Is.EqualTo(attachment2.Data));
+        mockReporter.Verify(r => r.LoadAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task MainViewModel_Error()
+    {
+        // Arrange
+        var mockReporter = new Mock<ICrashReporter>();
+        var exception = new Exception("test");
+        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(exception);
+
+        // Act
+        var viewModel = new MainViewModel(mockReporter.Object);
+        await Task.Yield();
+
+        // Assert
+        Assert.That(viewModel.Error, Is.EqualTo(exception));
         mockReporter.Verify(r => r.LoadAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

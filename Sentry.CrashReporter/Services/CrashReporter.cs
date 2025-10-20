@@ -28,20 +28,11 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
             return null;
         }
 
-        try
-        {
-            var stopwatch = Stopwatch.StartNew();
-            var envelope = await Envelope.FromStorageFileAsync(_file, cancellationToken);
-            stopwatch.Stop();
-            this.Log().LogInformation($"Loaded {_file.Path} in {stopwatch.ElapsedMilliseconds} ms.");
-            return envelope;
-        }
-        catch (Exception ex)
-        {
-            this.Log().LogError(ex, $"Failed to load envelope from {_file.Path}");
-            // TODO: propagate error
-            return null;
-        }
+        var stopwatch = Stopwatch.StartNew();
+        var envelope = await Envelope.FromStorageFileAsync(_file, cancellationToken);
+        stopwatch.Stop();
+        this.Log().LogInformation($"Loaded {_file.Path} in {stopwatch.ElapsedMilliseconds} ms.");
+        return envelope;
     }
 
     public async Task SubmitAsync(Envelope envelope, CancellationToken cancellationToken = default)
