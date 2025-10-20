@@ -16,22 +16,22 @@ public class CrashReporterTests
 
         // Assert
         Assert.That(envelope, Is.Not.Null);
-        Assert.That(reporter.FilePath, Is.EqualTo(filePath));
+        Assert.That(envelope!.FilePath, Is.EqualTo(filePath));
     }
 
     [Test]
     public async Task LoadAsync_Null()
     {
         // Arrange
+        var file = new Mock<IStorageFile>();
         var client = new Mock<ISentryClient>();
-        var reporter = new Services.CrashReporter(null, client.Object);
+        var reporter = new Services.CrashReporter(file.Object, client.Object);
 
         // Act
         var envelope = await reporter.LoadAsync();
 
         // Assert
         Assert.That(envelope, Is.Null);
-        Assert.That(reporter.FilePath, Is.Empty);
     }
 
     [Test]
@@ -45,7 +45,7 @@ public class CrashReporterTests
 
         // Act
         var envelope = await reporter.LoadAsync();
-        await reporter.SubmitAsync();
+        await reporter.SubmitAsync(envelope!);
 
         // Assert
         Assert.That(envelope, Is.Not.Null);
@@ -71,7 +71,7 @@ public class CrashReporterTests
         // Act
         var envelope = await reporter.LoadAsync();
         reporter.UpdateFeedback(feedback);
-        await reporter.SubmitAsync();
+        await reporter.SubmitAsync(envelope!);
 
         // Assert
         Assert.That(envelope, Is.Not.Null);
@@ -100,8 +100,8 @@ public class CrashReporterTests
         var reporter = new Services.CrashReporter(file, client.Object);
 
         // Act
-        await reporter.LoadAsync();
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => reporter.SubmitAsync());
+        var envelope = await reporter.LoadAsync();
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => reporter.SubmitAsync(envelope!));
 
         // Assert
         Assert.That(ex?.Message, Does.Match(@"\bDSN\b"));

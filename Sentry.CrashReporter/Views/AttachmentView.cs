@@ -7,17 +7,33 @@ namespace Sentry.CrashReporter.Views;
 
 public class AttachmentView : ReactiveUserControl<AttachmentViewModel>
 {
+    public static readonly DependencyProperty EnvelopeProperty = DependencyProperty.Register(
+        nameof(Envelope), typeof(Envelope), typeof(AttachmentView), new PropertyMetadata(null));
+
+    public Envelope? Envelope
+    {
+        get => (Envelope)GetValue(EnvelopeProperty);
+        set => SetValue(EnvelopeProperty, value);
+    }
+
     public AttachmentView()
     {
         ViewModel = new AttachmentViewModel();
-        this.DataContext(ViewModel, (view, vm) => view
-            .Content(new ScrollViewer()
+        this.WhenActivated(d =>
+        {
+            this.WhenAnyValue(v => v.Envelope)
+                .BindTo(ViewModel, vm => vm.Envelope)
+                .DisposeWith(d);
+        });
+
+        this.Content(new ScrollViewer()
+            .DataContext(ViewModel, (view, vm) => view 
                 .Content(new StackPanel()
                     .Orientation(Orientation.Vertical)
                     .Spacing(8)
                     .Children(new AttachmentGrid()
                         .Data(x => x.Binding(() => vm.Attachments))
-                        .OnLaunch(a => _ = view.ViewModel?.Launch(a))))));
+                        .OnLaunch(a => _ = ViewModel?.Launch(a))))));
     }
 }
 

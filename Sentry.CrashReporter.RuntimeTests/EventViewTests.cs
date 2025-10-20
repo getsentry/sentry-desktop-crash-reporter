@@ -59,7 +59,7 @@ public class EventViewTests : RuntimeTestBase
         _ = MockCrashReporter(envelope);
 
         // Act
-        var view = new EventView();
+        var view = new EventView().Envelope(envelope);
         await LoadTestContent(view);
 
         var tagsExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Tags");
@@ -107,7 +107,7 @@ public class EventViewTests : RuntimeTestBase
         _ = MockCrashReporter(envelope);
 
         // Act
-        var view = new EventView();
+        var view = new EventView().Envelope(envelope);
         await LoadTestContent(view);
 
         var tagsExpander = view.FindFirstDescendant<Expander>(e => e.Header.ToString() == "Tags");

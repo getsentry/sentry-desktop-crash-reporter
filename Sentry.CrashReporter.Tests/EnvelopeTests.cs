@@ -6,7 +6,7 @@ public class EnvelopeTests
     public async Task ParseTwoItems()
     {
         await using var file = File.OpenRead("data/two_items.envelope");
-        var envelope = await Envelope.DeserializeAsync(file);
+        var envelope = await Envelope.FromFileStreamAsync(file);
 
         envelope.TryGetDsn().Should().Be("https://e12d836b15bb49d7bbf99e64295d995b:@sentry.io/42");
         envelope.TryGetEventId().Should().Be("9ec79c33ec9942ab8353589fcb2e04dc");

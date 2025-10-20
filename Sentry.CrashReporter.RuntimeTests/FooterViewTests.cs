@@ -36,7 +36,7 @@ public class FooterViewTests : RuntimeTestBase
         _ = MockCrashReporter(envelope);
 
         // Act
-        var view = new FooterView();
+        var view = new FooterView().Envelope(envelope);
         await LoadTestContent(view);
 
         // Assert
@@ -64,10 +64,10 @@ public class FooterViewTests : RuntimeTestBase
         var envelope = new Envelope(new JsonObject { { "dsn", "https://foo@bar.com/123" }, { "event_id" , "12345678901234567890123456789012" } }, []);
         var (mockReporter, _) = MockCrashReporter(envelope);
         var tcs = new TaskCompletionSource();
-        mockReporter.Setup(r => r.SubmitAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
+        mockReporter.Setup(r => r.SubmitAsync(envelope, It.IsAny<CancellationToken>())).Returns(tcs.Task);
 
         // Act
-        var view = new FooterView();
+        var view = new FooterView().Envelope(envelope);
         await LoadTestContent(view);
         view.FindFirstDescendant<Button>("submitButton")?.Command.Execute(null);
         await Task.Yield();
@@ -99,10 +99,10 @@ public class FooterViewTests : RuntimeTestBase
         // Arrange
         var envelope = new Envelope(new JsonObject { { "dsn", "https://foo@bar.com/123" }, { "event_id" , "12345678901234567890123456789012" } }, []);
         var (mockReporter, _) = MockCrashReporter(envelope);
-        mockReporter.Setup(r => r.SubmitAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Something went wrong"));
+        mockReporter.Setup(r => r.SubmitAsync(envelope, It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Something went wrong"));
 
         // Act
-        var view = new FooterView();
+        var view = new FooterView().Envelope(envelope);
         await LoadTestContent(view);
         view.FindFirstDescendant<Button>("submitButton")?.Command.Execute(null);
         await UnitTestsUIContentHelper.WaitForIdle();
@@ -125,30 +125,34 @@ public class FooterViewTests : RuntimeTestBase
     }
 
     [TestMethod]
-    public void FooterView_Submit_AndCloseWindow()
+    public async Task FooterView_Submit_AndCloseWindow()
     {
         // Arrange
         var envelope = new Envelope(new JsonObject { { "dsn", "https://foo@bar.com/123" }, { "event_id", "12345678901234567890123456789012" } }, []);
         var (mockReporter, mockWindow) = MockCrashReporter(envelope);
 
         // Act
-        var view = new FooterView();
+        var view = new FooterView().Envelope(envelope);
+        await LoadTestContent(view);
+
         var submitButton = view.FindFirstDescendant<Button>("submitButton");
         submitButton?.Command.Execute(null);
 
         // Assert
-        mockReporter.Verify(x => x.SubmitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        mockReporter.Verify(x => x.SubmitAsync(envelope, It.IsAny<CancellationToken>()), Times.Once);
         mockWindow.Verify(x => x.Close(), Times.Once);
     }
 
     [TestMethod]
-    public void FooterView_Cancel_ClosesWindow()
+    public async Task FooterView_Cancel_ClosesWindow()
     {
         // Arrange
         var (_, mockWindow) = MockCrashReporter();
 
         // Act
         var view = new FooterView();
+        await LoadTestContent(view);
+
         var cancelButton = view.FindFirstDescendant<Button>("cancelButton");
         cancelButton?.Command.Execute(null);
 

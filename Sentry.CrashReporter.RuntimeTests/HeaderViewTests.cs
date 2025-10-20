@@ -5,34 +5,35 @@ namespace Sentry.CrashReporter.RuntimeTests;
 public class HeaderViewTests : RuntimeTestBase
 {
     [TestMethod]
-    public void HeaderView_CanBeCreated()
+    public async Task HeaderView_CanBeCreated()
     {
         // Arrange
         _ = MockCrashReporter();
 
         // Act
         var view = new HeaderView();
-        var exceptionLabel = view.FindFirstDescendant<FrameworkElement>(d => d.Name == "exceptionLabel");
-        var releaseLabel = view.FindFirstDescendant<FrameworkElement>(d => d.Name == "releaseLabel");
-        var osLabel = view.FindFirstDescendant<FrameworkElement>(d => d.Name == "osLabel");
-        var environmentLabel = view.FindFirstDescendant<FrameworkElement>(d => d.Name == "environmentLabel");
+        await LoadTestContent(view);
 
         // Assert
+        var exceptionLabel = view.FindFirstDescendant<FrameworkElement>(d => d.Name == "exceptionLabel");
         Assert.IsNotNull(exceptionLabel);
         Assert.AreEqual(Visibility.Collapsed, exceptionLabel.Visibility);
 
+        var releaseLabel = view.FindFirstDescendant<FrameworkElement>(d => d.Name == "releaseLabel");
         Assert.IsNotNull(releaseLabel);
         Assert.AreEqual(Visibility.Collapsed, releaseLabel.Visibility);
 
+        var osLabel = view.FindFirstDescendant<FrameworkElement>(d => d.Name == "osLabel");
         Assert.IsNotNull(osLabel);
         Assert.AreEqual(Visibility.Collapsed, osLabel.Visibility);
 
+        var environmentLabel = view.FindFirstDescendant<FrameworkElement>(d => d.Name == "environmentLabel");
         Assert.IsNotNull(environmentLabel);
         Assert.AreEqual(Visibility.Collapsed, environmentLabel.Visibility);
     }
 
     [TestMethod]
-    public void HeaderView_DisplaysException()
+    public async Task HeaderView_DisplaysException()
     {
         // Arrange
         var envelope = new Envelope(new JsonObject(), [
@@ -46,16 +47,17 @@ public class HeaderViewTests : RuntimeTestBase
         _ = MockCrashReporter(envelope);
 
         // Act
-        var view = new HeaderView();
-        var exceptionLabel = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "SIGSEGV");
+        var view = new HeaderView().Envelope(envelope);
+        await LoadTestContent(view);
 
         // Assert
+        var exceptionLabel = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "SIGSEGV");
         Assert.IsNotNull(exceptionLabel);
         Assert.AreEqual(Visibility.Visible, exceptionLabel.Visibility);
     }
 
     [TestMethod]
-    public void HeaderView_DisplaysRelease()
+    public async Task HeaderView_DisplaysRelease()
     {
         // Arrange
         var envelope = new Envelope(new JsonObject(), [
@@ -69,10 +71,11 @@ public class HeaderViewTests : RuntimeTestBase
         _ = MockCrashReporter(envelope);
 
         // Act
-        var view = new HeaderView();
-        var releaseLabel = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "my-app@0.1.0");
+        var view = new HeaderView().Envelope(envelope);
+        await LoadTestContent(view);
 
         // Assert
+        var releaseLabel = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "my-app@0.1.0");
         Assert.IsNotNull(releaseLabel);
         Assert.AreEqual(Visibility.Visible, releaseLabel.Visibility);
     }
@@ -83,7 +86,7 @@ public class HeaderViewTests : RuntimeTestBase
     [DataRow("macOS", "15.7.1", FA.Apple)]
     [DataRow("iOS", "26", FA.Apple)]
     [DataRow("Android", "16", FA.Android)]
-    public void HeaderView_DisplaysOs(string os, string version, string brand)
+    public async Task HeaderView_DisplaysOs(string os, string version, string brand)
     {
         // Arrange
         var envelope = new Envelope(new JsonObject(), [
@@ -97,20 +100,21 @@ public class HeaderViewTests : RuntimeTestBase
         _ = MockCrashReporter(envelope);
 
         // Act
-        var view = new HeaderView();
-        var osLabel = view.FindFirstDescendant<TextBlock>(tb => tb.Text.Contains(os) && tb.Text.Contains(version));
-        var osIcon = view.FindFirstDescendant<FontAwesomeIcon>(fa => fa.Brand == brand);
+        var view = new HeaderView().Envelope(envelope);
+        await LoadTestContent(view);
 
         // Assert
+        var osLabel = view.FindFirstDescendant<TextBlock>(tb => tb.Text.Contains(os) && tb.Text.Contains(version));
         Assert.IsNotNull(osLabel);
         Assert.AreEqual(Visibility.Visible, osLabel.Visibility);
 
+        var osIcon = view.FindFirstDescendant<FontAwesomeIcon>(fa => fa.Brand == brand);
         Assert.IsNotNull(osIcon);
         Assert.AreEqual(Visibility.Visible, osIcon.Visibility);
     }
     
     [TestMethod]
-    public void HeaderView_DisplaysEnvironment()
+    public async Task HeaderView_DisplaysEnvironment()
     {
         // Arrange
         var envelope = new Envelope(new JsonObject(), [
@@ -124,10 +128,11 @@ public class HeaderViewTests : RuntimeTestBase
         _ = MockCrashReporter(envelope);
 
         // Act
-        var view = new HeaderView();
-        var environmentLabel = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "production");
+        var view = new HeaderView().Envelope(envelope);
+        await LoadTestContent(view);
 
         // Assert
+        var environmentLabel = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "production");
         Assert.IsNotNull(environmentLabel);
         Assert.AreEqual(Visibility.Visible, environmentLabel.Visibility);
     }

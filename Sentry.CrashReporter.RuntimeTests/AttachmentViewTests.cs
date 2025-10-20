@@ -30,7 +30,7 @@ public class AttachmentViewTests : RuntimeTestBase
         _ = MockCrashReporter(envelope);
 
         // Act
-        var view = new AttachmentView();
+        var view = new AttachmentView().Envelope(envelope);
         await LoadTestContent(view);
 
         var filenameA = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "a.bin");

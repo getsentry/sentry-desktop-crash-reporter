@@ -6,12 +6,29 @@ namespace Sentry.CrashReporter.Views;
 
 public sealed class EventView : ReactiveUserControl<EventViewModel>
 {
+    public static readonly DependencyProperty EnvelopeProperty = DependencyProperty.Register(
+        nameof(Envelope), typeof(Envelope), typeof(EventView), new PropertyMetadata(null));
+
+    public Envelope? Envelope
+    {
+        get => (Envelope)GetValue(EnvelopeProperty);
+        set => SetValue(EnvelopeProperty, value);
+    }
+
     private static readonly JsonToBoolConverter ToBoolean = new();
 
     public EventView()
     {
-        this.DataContext(new EventViewModel(), (view, vm) => view
-            .Content(new ScrollViewer()
+        ViewModel = new EventViewModel();
+        this.WhenActivated(d =>
+        {
+            this.WhenAnyValue(v => v.Envelope)
+                .BindTo(ViewModel, vm => vm.Envelope)
+                .DisposeWith(d);
+        });
+
+        this.Content(new ScrollViewer()
+            .DataContext(ViewModel, (view, vm) => view 
                 .Content(new StackPanel()
                     .Orientation(Orientation.Vertical)
                     .Spacing(8)

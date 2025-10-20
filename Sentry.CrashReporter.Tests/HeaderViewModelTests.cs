@@ -5,13 +5,8 @@ public class HeaderViewModelTests
     [Test]
     public void Defaults()
     {
-        // Arrange
-        var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Envelope?>(null));
-
         // Act
-        var viewModel = new HeaderViewModel(mockReporter.Object);
+        var viewModel = new HeaderViewModel();
 
         // Assert
         Assert.That(viewModel.EventId, Is.Null.Or.Empty);
@@ -37,12 +32,12 @@ public class HeaderViewModelTests
                 new(new JsonObject { ["type"] = "event" },
                     Encoding.UTF8.GetBytes("{\"event_id\":\"abcdef123456\",\"timestamp\":\"2023-11-23T10:00:00Z\",\"platform\":\"csharp\",\"level\":\"error\",\"release\":\"1.0.0\",\"environment\":\"production\",\"contexts\":{\"os\":{\"name\":\"Windows\",\"version\":\"10.0\"}},\"exception\":{\"values\":[{\"type\":\"System.Exception\",\"value\":\"Test\"}]}}"))
             });
-        var mockReporter = new Mock<ICrashReporter>();
-        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Envelope?>(envelope));
 
         // Act
-        var viewModel = new HeaderViewModel(mockReporter.Object);
+        var viewModel = new HeaderViewModel
+        {
+            Envelope = envelope
+        };
 
         // Assert
         Assert.That(viewModel.EventId, Is.EqualTo("abcdef12"));

@@ -6,12 +6,29 @@ namespace Sentry.CrashReporter.Views;
 
 public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
 {
+    public static readonly DependencyProperty EnvelopeProperty = DependencyProperty.Register(
+        nameof(Envelope), typeof(Envelope), typeof(HeaderView), new PropertyMetadata(null));
+
+    public Envelope? Envelope
+    {
+        get => (Envelope)GetValue(EnvelopeProperty);
+        set => SetValue(EnvelopeProperty, value);
+    }
+
     private static readonly StringVisibilityConverter ToVisibility = new();
 
     public HeaderView()
     {
-        this.DataContext(new HeaderViewModel(), (view, vm) => view
-            .Content(new Grid()
+        ViewModel = new HeaderViewModel();
+        this.WhenActivated(d =>
+        {
+            this.WhenAnyValue(v => v.Envelope)
+                .BindTo(ViewModel, vm => vm.Envelope)
+                .DisposeWith(d);
+        });
+
+        this.Content(new Grid()
+            .DataContext(ViewModel, (view, vm) => view
                 .ColumnDefinitions("*,Auto")
                 .Children(
                     new StackPanel()

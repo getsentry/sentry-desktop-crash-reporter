@@ -23,8 +23,12 @@ public partial class App : Application
         var services = new ServiceCollection();
         services.AddHttpClient()
             .ConfigureHttpClientDefaults(b => b.AddStandardResilienceHandler(ConfigureResilience));
+        if (file is not null)
+        {
+            services.AddSingleton<IStorageFile>(file);
+        }
         services.AddSingleton<ISentryClient, SentryClient>();
-        services.AddSingleton<ICrashReporter>(sp => new Services.CrashReporter(file));
+        services.AddSingleton<ICrashReporter, Services.CrashReporter>();
         services.AddSingleton<IWindowService, WindowService>();
         Ioc.Default.ConfigureServices(services.BuildServiceProvider());
         return Services;

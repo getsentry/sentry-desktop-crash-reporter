@@ -31,7 +31,7 @@ public class SentryClientTests
     public async Task SubmitEnvelope_Sends_Request(string filePath)
     {
         await using var file = File.OpenRead(filePath);
-        var envelope = await Envelope.DeserializeAsync(file);
+        var envelope = await Envelope.FromFileStreamAsync(file);
         var dsn = envelope.TryGetDsn()!;
         var expectedContent = await File.ReadAllTextAsync(filePath);
 

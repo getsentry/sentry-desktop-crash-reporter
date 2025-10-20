@@ -24,7 +24,7 @@ public class EnvelopeViewTests : RuntimeTestBase
         _ = MockCrashReporter(envelope);
 
         // Act
-        var view = new EnvelopeView();
+        var view = new EnvelopeView().Envelope(envelope);
         await LoadTestContent(view);
 
         // Assert

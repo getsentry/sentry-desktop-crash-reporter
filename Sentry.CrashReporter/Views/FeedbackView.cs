@@ -4,10 +4,27 @@ namespace Sentry.CrashReporter.Views;
 
 public sealed class FeedbackView : ReactiveUserControl<FeedbackViewModel>
 {
+    public static readonly DependencyProperty EnvelopeProperty = DependencyProperty.Register(
+        nameof(Envelope), typeof(Envelope), typeof(FeedbackView), new PropertyMetadata(null));
+
+    public Envelope? Envelope
+    {
+        get => (Envelope)GetValue(EnvelopeProperty);
+        set => SetValue(EnvelopeProperty, value);
+    }
+
     public FeedbackView()
     {
-        this.DataContext(new FeedbackViewModel(), (view, vm) => view
-            .Content(new ScrollViewer()
+        ViewModel = new FeedbackViewModel();
+        this.WhenActivated(d =>
+        {
+            this.WhenAnyValue(v => v.Envelope)
+                .BindTo(ViewModel, vm => vm.Envelope)
+                .DisposeWith(d);
+        });
+
+        this.Content(new ScrollViewer()
+            .DataContext(ViewModel, (view, vm) => view
                 .Content(new Grid()
                     .RowSpacing(8)
                     .RowDefinitions("Auto,Auto,Auto,*")

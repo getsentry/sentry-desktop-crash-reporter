@@ -55,10 +55,6 @@ public partial class FooterViewModel : ReactiveObject
                     return FooterStatus.Empty;
                 })
             .ToProperty(this, x => x.Status);
-
-        Observable.FromAsync(() => _reporter.LoadAsync().AsTask())
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe(value => Envelope = value);
     }
 
     [ReactiveCommand(CanExecute = nameof(_canSubmit))]
@@ -67,7 +63,7 @@ public partial class FooterViewModel : ReactiveObject
         ErrorMessage = null;
         try
         {
-            await _reporter.SubmitAsync();
+            await _reporter.SubmitAsync(_envelope!);
             _window.Close();
         }
         catch (Exception e)

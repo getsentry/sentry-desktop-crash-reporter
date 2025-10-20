@@ -7,69 +7,46 @@ public record Feedback(string? Name, string? Email, string Message);
 
 public interface ICrashReporter
 {
-    string? Dsn { get; }
-    string FilePath { get; }
     Feedback? Feedback { get; }
     public Task<Envelope?> LoadAsync(CancellationToken cancellationToken = default);
-    public Task SubmitAsync(CancellationToken cancellationToken = default);
+    public Task SubmitAsync(Envelope envelope, CancellationToken cancellationToken = default);
     public void UpdateFeedback(Feedback? feedback);
 }
 
-public class CrashReporter : ICrashReporter
+public class CrashReporter(IStorageFile? file = null, ISentryClient? client = null) : ICrashReporter
 {
-    private readonly ISentryClient _client;
-    private readonly TaskCompletionSource<Envelope?> _envelope = new();
-    private Feedback? _feedback;
+    private readonly IStorageFile? _file = file ?? App.Services.GetService<IStorageFile>();
+    private readonly ISentryClient _client = client ?? App.Services.GetRequiredService<ISentryClient>();
+    private Feedback? _feedback = ResolveFeedback();
 
-    public string? Dsn { get; private set; }
-    public string FilePath { get; }
     public Feedback? Feedback => _feedback;
 
-    public CrashReporter(StorageFile? file = null, ISentryClient? client = null)
+    public async Task<Envelope?> LoadAsync(CancellationToken cancellationToken = default)
     {
-        _client = client ?? App.Services.GetRequiredService<ISentryClient>();
-        _feedback = ResolveFeedback();
-        Dsn = Environment.GetEnvironmentVariable("SENTRY_TEST_DSN");
-        FilePath = file?.Path ?? string.Empty;
-        _ = InitAsync(file);
-    }
-
-    private async Task InitAsync(StorageFile? file, CancellationToken cancellationToken = default)
-    {
-        if (file is null)
+        if (_file is null)
         {
-            _envelope.SetResult(null);
-            return;
+            return null;
         }
 
         try
         {
             var stopwatch = Stopwatch.StartNew();
-            await using var stream = await file.OpenStreamForReadAsync();
-            var envelope = await Envelope.DeserializeAsync(stream, cancellationToken);
+            var envelope = await Envelope.FromStorageFileAsync(_file, cancellationToken);
             stopwatch.Stop();
-            this.Log().LogInformation($"Loaded {FilePath} in {stopwatch.ElapsedMilliseconds} ms.");
-            Dsn ??= envelope.TryGetDsn();
-            _envelope.SetResult(envelope);
+            this.Log().LogInformation($"Loaded {_file.Path} in {stopwatch.ElapsedMilliseconds} ms.");
+            return envelope;
         }
         catch (Exception ex)
         {
-            this.Log().LogError(ex, $"Failed to load envelope from {FilePath}");
+            this.Log().LogError(ex, $"Failed to load envelope from {_file.Path}");
             // TODO: propagate error
-            // _envelope.SetException(ex);
-            _envelope.SetResult(null);
+            return null;
         }
     }
 
-    public Task<Envelope?> LoadAsync(CancellationToken cancellationToken = default)
+    public async Task SubmitAsync(Envelope envelope, CancellationToken cancellationToken = default)
     {
-        return _envelope.Task;
-    }
-
-    public async Task SubmitAsync(CancellationToken cancellationToken = default)
-    {
-        var envelope = await LoadAsync(cancellationToken) ?? throw new InvalidOperationException("No envelope to submit.");
-        var dsn = Dsn ?? envelope.TryGetDsn()
+        var dsn = envelope.TryGetDsn()
                   ?? throw new InvalidOperationException("Envelope does not contain a valid DSN.");
 
         await _client.SubmitEnvelopeAsync(dsn, envelope, cancellationToken);

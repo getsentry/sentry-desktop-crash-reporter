@@ -6,11 +6,28 @@ namespace Sentry.CrashReporter.Views;
 
 public sealed class EnvelopeView : ReactivePage<EnvelopeViewModel>
 {
+    public static readonly DependencyProperty EnvelopeProperty = DependencyProperty.Register(
+        nameof(Envelope), typeof(Envelope), typeof(EnvelopeView), new PropertyMetadata(null));
+
+    public Envelope? Envelope
+    {
+        get => (Envelope)GetValue(EnvelopeProperty);
+        set => SetValue(EnvelopeProperty, value);
+    }
+
     public EnvelopeView()
     {
-        this.DataContext(new EnvelopeViewModel(), (view, vm) => view
-            .Background(ThemeResource.Get<Brush>("ApplicationPageBackgroundThemeBrush"))
+        ViewModel = new EnvelopeViewModel();
+        this.WhenActivated(d =>
+        {
+            this.WhenAnyValue(v => v.Envelope)
+                .BindTo(ViewModel, vm => vm.Envelope)
+                .DisposeWith(d);
+        });
+
+        this.Background(ThemeResource.Get<Brush>("ApplicationPageBackgroundThemeBrush"))
             .Content(new Grid()
+                .DataContext(ViewModel, (view, vm) => view
                 .Children(
                     new ScrollViewer()
                         .Grid(row: 1)
