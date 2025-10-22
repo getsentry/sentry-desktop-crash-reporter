@@ -7,6 +7,7 @@ public partial class FeedbackViewModel : ReactiveObject
     [Reactive] private Envelope? _envelope;
     [ObservableAsProperty] private string? _dsn;
     [ObservableAsProperty] private string? _eventId;
+    [ObservableAsProperty] private bool _isAvailable;
     [ObservableAsProperty] private bool _isEnabled;
     [Reactive] private string _message = string.Empty;
     [Reactive] private string? _email;
@@ -28,7 +29,10 @@ public partial class FeedbackViewModel : ReactiveObject
         _eventIdHelper = this.WhenAnyValue(x => x.Envelope, e => e?.TryGetEventId())
             .ToProperty(this, x => x.EventId);
 
-        _isEnabledHelper = this.WhenAnyValue(x => x.Dsn, y => y.EventId, (x, y) => !string.IsNullOrWhiteSpace(x) && !string.IsNullOrWhiteSpace(y))
+        _isAvailableHelper = this.WhenAnyValue(x => x.Dsn, y => y.EventId, (x, y) => !string.IsNullOrWhiteSpace(x) && !string.IsNullOrWhiteSpace(y))
+            .ToProperty(this, x => x.IsAvailable);
+
+        _isEnabledHelper = this.WhenAnyValue(x => x.IsAvailable, y => y.Message, (a, m) => a && !string.IsNullOrWhiteSpace(m))
             .ToProperty(this, x => x.IsEnabled);
 
         this.WhenAnyValue(x => x.Name, x => x.Email, x => x.Message)

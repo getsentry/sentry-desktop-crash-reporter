@@ -70,9 +70,9 @@ public class UITests : TestBase
                 .WithBody("{\"id\":\"abcd1234\"}"));
 
         // Act
+        App.EnterText(App.Marked("messageTextBox"), "It crashed!");
         App.EnterText(App.Marked("nameTextBox"), "John Doe");
         App.EnterText(App.Marked("emailTextBox"), "john.doe@example.com");
-        App.EnterText(App.Marked("messageTextBox"), "It crashed!");
         App.Tap(App.Marked("submitButton"));
         await WaitUntilAsync(() => server.LogEntries.Count >= 2, TimeSpan.FromSeconds(30));
 
@@ -198,9 +198,9 @@ public class UITests : TestBase
                 .WithBody("{\"id\":\"abcd1234\"}"));
 
         // Act
+        App.EnterText(App.Marked("messageTextBox"), "It crashed!");
         App.EnterText(App.Marked("nameTextBox"), "John Doe");
         App.EnterText(App.Marked("emailTextBox"), "john.doe@example.com");
-        App.EnterText(App.Marked("messageTextBox"), "It crashed!");
         App.Tap(App.Marked("submitButton"));
         await WaitUntilAsync(() => server.LogEntries.Count >= 3, TimeSpan.FromSeconds(30));
 
