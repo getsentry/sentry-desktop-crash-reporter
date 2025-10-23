@@ -19,10 +19,11 @@ A reference implementation of an external crash reporter for desktop application
 
 ## Features
 
+* **Cross-Platform:** Works on Windows, macOS, and Linux thanks to [.NET](https://dot.net) and the [Uno Platform](https://platform.uno/).
 * **User Consent:** Gives the user explicit control over whether their crash data is sent.
 * **User Feedback:** Allows users to add comments to the crash report.
-* **Crash Information:** Displays crash details from the minidump.
-* **Cross-Platform:** Works on Windows, macOS, and Linux thanks to [.NET](https://dot.net) and the [Uno Platform](https://platform.uno/).
+* **Crash Information:** Displays crash details from the attached memory dump.
+* **Attachments**: Allows users to preview crash report attachments, such as screenshots.
 
 ## Usage
 
