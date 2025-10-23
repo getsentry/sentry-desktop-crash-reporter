@@ -61,14 +61,34 @@ public sealed class MainPage : Page
                                                     .ToolTip("Feedback")
                                                     .Navigation(request: "feedback"),
                                                 new SegmentedItem()
-                                                    .Content(new FontAwesomeIcon(FA.Bug))
-                                                    .ToolTip("Event")
-                                                    .Navigation(request: "event"),
+                                                    .Content(new FontAwesomeIcon(FA.Tags))
+                                                    .ToolTip("Tags")
+                                                    .Visibility(x => x.Binding(() => vm.Tags).Converter(ToVisibility))
+                                                    .Navigation(request: "tags"),
+                                                new SegmentedItem()
+                                                    .Content(new FontAwesomeIcon(FA.Hashtag))
+                                                    .ToolTip("Contexts")
+                                                    .Visibility(x => x.Binding(() => vm.Contexts).Converter(ToVisibility))
+                                                    .Navigation(request: "contexts"),
+                                                new SegmentedItem()
+                                                    .Content(new FontAwesomeIcon(FA.Table))
+                                                    .ToolTip("Additional Data")
+                                                    .Visibility(x => x.Binding(() => vm.Extra).Converter(ToVisibility))
+                                                    .Navigation(request: "extra"),
+                                                new SegmentedItem()
+                                                    .Content(new FontAwesomeIcon(FA.Cubes))
+                                                    .ToolTip("SDK")
+                                                    .Visibility(x => x.Binding(() => vm.Sdk).Converter(ToVisibility))
+                                                    .Navigation(request: "sdk"),
+                                                new SegmentedItem()
+                                                    .Content(new FontAwesomeIcon(FA.User))
+                                                    .ToolTip("User")
+                                                    .Visibility(x => x.Binding(() => vm.User).Converter(ToVisibility))
+                                                    .Navigation(request: "user"),
                                                 new SegmentedItem()
                                                     .Content(new FontAwesomeIcon(FA.Paperclip))
                                                     .ToolTip("Attachments")
-                                                    .Visibility(x => x.Binding(() => vm.Attachments)
-                                                        .Converter(ToVisibility))
+                                                    .Visibility(x => x.Binding(() => vm.Attachments).Converter(ToVisibility))
                                                     .Navigation(request: "attachment"),
                                                 new SegmentedItem()
                                                     .Content(new FontAwesomeIcon(FA.Code))
@@ -88,10 +108,26 @@ public sealed class MainPage : Page
                                                     .Region(name: "feedback")
                                                     .Visibility(Visibility.Visible)
                                                     .Envelope(x => x.Binding(() => vm.Envelope)),
-                                                new EventView()
-                                                    .Region(name: "event")
+                                                new JsonGridView()
+                                                    .Region(name: "tags")
                                                     .Visibility(Visibility.Collapsed)
-                                                    .Envelope(x => x.Binding(() => vm.Envelope)),
+                                                    .Data(x => x.Binding(() => vm.Tags)),
+                                                new JsonGridView()
+                                                    .Region(name: "contexts")
+                                                    .Visibility(Visibility.Collapsed)
+                                                    .Data(x => x.Binding(() => vm.Contexts)),
+                                                new JsonGridView()
+                                                    .Region(name: "extra")
+                                                    .Visibility(Visibility.Collapsed)
+                                                    .Data(x => x.Binding(() => vm.Extra)),
+                                                new JsonGridView()
+                                                    .Region(name: "sdk")
+                                                    .Visibility(Visibility.Collapsed)
+                                                    .Data(x => x.Binding(() => vm.Sdk)),
+                                                new JsonGridView()
+                                                    .Region(name: "user")
+                                                    .Visibility(Visibility.Collapsed)
+                                                    .Data(x => x.Binding(() => vm.User)),
                                                 new AttachmentView()
                                                     .Region(name: "attachment")
                                                     .Visibility(Visibility.Collapsed)

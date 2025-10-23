@@ -17,6 +17,13 @@ public class MainViewModelTests
         Assert.That(viewModel.IsExecuting, Is.False);
         Assert.That(viewModel.SelectedIndex, Is.EqualTo(0));
         Assert.That(viewModel.Subtitle, Is.EqualTo("Feedback (optional)"));
+        Assert.That(viewModel.Envelope, Is.Null.Or.Empty);
+        Assert.That(viewModel.Event, Is.Null.Or.Empty);
+        Assert.That(viewModel.Payload, Is.Null.Or.Empty);
+        Assert.That(viewModel.Tags, Is.Null.Or.Empty);
+        Assert.That(viewModel.Contexts, Is.Null.Or.Empty);
+        Assert.That(viewModel.Extra, Is.Null.Or.Empty);
+        Assert.That(viewModel.Sdk, Is.Null.Or.Empty);
         Assert.That(viewModel.Attachments, Is.Null.Or.Empty);
         mockReporter.Verify(r => r.LoadAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -65,10 +72,14 @@ public class MainViewModelTests
 
     [Test]
     [TestCase(0, "", "Feedback (optional)")]
-    [TestCase(1, "", "Event")]
-    [TestCase(2, "", "Attachments")]
-    [TestCase(3, "", "Envelope")]
-    [TestCase(3, "test.envelope", "Envelope (test.envelope)")]
+    [TestCase(1, "", "Tags")]
+    [TestCase(2, "", "Contexts")]
+    [TestCase(3, "", "Additional Data")]
+    [TestCase(4, "", "SDK")]
+    [TestCase(5, "", "User")]
+    [TestCase(6, "", "Attachments")]
+    [TestCase(7, "", "Envelope")]
+    [TestCase(7, "test.envelope", "Envelope (test.envelope)")]
     public void MainViewModel_ResolveSubtitle(int index, string filePath, string expectedSubtitle)
     {
         // Arrange
@@ -91,6 +102,42 @@ public class MainViewModelTests
     }
 
     [Test]
+    public void MainViewModel_Event()
+    {
+        // Arrange
+        var eventPayload = new JsonObject
+        {
+            ["tags"] = new JsonObject { ["tag_key"] = "tag_value" },
+            ["contexts"] = new JsonObject { ["context_key"] = new JsonObject { ["inner_key"] = "context_value" } },
+            ["extra"] = new JsonObject { ["extra_key"] = "extra_value" },
+            ["sdk"] = new JsonObject { ["name"] = "Sentry.Test", ["version"] = "1.0" }
+        };
+        var eventItem = new EnvelopeItem(
+            new JsonObject { ["type"] = "event" },
+            Encoding.UTF8.GetBytes(eventPayload.ToJsonString())
+        );
+        var envelope = new Envelope(
+            new JsonObject(),
+            new List<EnvelopeItem> { eventItem }
+        );
+        var mockReporter = new Mock<ICrashReporter>();
+        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult<Envelope?>(envelope));
+
+        // Act
+        var viewModel = new MainViewModel(mockReporter.Object);
+
+        // Assert
+        Assert.That(viewModel.Envelope, Is.EqualTo(envelope));
+        Assert.That(viewModel.Event, Is.EqualTo(eventItem));
+        Assert.That(viewModel.Payload?.ToJsonString(), Is.EqualTo(eventPayload.ToJsonString()));
+        Assert.That(viewModel.Tags?.ToJsonString(), Is.EqualTo("{\"tag_key\":\"tag_value\"}"));
+        Assert.That(viewModel.Contexts?.ToJsonString(), Is.EqualTo("{\"context_key.inner_key\":\"context_value\"}"));
+        Assert.That(viewModel.Extra?.ToJsonString(), Is.EqualTo("{\"extra_key\":\"extra_value\"}"));
+        Assert.That(viewModel.Sdk?.ToJsonString(), Is.EqualTo("{\"name\":\"Sentry.Test\",\"version\":\"1.0\"}"));
+    }
+
+    [Test]
     public void MainViewModel_Attachments()
     {
         // Arrange
@@ -108,7 +155,7 @@ public class MainViewModelTests
                     attachment2.Data)
             ]);
 
-         var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.FromResult<Envelope?>(envelope));
 
