@@ -42,15 +42,21 @@ public class MainViewModelTests
     public async Task MainViewModel_IsExecuting_False()
     {
         // Arrange
-        var taskCompletionSource = new TaskCompletionSource<Envelope?>();
+        var envelope = new TaskCompletionSource<Envelope?>();
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
-            .Returns(taskCompletionSource.Task);
+            .Returns(envelope.Task);
 
         // Act
         var viewModel = new MainViewModel(mockReporter.Object);
-        taskCompletionSource.SetResult(null);
-        await Task.Delay(TimeSpan.FromMilliseconds(1));
+        var isExecuting = new TaskCompletionSource();
+        viewModel.IsExecutingChanged += (_, _) =>
+        {
+            if (!viewModel.IsExecuting)
+                isExecuting.TrySetResult();
+        };
+        envelope.SetResult(null);
+        await isExecuting.Task;
 
         // Assert
         Assert.That(viewModel.IsExecuting, Is.False);
