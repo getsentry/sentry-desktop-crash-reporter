@@ -15,7 +15,7 @@
 
 A reference implementation of an external crash reporter for desktop applications using the [Sentry Native SDK](https://docs.sentry.io/platforms/native/).
 
-![Screenshots](.screenshots/all.png)
+![Screenshots](.github/screenshots/all.png)
 
 ## Features
 
