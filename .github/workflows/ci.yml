@@ -137,20 +137,15 @@ jobs:
         run: dotnet build -c Release -f net9.0 Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
 
       - name: Run UI Tests
+        id: run-ui-tests
+        continue-on-error: true
         shell: pwsh
-        env:
-          UNO_UITEST_PLATFORM: Browser
-          UNO_UITEST_TARGETURI: "http://localhost:5000"
-          UNO_UITEST_CHROME_CONTAINER_MODE: true
-        run: |
-          $env:UNO_UITEST_DRIVER_PATH = $env:CHROMEWEBDRIVER
-          $server = Start-Process -FilePath dotnet -ArgumentList "run --no-build -c Release -f net9.0-browserwasm --project Sentry.CrashReporter/Sentry.CrashReporter.csproj --launch-profile ""Sentry.CrashReporter (WebAssembly)""" -PassThru
-          try {
-            dotnet test --no-build -c Release -f net9.0 -l GitHubActions -l trx Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
-          }
-          finally {
-            Stop-Process -Id $server.Id -Force
-          }
+        run: .github/scripts/run-ui-tests.ps1
+
+      - name: Retry UI Tests
+        if: steps.run-ui-tests.outcome == 'failure'
+        shell: pwsh
+        run: .github/scripts/run-ui-tests.ps1
 
       - name: Upload Test Results
         if: always()
