@@ -13,6 +13,8 @@ public sealed class FeedbackView : ReactiveUserControl<FeedbackViewModel>
         set => SetValue(EnvelopeProperty, value);
     }
 
+    private TextBox? _messageTextBox;
+
     public FeedbackView()
     {
         ViewModel = new FeedbackViewModel();
@@ -20,6 +22,12 @@ public sealed class FeedbackView : ReactiveUserControl<FeedbackViewModel>
         {
             this.WhenAnyValue(v => v.Envelope)
                 .BindTo(ViewModel, vm => vm.Envelope)
+                .DisposeWith(d);
+
+            this.WhenAnyValue(vm => vm.ViewModel!.IsAvailable)
+                .Where(isAvailable => isAvailable && _messageTextBox?.IsLoaded is true)
+                .Take(1)
+                .Subscribe(async _ => await FocusManager.TryFocusAsync(_messageTextBox!, FocusState.Keyboard))
                 .DisposeWith(d);
         });
 
@@ -30,6 +38,7 @@ public sealed class FeedbackView : ReactiveUserControl<FeedbackViewModel>
                     .RowDefinitions("*,Auto,Auto")
                     .Children(
                         new TextBox()
+                            .Name(out _messageTextBox)
                             .Grid(row: 0)
                             .Header("Message")
                             .PlaceholderText("Tell us about your issue")
