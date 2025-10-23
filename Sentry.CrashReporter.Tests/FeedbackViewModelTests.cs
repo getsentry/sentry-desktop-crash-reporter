@@ -40,7 +40,7 @@ public class FeedbackViewModelTests
     [TestCase("https://foo@bar.com/123", "", false)]
     [TestCase("", "12345678901234567890123456789012", false)]
     [TestCase("https://foo@bar.com/123", "12345678901234567890123456789012", true)]
-    public void IsEnabled(string dsn, string eventId, bool expectedEnabled)
+    public void IsAvailable(string dsn, string eventId, bool expectedAvailable)
     {
         // Arrange
         var envelope = new Envelope(
@@ -56,9 +56,10 @@ public class FeedbackViewModelTests
         };
 
         // Assert
-        Assert.That(viewModel.IsEnabled, Is.EqualTo(expectedEnabled));
+        Assert.That(viewModel.IsEnabled, Is.False);
+        Assert.That(viewModel.IsAvailable, Is.EqualTo(expectedAvailable));
     }
-    
+
     [Test]
     public void UpdateFeedback_Name()
     {
@@ -70,6 +71,7 @@ public class FeedbackViewModelTests
         viewModel.Name = "John Doe";
 
          // Assert
+         Assert.That(viewModel.IsEnabled, Is.False);
          mockReporter.Verify(r => r.UpdateFeedback(It.Is<Feedback>(
             f => f.Name == "John Doe" && f.Email == null && f.Message == string.Empty)), Times.Once);
     }
@@ -85,6 +87,7 @@ public class FeedbackViewModelTests
         viewModel.Email = "john.doe@example.com";
 
         // Assert
+        Assert.That(viewModel.IsEnabled, Is.False);
         mockReporter.Verify(r => r.UpdateFeedback(It.Is<Feedback>(
             f => f.Name == null && f.Email == "john.doe@example.com" && f.Message == string.Empty)), Times.Once);
     }
@@ -93,13 +96,21 @@ public class FeedbackViewModelTests
     public void UpdateFeedback_Message()
     {
         // Arrange
+        var envelope = new Envelope(
+            new JsonObject { ["dsn"] = "https://foo@bar.com/123", ["event_id"] = "12345678901234567890123456789012" },
+            new List<EnvelopeItem>()
+        );
         var mockReporter = new Mock<ICrashReporter>();
-        var viewModel = new FeedbackViewModel(mockReporter.Object);
+        var viewModel = new FeedbackViewModel(mockReporter.Object)
+        {
+            Envelope = envelope
+        };
 
         // Act
         viewModel.Message = "It crashed!";
 
         // Assert
+        Assert.That(viewModel.IsEnabled, Is.True);
         mockReporter.Verify(r => r.UpdateFeedback(It.Is<Feedback>(
             f => f.Name == null && f.Email == null && f.Message == "It crashed!")), Times.Once);
     }

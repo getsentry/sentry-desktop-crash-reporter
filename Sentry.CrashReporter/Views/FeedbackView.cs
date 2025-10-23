@@ -26,29 +26,33 @@ public sealed class FeedbackView : ReactiveUserControl<FeedbackViewModel>
         this.Content(new ScrollViewer()
             .DataContext(ViewModel, (view, vm) => view
                 .Content(new Grid()
-                    .RowSpacing(8)
-                    .RowDefinitions("Auto,Auto,Auto,*")
+                    .RowSpacing(16)
+                    .RowDefinitions("*,Auto,Auto")
                     .Children(
                         new TextBox()
-                            .PlaceholderText("Name")
-                            .AutomationProperties(automationId: "nameTextBox")
-                            .IsEnabled(x => x.Binding(() => vm.IsEnabled))
-                            .Text(x => x.Binding(() => vm.Name).TwoWay())
-                            .Grid(row: 1),
-                        new TextBox()
-                            .PlaceholderText("Email")
-                            .AutomationProperties(automationId: "emailTextBox")
-                            .IsEnabled(x => x.Binding(() => vm.IsEnabled))
-                            .Text(x => x.Binding(() => vm.Email).TwoWay())
-                            .Grid(row: 2),
-                        new TextBox()
-                            .PlaceholderText("Message")
+                            .Grid(row: 0)
+                            .Header("Message")
+                            .PlaceholderText("Tell us about your issue")
                             .AutomationProperties(automationId: "messageTextBox")
+                            .MaxLength(4096)
                             .AcceptsReturn(true)
                             .TextWrapping(TextWrapping.Wrap)
-                            .Text(x => x.Binding(() => vm.Message).TwoWay())
+                            .IsEnabled(x => x.Binding(() => vm.IsAvailable))
+                            .Text(x => x.Binding(() => vm.Message).TwoWay().UpdateSourceTrigger(UpdateSourceTrigger.PropertyChanged))
+                            .VerticalAlignment(VerticalAlignment.Stretch),
+                        new TextBox()
+                            .Grid(row: 1)
+                            .Header("Name")
+                            .PlaceholderText("Your name (optional)")
+                            .AutomationProperties(automationId: "nameTextBox")
                             .IsEnabled(x => x.Binding(() => vm.IsEnabled))
-                            .VerticalAlignment(VerticalAlignment.Stretch)
-                            .Grid(row: 3)))));
+                            .Text(x => x.Binding(() => vm.Name).TwoWay().UpdateSourceTrigger(UpdateSourceTrigger.PropertyChanged)),
+                        new TextBox()
+                            .Grid(row: 2)
+                            .Header("Email")
+                            .PlaceholderText("Contact email (optional)")
+                            .AutomationProperties(automationId: "emailTextBox")
+                            .IsEnabled(x => x.Binding(() => vm.IsEnabled))
+                            .Text(x => x.Binding(() => vm.Email).TwoWay().UpdateSourceTrigger(UpdateSourceTrigger.PropertyChanged))))));
     }
 }
