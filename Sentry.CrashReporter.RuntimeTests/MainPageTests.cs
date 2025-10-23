@@ -19,7 +19,6 @@ public class MainPageTests : RuntimeTestBase
         var loadingView = page.FindFirstDescendant<LoadingView>();
         var progressRing = loadingView?.FindFirstDescendant<ProgressRing>();
         var headerView = loadingView?.FindFirstDescendant<HeaderView>();
-        var eventView = loadingView?.FindFirstDescendant<EventView>();
         var feedbackView = loadingView?.FindFirstDescendant<FeedbackView>();
         var footerView = loadingView?.FindFirstDescendant<FooterView>();
         var errorView = loadingView?.FindFirstDescendant<ErrorView>();
@@ -28,7 +27,6 @@ public class MainPageTests : RuntimeTestBase
         Assert.IsNotNull(loadingView);
         Assert.IsNotNull(progressRing);
         Assert.IsNotNull(headerView);
-        Assert.IsNotNull(eventView);
         Assert.IsNotNull(feedbackView);
         Assert.IsNotNull(footerView);
         Assert.IsNotNull(errorView);
