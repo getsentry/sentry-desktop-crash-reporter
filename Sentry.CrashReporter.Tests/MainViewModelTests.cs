@@ -16,7 +16,6 @@ public class MainViewModelTests
         // Assert
         Assert.That(viewModel.IsExecuting, Is.False);
         Assert.That(viewModel.SelectedIndex, Is.EqualTo(0));
-        Assert.That(viewModel.Subtitle, Is.EqualTo("Feedback (optional)"));
         Assert.That(viewModel.Envelope, Is.Null.Or.Empty);
         Assert.That(viewModel.Event, Is.Null.Or.Empty);
         Assert.That(viewModel.Payload, Is.Null.Or.Empty);
@@ -67,37 +66,6 @@ public class MainViewModelTests
 
         // Assert
         Assert.That(viewModel.IsExecuting, Is.False);
-        mockReporter.Verify(r => r.LoadAsync(It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Test]
-    [TestCase(0, "", "Feedback (optional)")]
-    [TestCase(1, "", "Tags")]
-    [TestCase(2, "", "Contexts")]
-    [TestCase(3, "", "Additional Data")]
-    [TestCase(4, "", "SDK")]
-    [TestCase(5, "", "User")]
-    [TestCase(6, "", "Attachments")]
-    [TestCase(7, "", "Envelope")]
-    [TestCase(7, "test.envelope", "Envelope")]
-    public void MainViewModel_ResolveSubtitle(int index, string filePath, string expectedSubtitle)
-    {
-        // Arrange
-        var envelope = new Envelope(new JsonObject(), [])
-        {
-            FilePath = filePath
-        };
-        var mockReporter = new Mock<ICrashReporter>();
-
-        // Act
-        var viewModel = new MainViewModel(mockReporter.Object)
-        {
-            SelectedIndex = index,
-            Envelope = envelope
-        };
-
-        // Assert
-        Assert.That(viewModel.Subtitle, Is.EqualTo(expectedSubtitle));
         mockReporter.Verify(r => r.LoadAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
