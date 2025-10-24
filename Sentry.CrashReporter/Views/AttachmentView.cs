@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.Input;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.ViewModels;
 using CommunityConverters = CommunityToolkit.Common.Converters;
@@ -76,11 +77,17 @@ internal class AttachmentGrid : DataGrid
 
         UpdateAlternatingRowBackground();
 
-        var menuFlyout = new MenuFlyout();
-        var openMenuItem = new MenuFlyoutItem { Text = "Open" };
-        openMenuItem.Click += (_, _) => LaunchSelected();
-        menuFlyout.Items.Add(openMenuItem);
-        ContextFlyout = menuFlyout;
+        ContextFlyout = new MenuFlyout
+        {
+            Items =
+            {
+                new MenuFlyoutItem
+                {
+                    Text = "Open",
+                    Command = new RelayCommand(LaunchSelected)
+                }
+            }
+        };
 
         Columns.Add(new DataGridTemplateColumn
         {

@@ -11,7 +11,6 @@ using JsonGridData = IList<KeyValuePair<string, JsonNode>>;
 
 public sealed class JsonGrid : DataGrid
 {
-    private readonly KeyboardAccelerator? _copyAccelerator;
     private static readonly JsonToStringConverter JsonToString = new ();
 
     public static readonly DependencyProperty DataProperty = DependencyProperty.Register(
@@ -34,7 +33,6 @@ public sealed class JsonGrid : DataGrid
     public JsonGrid()
     {
         DataContextChanged += (_, _) => TryAutoBind();
-        RegisterPropertyChangedCallback(VisibilityProperty, OnVisibilityChanged);
         ActualThemeChanged += OnThemeChanged;
         RightTapped += OnRightTapped;
 
@@ -47,20 +45,17 @@ public sealed class JsonGrid : DataGrid
 
         UpdateAlternatingRowBackground();
 
-        var menuFlyout = new MenuFlyout();
-        var copyMenuItem = new MenuFlyoutItem { Text = "Copy" };
-        copyMenuItem.Command = new RelayCommand(CopySelection);
-        menuFlyout.Items.Add(copyMenuItem);
-        ContextFlyout = menuFlyout;
-
-        _copyAccelerator = new KeyboardAccelerator
+        ContextFlyout = new MenuFlyout
         {
-            Key = VirtualKey.C,
-            Modifiers = OperatingSystem.IsMacOS() ? VirtualKeyModifiers.Windows : VirtualKeyModifiers.Control,
-            IsEnabled = false
+            Items =
+            {
+                new MenuFlyoutItem
+                {
+                    Text = "Copy",
+                    Command = new RelayCommand(CopySelection),
+                }
+            }
         };
-        _copyAccelerator.Invoked += OnCopyInvoked;
-        KeyboardAccelerators.Add(_copyAccelerator);
 
         Columns.Add(new DataGridTemplateColumn
         {
@@ -95,14 +90,6 @@ public sealed class JsonGrid : DataGrid
             DataContext is JsonGridData json)
         {
             Data = json;
-        }
-    }
-
-    private void OnVisibilityChanged(DependencyObject sender, DependencyProperty dp)
-    {
-        if (_copyAccelerator is not null)
-        {
-            _copyAccelerator.IsEnabled = Visibility == Visibility.Visible;
         }
     }
 
@@ -156,11 +143,5 @@ public sealed class JsonGrid : DataGrid
         {
             App.Services.GetRequiredService<IClipboardService>().SetText(text);
         }
-    }
-
-    private void OnCopyInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
-    {
-        CopySelection();
-        args.Handled = true;
     }
 }

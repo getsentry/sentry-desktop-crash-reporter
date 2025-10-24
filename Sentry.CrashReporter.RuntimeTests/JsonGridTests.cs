@@ -104,22 +104,6 @@ public class JsonGridTests : RuntimeTestBase
     }
 
     [TestMethod]
-    public async Task JsonGrid_HasCopyAccelerator()
-    {
-        // Arrange
-        var json = JsonNode.Parse("""{"key":"value"}""")!.AsObject();
-
-        // Act
-        var grid = new JsonGrid().Data(json!);
-        await LoadTestContent(grid);
-
-        // Assert
-        Assert.HasCount(1, grid.KeyboardAccelerators);
-        var accelerator = grid.KeyboardAccelerators[0];
-        Assert.AreEqual(Windows.System.VirtualKey.C, accelerator.Key);
-    }
-
-    [TestMethod]
     public async Task JsonGrid_HasContextMenu()
     {
         // Arrange
