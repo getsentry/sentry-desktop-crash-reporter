@@ -8,7 +8,7 @@ public class FeedbackViewTests : RuntimeTestBase
     public async Task FeedbackView_CanBeCreated()
     {
         // Arrange
-        _ = MockCrashReporter();
+        _ = MockRuntime();
 
         // Act
         var view = new FeedbackView();
@@ -33,7 +33,7 @@ public class FeedbackViewTests : RuntimeTestBase
     public async Task FeedbackView_TextBoxesUpdate()
     {
         // Arrange
-        var (mockReporter, _) = MockCrashReporter();
+        var mockRuntime = MockRuntime();
 
         var view = new FeedbackView();
         await LoadTestContent(view);
@@ -48,7 +48,7 @@ public class FeedbackViewTests : RuntimeTestBase
         emailTextBox.Text = "john.doe@example.com";
 
         // Assert
-        mockReporter.Verify(r => r.UpdateFeedback(It.Is<Feedback>(f => f.Name == "John Doe" && f.Email == "john.doe@example.com" && f.Message == "This is a test message.")));
+        mockRuntime.Reporter.Verify(r => r.UpdateFeedback(It.Is<Feedback>(f => f.Name == "John Doe" && f.Email == "john.doe@example.com" && f.Message == "This is a test message.")));
     }
 
     [TestMethod]
@@ -56,7 +56,7 @@ public class FeedbackViewTests : RuntimeTestBase
     {
         // Arrange
         var envelope = new Envelope(new JsonObject { ["dsn"] = "https://foo@bar.com/123", ["event_id"] = "12345678901234567890123456789012" }, []);
-        _ = MockCrashReporter(envelope);
+        _ = MockRuntime(envelope);
 
         var view = new FeedbackView().Envelope(envelope);
         await LoadTestContent(view);
@@ -76,7 +76,7 @@ public class FeedbackViewTests : RuntimeTestBase
     {
         // Arrange
         var envelope = new Envelope(new JsonObject(), []);
-        _ = MockCrashReporter(envelope);
+        _ = MockRuntime(envelope);
 
         var view = new FeedbackView().Envelope(envelope);
         await LoadTestContent(view);
@@ -96,7 +96,7 @@ public class FeedbackViewTests : RuntimeTestBase
     {
         // Arrange
         var envelope = new Envelope(new JsonObject { ["dsn"] = "https://foo@bar.com/123", ["event_id"] = "12345678901234567890123456789012" }, []);
-        _ = MockCrashReporter(envelope);
+        _ = MockRuntime(envelope);
 
         var view = new FeedbackView().Envelope(envelope);
         await LoadTestContent(view);

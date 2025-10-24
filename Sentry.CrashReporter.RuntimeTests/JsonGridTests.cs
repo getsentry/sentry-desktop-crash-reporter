@@ -39,7 +39,7 @@ public class JsonGridTests : RuntimeTestBase
     {
         // Arrange
         var json = JsonNode.Parse("""{"key":null}""")!.AsObject();
-    
+
         // Act
         var grid = new JsonGrid().Data(json!);
         await LoadTestContent(grid);
@@ -54,7 +54,7 @@ public class JsonGridTests : RuntimeTestBase
     {
         // Arrange
         var json = JsonNode.Parse("""{"key":"value"}""")!.AsObject();
-    
+
         // Act
         var grid = new JsonGrid().Data(json!);
         await LoadTestContent(grid);
@@ -149,7 +149,7 @@ public class JsonGridTests : RuntimeTestBase
         var grid = new JsonGrid().Data(json!);
         await LoadTestContent(grid);
         grid.SelectedIndex = 0;
-        grid.CurrentColumn = grid.Columns[0]; // Select key column
+        grid.CurrentColumn = grid.Columns[0];
         await UnitTestsUIContentHelper.WaitForIdle();
 
         // Assert
@@ -167,7 +167,7 @@ public class JsonGridTests : RuntimeTestBase
         var grid = new JsonGrid().Data(json!);
         await LoadTestContent(grid);
         grid.SelectedIndex = 0;
-        grid.CurrentColumn = grid.Columns[1]; // Select value column
+        grid.CurrentColumn = grid.Columns[1];
         await UnitTestsUIContentHelper.WaitForIdle();
 
         // Assert
@@ -207,5 +207,51 @@ public class JsonGridTests : RuntimeTestBase
         // Assert
         var selectedText = grid.GetSelectedText();
         Assert.AreEqual("first\tvalue1\nsecond\tvalue2\nthird\tvalue3", selectedText);
+    }
+
+    [TestMethod]
+    public async Task JsonGrid_CopySelection_CopiesKeyToClipboard()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"testkey":"testvalue"}""")!.AsObject();
+        var mockRuntime = MockRuntime();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+        grid.SelectedIndex = 0;
+        grid.CurrentColumn = grid.Columns[0];
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        var menu = (MenuFlyout)grid.ContextFlyout!;
+        var copyItem = (MenuFlyoutItem)menu.Items[0];
+        copyItem.Command?.Execute(null);
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        // Assert
+        mockRuntime.Clipboard.Verify(c => c.SetText("testkey"), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task JsonGrid_CopySelection_CopiesValueToClipboard()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"testkey":"testvalue"}""")!.AsObject();
+        var mockRuntime = MockRuntime();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+        grid.SelectedIndex = 0;
+        grid.CurrentColumn = grid.Columns[1];
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        var menu = (MenuFlyout)grid.ContextFlyout!;
+        var copyItem = (MenuFlyoutItem)menu.Items[0];
+        copyItem.Command?.Execute(null);
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        // Assert
+        mockRuntime.Clipboard.Verify(c => c.SetText("testvalue"), Times.Once);
     }
 }

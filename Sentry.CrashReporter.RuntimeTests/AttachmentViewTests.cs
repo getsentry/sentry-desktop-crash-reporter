@@ -8,7 +8,7 @@ public class AttachmentViewTests : RuntimeTestBase
     public async Task AttachmentView_CanBeCreated()
     {
         // Arrange
-        _ = MockCrashReporter();
+        _ = MockRuntime();
 
         // Act
         var view = new AttachmentView();
@@ -27,7 +27,7 @@ public class AttachmentViewTests : RuntimeTestBase
             new EnvelopeItem(new JsonObject { { "type", "attachment" }, { "filename", "a.bin" } }, [0x01, 0x02, 0x03]),
             new EnvelopeItem(new JsonObject { { "type", "attachment" }, { "filename", "b.bin" } }, [0x04, 0x05, 0x06, 0x7, 0x8, 0x9])
         ]);
-        _ = MockCrashReporter(envelope);
+        _ = MockRuntime(envelope);
 
         // Act
         var view = new AttachmentView().Envelope(envelope);

@@ -1,7 +1,8 @@
 using System.Text.Json.Nodes;
-using Windows.ApplicationModel.DataTransfer;
+using CommunityToolkit.Mvvm.Input;
 using Sentry.CrashReporter.Converters;
 using Sentry.CrashReporter.Extensions;
+using Sentry.CrashReporter.Services;
 
 namespace Sentry.CrashReporter.Controls;
 
@@ -48,7 +49,7 @@ public sealed class JsonGrid : DataGrid
 
         var menuFlyout = new MenuFlyout();
         var copyMenuItem = new MenuFlyoutItem { Text = "Copy" };
-        copyMenuItem.Click += (_, _) => CopySelection();
+        copyMenuItem.Command = new RelayCommand(CopySelection);
         menuFlyout.Items.Add(copyMenuItem);
         ContextFlyout = menuFlyout;
 
@@ -153,9 +154,7 @@ public sealed class JsonGrid : DataGrid
         var text = GetSelectedText();
         if (!string.IsNullOrEmpty(text))
         {
-            var dataPackage = new DataPackage();
-            dataPackage.SetText(text);
-            Clipboard.SetContent(dataPackage);
+            App.Services.GetRequiredService<IClipboardService>().SetText(text);
         }
     }
 
