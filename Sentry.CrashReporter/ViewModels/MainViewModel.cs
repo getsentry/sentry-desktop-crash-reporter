@@ -1,7 +1,6 @@
 using System.Text.Json.Nodes;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.Services;
-using Path = System.IO.Path;
 
 namespace Sentry.CrashReporter.ViewModels;
 
@@ -11,7 +10,6 @@ public partial class MainViewModel : ReactiveObject, ILoadable
     [Reactive] private bool _isExecuting;
     [Reactive] private int _selectedIndex;
     [Reactive] private Exception? _error;
-    [ObservableAsProperty] private string _subtitle = string.Empty;
     [ObservableAsProperty] private EnvelopeItem? _event;
     [ObservableAsProperty] private JsonObject? _payload;
     [ObservableAsProperty] private JsonObject? _user;
@@ -29,9 +27,6 @@ public partial class MainViewModel : ReactiveObject, ILoadable
 
         this.WhenAnyValue(x => x.IsExecuting)
             .Subscribe(x => IsExecutingChanged?.Invoke(this, EventArgs.Empty));
-
-        _subtitleHelper = this.WhenAnyValue(x => x.SelectedIndex, x => x.Error, ResolveSubtitle)
-            .ToProperty(this, x => x.Subtitle);
 
         _eventHelper = this.WhenAnyValue(x => x.Envelope)
             .Select(envelope => envelope?.TryGetEvent())
@@ -72,32 +67,16 @@ public partial class MainViewModel : ReactiveObject, ILoadable
             .Subscribe(
                 onNext: value =>
                 {
+                    Console.WriteLine("### OnNext");
                     Envelope = value;
                     Error = null;
                     IsExecuting = false;
                 },
                 onError: ex =>
                 {
+                    Console.WriteLine("### OnError");
                     Error = ex;
                     IsExecuting = false;
                 });
-    }
-
-    private static string ResolveSubtitle(int index, Exception? error)
-    {
-        return (error, index) switch
-        {
-            // TODO: clean up
-            (not null, _) => "Something went wrong",
-            (_, 0) => "Feedback (optional)",
-            (_, 1) => "Tags",
-            (_, 2) => "Contexts",
-            (_, 3) => "Additional Data",
-            (_, 4) => "SDK",
-            (_, 5) => "User",
-            (_, 6) => "Attachments",
-            (_, 7) => "Envelope",
-            _ => string.Empty
-        };
     }
 }

@@ -20,6 +20,83 @@ public sealed class MainPage : Page
         NotEmptyValue = Visibility.Collapsed
     };
 
+    internal record ViewItem(
+        string Title,
+        string Icon,
+        string ToolTip,
+        string Region,
+        Func<MainViewModel, IDependencyPropertyBuilder<Visibility>, IBindingBuilder> Visibility,
+        Func<MainViewModel, UIElement> Builder
+    );
+
+    internal static readonly ViewItem[] Views =
+    [
+        new(
+            Title: "Feedback (optional)",
+            Icon: FA.CommentDots,
+            ToolTip: "Feedback",
+            Region: "feedback",
+            Visibility: (_, x) => x.Binding(() => Visibility.Visible),
+            Builder: vm => new FeedbackView().Envelope(x => x.Binding(() => vm.Envelope))
+        ),
+        new(
+            Title: "Tags",
+            Icon: FA.Tags,
+            ToolTip: "Tags",
+            Region: "tags",
+            Visibility: (vm, x) => x.Binding(() => vm.Tags).Converter(ToVisibility),
+            Builder: vm => new JsonGrid().Data(x => x.Binding(() => vm.Tags))
+        ),
+        new(
+            Title: "Contexts",
+            Icon: FA.Hashtag,
+            ToolTip: "Contexts",
+            Region: "contexts",
+            Visibility: (vm, x) => x.Binding(() => vm.Contexts).Converter(ToVisibility),
+            Builder: vm => new JsonGrid().Data(x => x.Binding(() => vm.Contexts))
+        ),
+        new(
+            Title: "Additional Data",
+            Icon: FA.Table,
+            ToolTip: "Additional Data",
+            Region: "extra",
+            Visibility: (vm, x) => x.Binding(() => vm.Extra).Converter(ToVisibility),
+            Builder: vm => new JsonGrid().Data(x => x.Binding(() => vm.Extra))
+        ),
+        new(
+            Title: "SDK",
+            Icon: FA.Cubes,
+            ToolTip: "SDK",
+            Region: "sdk",
+            Visibility: (vm, x) => x.Binding(() => vm.Sdk).Converter(ToVisibility),
+            Builder: vm => new JsonGrid().Data(x => x.Binding(() => vm.Sdk))
+        ),
+        new(
+            Title: "User",
+            Icon: FA.User,
+            ToolTip: "User",
+            Region: "user",
+            Visibility: (vm, x) => x.Binding(() => vm.User).Converter(ToVisibility),
+            Builder: vm => new JsonGrid().Data(x => x.Binding(() => vm.User))
+        ),
+        new(
+            Title: "Attachments",
+            Icon: FA.Paperclip,
+            ToolTip: "Attachments",
+            Region: "attachments",
+            Visibility: (vm, x) => x.Binding(() => vm.Attachments).Converter(ToVisibility),
+            Builder: vm => new AttachmentView().Envelope(x => x.Binding(() => vm.Envelope))
+        ),
+        new(
+            Title: "Envelope",
+            Icon: FA.Code,
+            ToolTip: "Envelope",
+            Region: "envelope",
+            Visibility: (_, x) => x.Binding(() => Visibility.Visible),
+            Builder: vm => new EnvelopeView().Envelope(x => x.Binding(() => vm.Envelope))
+        )
+    ];
+
     public MainPage()
     {
         this.DataContext<MainViewModel>((view, vm) => view
@@ -46,54 +123,26 @@ public sealed class MainPage : Page
                                 new Grid()
                                     .Grid(row: 1)
                                     .ColumnDefinitions("*,Auto")
-                                    .Children(new TextBlock()
+                                    .Children(
+                                        new TextBlock()
                                             .Grid(column: 0)
                                             .Style(ThemeResource.Get<Style>("SubtitleTextBlockStyle"))
-                                            .Text(x => x.Binding(() => vm.Subtitle)),
+                                            .Visibility(x => x.Binding(() => vm.Error).Converter(ErrorToVisible))
+                                            .Text("Something went wrong"),
+                                        new TextBlock()
+                                            .Grid(column: 0)
+                                            .Style(ThemeResource.Get<Style>("SubtitleTextBlockStyle"))
+                                            .Visibility(x => x.Binding(() => vm.Error).Converter(ErrorToCollapsed))
+                                            .Text(x => x.Binding(() => vm.SelectedIndex).Convert(i => Views[i].Title)),
                                         new Segmented()
-                                            .Name(out var segmented)
                                             .Grid(column: 1)
                                             .Visibility(x => x.Binding(() => vm.Error).Converter(ErrorToCollapsed))
                                             .SelectedIndex(x => x.Binding(() => vm.SelectedIndex).TwoWay())
-                                            .Items(
-                                                new SegmentedItem()
-                                                    .Content(new FontAwesomeIcon(FA.CommentDots))
-                                                    .ToolTip("Feedback")
-                                                    .Navigation(request: "feedback"),
-                                                new SegmentedItem()
-                                                    .Content(new FontAwesomeIcon(FA.Tags))
-                                                    .ToolTip("Tags")
-                                                    .Visibility(x => x.Binding(() => vm.Tags).Converter(ToVisibility))
-                                                    .Navigation(request: "tags"),
-                                                new SegmentedItem()
-                                                    .Content(new FontAwesomeIcon(FA.Hashtag))
-                                                    .ToolTip("Contexts")
-                                                    .Visibility(x => x.Binding(() => vm.Contexts).Converter(ToVisibility))
-                                                    .Navigation(request: "contexts"),
-                                                new SegmentedItem()
-                                                    .Content(new FontAwesomeIcon(FA.Table))
-                                                    .ToolTip("Additional Data")
-                                                    .Visibility(x => x.Binding(() => vm.Extra).Converter(ToVisibility))
-                                                    .Navigation(request: "extra"),
-                                                new SegmentedItem()
-                                                    .Content(new FontAwesomeIcon(FA.Cubes))
-                                                    .ToolTip("SDK")
-                                                    .Visibility(x => x.Binding(() => vm.Sdk).Converter(ToVisibility))
-                                                    .Navigation(request: "sdk"),
-                                                new SegmentedItem()
-                                                    .Content(new FontAwesomeIcon(FA.User))
-                                                    .ToolTip("User")
-                                                    .Visibility(x => x.Binding(() => vm.User).Converter(ToVisibility))
-                                                    .Navigation(request: "user"),
-                                                new SegmentedItem()
-                                                    .Content(new FontAwesomeIcon(FA.Paperclip))
-                                                    .ToolTip("Attachments")
-                                                    .Visibility(x => x.Binding(() => vm.Attachments).Converter(ToVisibility))
-                                                    .Navigation(request: "attachment"),
-                                                new SegmentedItem()
-                                                    .Content(new FontAwesomeIcon(FA.Code))
-                                                    .ToolTip("Envelope")
-                                                    .Navigation(request: "envelope"))),
+                                            .Items(Views.Select(v => new SegmentedItem()
+                                                    .Content(new FontAwesomeIcon(v.Icon))
+                                                    .ToolTip(v.ToolTip)
+                                                    .Navigation(request: v.Region)
+                                                    .Visibility(x => v.Visibility(vm, x))).ToArray<object>())),
                                 new Grid()
                                     .Grid(row: 2)
                                     .Children(
@@ -103,39 +152,10 @@ public sealed class MainPage : Page
                                         new Grid()
                                             .Region(attached: true, navigator: "Visibility")
                                             .Visibility(x => x.Binding(() => vm.Error).Converter(ErrorToCollapsed))
-                                            .Children(
-                                                new FeedbackView()
-                                                    .Region(name: "feedback")
-                                                    .Visibility(Visibility.Visible)
-                                                    .Envelope(x => x.Binding(() => vm.Envelope)),
-                                                new JsonGrid()
-                                                    .Region(name: "tags")
-                                                    .Visibility(Visibility.Collapsed)
-                                                    .Data(x => x.Binding(() => vm.Tags)),
-                                                new JsonGrid()
-                                                    .Region(name: "contexts")
-                                                    .Visibility(Visibility.Collapsed)
-                                                    .Data(x => x.Binding(() => vm.Contexts)),
-                                                new JsonGrid()
-                                                    .Region(name: "extra")
-                                                    .Visibility(Visibility.Collapsed)
-                                                    .Data(x => x.Binding(() => vm.Extra)),
-                                                new JsonGrid()
-                                                    .Region(name: "sdk")
-                                                    .Visibility(Visibility.Collapsed)
-                                                    .Data(x => x.Binding(() => vm.Sdk)),
-                                                new JsonGrid()
-                                                    .Region(name: "user")
-                                                    .Visibility(Visibility.Collapsed)
-                                                    .Data(x => x.Binding(() => vm.User)),
-                                                new AttachmentView()
-                                                    .Region(name: "attachment")
-                                                    .Visibility(Visibility.Collapsed)
-                                                    .Envelope(x => x.Binding(() => vm.Envelope)),
-                                                new EnvelopeView()
-                                                    .Region(name: "envelope")
-                                                    .Visibility(Visibility.Collapsed)
-                                                    .Envelope(x => x.Binding(() => vm.Envelope)))),
+                                            .Children(Views.Select((v, i) => v.Builder(vm)
+                                                .Region(name: v.Region)
+                                                .Visibility(x => x.Binding(() => vm.SelectedIndex)
+                                                    .Convert(s => s == i? Visibility.Visible : Visibility.Collapsed))).ToArray())),
                                 new FooterView()
                                     .Grid(row: 3)
                                     .Envelope(x => x.Binding(() => vm.Envelope)))))));
