@@ -138,4 +138,74 @@ public class JsonGridTests : RuntimeTestBase
         var copyItem = (MenuFlyoutItem)menu.Items[0];
         Assert.AreEqual("Copy", copyItem.Text);
     }
+
+    [TestMethod]
+    public async Task JsonGrid_GetSelectedText_ReturnsKey()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"mykey":"myvalue"}""")!.AsObject();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+        grid.SelectedIndex = 0;
+        grid.CurrentColumn = grid.Columns[0]; // Select key column
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        // Assert
+        var selectedText = grid.GetSelectedText();
+        Assert.AreEqual("mykey", selectedText);
+    }
+
+    [TestMethod]
+    public async Task JsonGrid_GetSelectedText_ReturnsValue()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"mykey":"myvalue"}""")!.AsObject();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+        grid.SelectedIndex = 0;
+        grid.CurrentColumn = grid.Columns[1]; // Select value column
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        // Assert
+        var selectedText = grid.GetSelectedText();
+        Assert.AreEqual("myvalue", selectedText);
+    }
+
+    [TestMethod]
+    public async Task JsonGrid_GetSelectedText_ReturnsNull_WhenNoSelection()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"mykey":"myvalue"}""")!.AsObject();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+
+        // Assert
+        var selectedText = grid.GetSelectedText();
+        Assert.IsNull(selectedText);
+    }
+
+    [TestMethod]
+    public async Task JsonGrid_GetSelectedText_ReturnsMultipleRows()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"first":"value1","second":"value2","third":"value3"}""")!.AsObject();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+        grid.SelectedItems.Add(grid.Data![0]);
+        grid.SelectedItems.Add(grid.Data![1]);
+        grid.SelectedItems.Add(grid.Data![2]);
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        // Assert
+        var selectedText = grid.GetSelectedText();
+        Assert.AreEqual("first\tvalue1\nsecond\tvalue2\nthird\tvalue3", selectedText);
+    }
 }

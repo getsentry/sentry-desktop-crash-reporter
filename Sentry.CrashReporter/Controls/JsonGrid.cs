@@ -128,7 +128,7 @@ public sealed class JsonGrid : DataGrid
         }
     }
 
-    private string? GetSelectedText()
+    internal string? GetSelectedText()
     {
         if (SelectedItems.Count > 1)
         {
