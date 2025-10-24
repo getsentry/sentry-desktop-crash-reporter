@@ -30,6 +30,7 @@ public partial class App : Application
         services.AddSingleton<ISentryClient, SentryClient>();
         services.AddSingleton<ICrashReporter, Services.CrashReporter>();
         services.AddSingleton<IWindowService, WindowService>();
+        services.AddSingleton<IClipboardService, ClipboardService>();
         Ioc.Default.ConfigureServices(services.BuildServiceProvider());
         return Services;
     }

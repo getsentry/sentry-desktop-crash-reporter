@@ -10,7 +10,7 @@ public class MainPageTests : RuntimeTestBase
     public async Task MainPage_IsLoaded()
     {
         // Arrange
-        _ = MockCrashReporter();
+        _ = MockRuntime();
 
         // Act
         var page = new MainPage();
@@ -36,8 +36,8 @@ public class MainPageTests : RuntimeTestBase
     public async Task MainPage_Normal()
     {
         // Arrange
-        var (mockReporter, _) = MockCrashReporter();
-        var viewModel = new MainViewModel(mockReporter.Object);
+        var mockRuntime = MockRuntime();
+        var viewModel = new MainViewModel(mockRuntime.Reporter.Object);
 
         // Act
         var page = new MainPage { DataContext = viewModel };
@@ -53,8 +53,8 @@ public class MainPageTests : RuntimeTestBase
     public async Task MainPage_Error()
     {
         // Arrange
-        var (mockReporter, _) = MockCrashReporter();
-        var viewModel = new MainViewModel(mockReporter.Object)
+        var mockRuntime = MockRuntime();
+        var viewModel = new MainViewModel(mockRuntime.Reporter.Object)
         {
             Error = new Exception("Something went wrong")
         };

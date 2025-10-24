@@ -1,35 +1,87 @@
 using System.Text.Json.Nodes;
+using CommunityToolkit.Mvvm.Input;
+using Sentry.CrashReporter.Converters;
 using Sentry.CrashReporter.Extensions;
+using Sentry.CrashReporter.Services;
 
 namespace Sentry.CrashReporter.Controls;
 
+using JsonGridItem = KeyValuePair<string, JsonNode>;
 using JsonGridData = IList<KeyValuePair<string, JsonNode>>;
 
-public class JsonGrid : Grid
+public sealed class JsonGrid : DataGrid
 {
-    public JsonGrid()
-    {
-        ColumnDefinitions.Add(new ColumnDefinition().Width(GridLength.Auto));
-        ColumnDefinitions.Add(new ColumnDefinition().Width(new GridLength(1, GridUnitType.Star)));
+    private static readonly JsonToStringConverter JsonToString = new ();
 
-        DataContextChanged += (_, _) => TryAutoBind();
-    }
-
-    public static readonly DependencyProperty DataProperty =
-        DependencyProperty.Register(
-            nameof(Data),
-            typeof(JsonGridData),
-            typeof(JsonGrid),
-            new PropertyMetadata(null, (d, e) =>
-            {
-                if (d is JsonGrid grid)
-                    grid.UpdateGrid(e.NewValue as JsonGridData);
-            }));
+    public static readonly DependencyProperty DataProperty = DependencyProperty.Register(
+        nameof(Data), typeof(JsonGridData), typeof(JsonGrid), new PropertyMetadata(null, OnDataChanged));
 
     public JsonGridData? Data
     {
         get => (JsonGridData?)GetValue(DataProperty);
         set => SetValue(DataProperty, value);
+    }
+
+    private static void OnDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is JsonGrid grid)
+        {
+            grid.ItemsSource = e.NewValue as JsonGridData;
+        }
+    }
+
+    public JsonGrid()
+    {
+        DataContextChanged += (_, _) => TryAutoBind();
+        ActualThemeChanged += OnThemeChanged;
+        RightTapped += OnRightTapped;
+
+        IsReadOnly = true;
+        AutoGenerateColumns = false;
+        GridLinesVisibility = DataGridGridLinesVisibility.None;
+        HeadersVisibility = DataGridHeadersVisibility.Column;
+        SelectionMode = DataGridSelectionMode.Extended;
+        ItemsSource = Data;
+
+        UpdateAlternatingRowBackground();
+
+        ContextFlyout = new MenuFlyout
+        {
+            Items =
+            {
+                new MenuFlyoutItem
+                {
+                    Text = "Copy",
+                    Command = new RelayCommand(CopySelection),
+                }
+            }
+        };
+
+        Columns.Add(new DataGridTemplateColumn
+        {
+            Header = "Key",
+            MinWidth = 200,
+            Width = DataGridLength.Auto,
+            CellTemplate = new DataTemplate(() =>
+                new TextBlock()
+                    .WithSourceCodePro()
+                    .Margin(new Thickness(8, 0))
+                    .VerticalAlignment(VerticalAlignment.Center)
+                    .Text(x => x.Binding("Key")))
+        });
+
+        Columns.Add(new DataGridTemplateColumn
+        {
+            Header = "Value",
+            Width = new DataGridLength(1, DataGridLengthUnitType.Star),
+            CellTemplate = new DataTemplate(() =>
+                new TextBlock()
+                    .WithSourceCodePro()
+                    .TextWrapping(TextWrapping.Wrap)
+                    .Margin(new Thickness(8, 0))
+                    .VerticalAlignment(VerticalAlignment.Center)
+                    .Text(x => x.Binding("Value").Converter(JsonToString)))
+        });
     }
 
     private void TryAutoBind()
@@ -41,46 +93,55 @@ public class JsonGrid : Grid
         }
     }
 
-    private void UpdateGrid(JsonGridData? json)
+    private void OnThemeChanged(FrameworkElement sender, object args)
     {
-        Children.Clear();
-        RowDefinitions.Clear();
+        UpdateAlternatingRowBackground();
+    }
 
-        if (json is null)
+    private void UpdateAlternatingRowBackground()
+    {
+        if (Application.Current.Resources.TryGetValue("SystemControlBackgroundListLowBrush", out var brush))
         {
-            return;
+            AlternatingRowBackground = (Brush)brush;
+        }
+    }
+
+    private void OnRightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        if (e.OriginalSource is FrameworkElement { DataContext: JsonGridItem item } &&
+            (SelectedItem is not JsonGridItem selected || selected.Key == item.Key))
+        {
+            SelectedItem = item;
+            CurrentColumn = Columns[e.GetPosition(this).X < Columns[0].ActualWidth ? 0 : 1];
+        }
+    }
+
+    internal string? GetSelectedText()
+    {
+        if (SelectedItems.Count > 1)
+        {
+            return string.Join("\n", SelectedItems.OfType<JsonGridItem>().Select(x => $"{x.Key}\t{x.Value}"));
         }
 
-        var row = 0;
-        var evenBrush = ThemeResource.Get<Brush>("SystemControlTransparentBrush");
-        var oddBrush = ThemeResource.Get<Brush>("SystemControlBackgroundListLowBrush");
-
-        foreach (var kvp in json)
+        if (SelectedItem is JsonGridItem item)
         {
-            RowDefinitions.Add(new RowDefinition().Height(GridLength.Auto));
+            return CurrentColumn?.DisplayIndex switch
+            {
+                0 => item.Key,
+                1 => item.Value.ToString(),
+                _ => null
+            };
+        }
 
-            Children.Add(new Border()
-                .Grid(row: row, column: 0)
-                .Background(row % 2 == 0 ? evenBrush : oddBrush)
-                .CornerRadius(new CornerRadius(2, 0, 0, 2))
-                .Padding(new Thickness(4, 2, 8, 2))
-                .Child(new TextBlock()
-                    .WithTextSelection()
-                    .WithSourceCodePro()
-                    .Text(kvp.Key)));
-
-            Children.Add(new Border()
-                .Grid(row: row, column: 1)
-                .Background(row % 2 == 0 ? evenBrush : oddBrush)
-                .CornerRadius(new CornerRadius(0, 2, 2, 0))
-                .Padding(new Thickness(8, 2, 4, 2))
-                .Child(new TextBlock()
-                    .WithTextSelection()
-                    .WithSourceCodePro()
-                    .Text(kvp.Value?.ToString() ?? string.Empty)
-                    .TextWrapping(TextWrapping.Wrap)));
-
-            row++;
+        return null;
+    }
+    
+    private void CopySelection()
+    {
+        var text = GetSelectedText();
+        if (!string.IsNullOrEmpty(text))
+        {
+            App.Services.GetRequiredService<IClipboardService>().SetText(text);
         }
     }
 }

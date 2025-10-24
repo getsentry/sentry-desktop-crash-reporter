@@ -108,23 +108,23 @@ public sealed class MainPage : Page
                                                     .Region(name: "feedback")
                                                     .Visibility(Visibility.Visible)
                                                     .Envelope(x => x.Binding(() => vm.Envelope)),
-                                                new JsonGridView()
+                                                new JsonGrid()
                                                     .Region(name: "tags")
                                                     .Visibility(Visibility.Collapsed)
                                                     .Data(x => x.Binding(() => vm.Tags)),
-                                                new JsonGridView()
+                                                new JsonGrid()
                                                     .Region(name: "contexts")
                                                     .Visibility(Visibility.Collapsed)
                                                     .Data(x => x.Binding(() => vm.Contexts)),
-                                                new JsonGridView()
+                                                new JsonGrid()
                                                     .Region(name: "extra")
                                                     .Visibility(Visibility.Collapsed)
                                                     .Data(x => x.Binding(() => vm.Extra)),
-                                                new JsonGridView()
+                                                new JsonGrid()
                                                     .Region(name: "sdk")
                                                     .Visibility(Visibility.Collapsed)
                                                     .Data(x => x.Binding(() => vm.Sdk)),
-                                                new JsonGridView()
+                                                new JsonGrid()
                                                     .Region(name: "user")
                                                     .Visibility(Visibility.Collapsed)
                                                     .Data(x => x.Binding(() => vm.User)),

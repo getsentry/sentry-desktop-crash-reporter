@@ -8,7 +8,7 @@ public class FooterViewTests : RuntimeTestBase
     public async Task FooterView_Empty()
     {
         // Arrange
-        _ = MockCrashReporter();
+        _ = MockRuntime();
 
         // Act
         var view = new FooterView();
@@ -33,7 +33,7 @@ public class FooterViewTests : RuntimeTestBase
     {
         // Arrange
         var envelope = new Envelope(new JsonObject { { "dsn", "https://foo@bar.com/123" }, { "event_id" , "12345678901234567890123456789012" } }, []);
-        _ = MockCrashReporter(envelope);
+        _ = MockRuntime(envelope);
 
         // Act
         var view = new FooterView().Envelope(envelope);
@@ -62,9 +62,9 @@ public class FooterViewTests : RuntimeTestBase
     {
         // Arrange
         var envelope = new Envelope(new JsonObject { { "dsn", "https://foo@bar.com/123" }, { "event_id" , "12345678901234567890123456789012" } }, []);
-        var (mockReporter, _) = MockCrashReporter(envelope);
+        var mockRuntime = MockRuntime();
         var tcs = new TaskCompletionSource();
-        mockReporter.Setup(r => r.SubmitAsync(envelope, It.IsAny<CancellationToken>())).Returns(tcs.Task);
+        mockRuntime.Reporter.Setup(r => r.SubmitAsync(envelope, It.IsAny<CancellationToken>())).Returns(tcs.Task);
 
         // Act
         var view = new FooterView().Envelope(envelope);
@@ -98,8 +98,8 @@ public class FooterViewTests : RuntimeTestBase
     {
         // Arrange
         var envelope = new Envelope(new JsonObject { { "dsn", "https://foo@bar.com/123" }, { "event_id" , "12345678901234567890123456789012" } }, []);
-        var (mockReporter, _) = MockCrashReporter(envelope);
-        mockReporter.Setup(r => r.SubmitAsync(envelope, It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Something went wrong"));
+        var mockRuntime = MockRuntime();
+        mockRuntime.Reporter.Setup(r => r.SubmitAsync(envelope, It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Something went wrong"));
 
         // Act
         var view = new FooterView().Envelope(envelope);
@@ -129,7 +129,7 @@ public class FooterViewTests : RuntimeTestBase
     {
         // Arrange
         var envelope = new Envelope(new JsonObject { { "dsn", "https://foo@bar.com/123" }, { "event_id", "12345678901234567890123456789012" } }, []);
-        var (mockReporter, mockWindow) = MockCrashReporter(envelope);
+        var mockRuntime = MockRuntime();
 
         // Act
         var view = new FooterView().Envelope(envelope);
@@ -139,15 +139,15 @@ public class FooterViewTests : RuntimeTestBase
         submitButton?.Command.Execute(null);
 
         // Assert
-        mockReporter.Verify(x => x.SubmitAsync(envelope, It.IsAny<CancellationToken>()), Times.Once);
-        mockWindow.Verify(x => x.Close(), Times.Once);
+        mockRuntime.Reporter.Verify(x => x.SubmitAsync(envelope, It.IsAny<CancellationToken>()), Times.Once);
+        mockRuntime.Window.Verify(x => x.Close(), Times.Once);
     }
 
     [TestMethod]
     public async Task FooterView_Cancel_ClosesWindow()
     {
         // Arrange
-        var (_, mockWindow) = MockCrashReporter();
+        var mockRuntime = MockRuntime();
 
         // Act
         var view = new FooterView();
@@ -157,6 +157,6 @@ public class FooterViewTests : RuntimeTestBase
         cancelButton?.Command.Execute(null);
 
         // Assert
-        mockWindow.Verify(x => x.Close(), Times.Once);
+        mockRuntime.Window.Verify(x => x.Close(), Times.Once);
     }
 }

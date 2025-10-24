@@ -1,5 +1,7 @@
 namespace Sentry.CrashReporter.RuntimeTests;
 
+public record MockRuntime(Mock<ICrashReporter> Reporter, Mock<IWindowService> Window, Mock<IClipboardService> Clipboard);
+
 public class RuntimeTestBase
 {
     [TestInitialize]
@@ -22,18 +24,20 @@ public class RuntimeTestBase
         await UnitTestsUIContentHelper.WaitForIdle();
     }
 
-    protected static (Mock<ICrashReporter>, Mock<IWindowService>) MockCrashReporter(Envelope? envelope = null)
+    protected static MockRuntime MockRuntime(Envelope? envelope = null)
     {
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.FromResult(envelope));
         var mockWindow = new Mock<IWindowService>();
+        var mockClipboard = new Mock<IClipboardService>();
 
         var services = new ServiceCollection();
-        services.AddSingleton<ICrashReporter>(sp => mockReporter.Object);
-        services.AddSingleton<IWindowService>(sp => mockWindow.Object);
+        services.AddSingleton(mockReporter.Object);
+        services.AddSingleton(mockWindow.Object);
+        services.AddSingleton(mockClipboard.Object);
         App.Services = services.BuildServiceProvider();
 
-        return (mockReporter, mockWindow);
+        return new MockRuntime(mockReporter, mockWindow, mockClipboard);
     }
 }

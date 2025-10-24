@@ -8,7 +8,7 @@ public class HeaderViewTests : RuntimeTestBase
     public async Task HeaderView_CanBeCreated()
     {
         // Arrange
-        _ = MockCrashReporter();
+        _ = MockRuntime();
 
         // Act
         var view = new HeaderView();
@@ -44,7 +44,7 @@ public class HeaderViewTests : RuntimeTestBase
                     { "exception", new JsonObject { { "values", new JsonArray { new JsonObject { { "type", "SIGSEGV" } } } } } },
                 }.ToJsonString()))
         ]);
-        _ = MockCrashReporter(envelope);
+        _ = MockRuntime(envelope);
 
         // Act
         var view = new HeaderView().Envelope(envelope);
@@ -68,7 +68,7 @@ public class HeaderViewTests : RuntimeTestBase
                     { "release", "my-app@0.1.0" },
                 }.ToJsonString()))
         ]);
-        _ = MockCrashReporter(envelope);
+        _ = MockRuntime(envelope);
 
         // Act
         var view = new HeaderView().Envelope(envelope);
@@ -97,7 +97,7 @@ public class HeaderViewTests : RuntimeTestBase
                     { "contexts", new JsonObject { { "os", new JsonObject { { "name", os }, { "version", version } } } } },
                 }.ToJsonString()))
         ]);
-        _ = MockCrashReporter(envelope);
+        _ = MockRuntime(envelope);
 
         // Act
         var view = new HeaderView().Envelope(envelope);
@@ -125,7 +125,7 @@ public class HeaderViewTests : RuntimeTestBase
                     { "environment", "production" }
                 }.ToJsonString()))
         ]);
-        _ = MockCrashReporter(envelope);
+        _ = MockRuntime(envelope);
 
         // Act
         var view = new HeaderView().Envelope(envelope);

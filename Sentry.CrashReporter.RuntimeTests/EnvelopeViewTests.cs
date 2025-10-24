@@ -21,7 +21,7 @@ public class EnvelopeViewTests : RuntimeTestBase
                     { "platform", "native" }
                 }.ToJsonString())),
         ]);
-        _ = MockCrashReporter(envelope);
+        _ = MockRuntime(envelope);
 
         // Act
         var view = new EnvelopeView().Envelope(envelope);

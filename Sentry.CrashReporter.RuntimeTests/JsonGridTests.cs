@@ -1,3 +1,5 @@
+using CommunityToolkit.WinUI;
+
 namespace Sentry.CrashReporter.RuntimeTests;
 
 [TestClass]
@@ -12,93 +14,228 @@ public class JsonGridTests : RuntimeTestBase
 
         // Assert
         Assert.IsNotNull(grid);
-        Assert.AreEqual(2, grid.ColumnDefinitions.Count);
-        Assert.AreEqual(0, grid.RowDefinitions.Count);
-        Assert.AreEqual(0, grid.Children.Count);
+        Assert.AreEqual(2, grid.Columns.Count);
     }
 
     [TestMethod]
-    public void JsonGrid_UpdatesWithData()
+    public async Task JsonGrid_UpdatesWithData()
     {
         // Arrange
-        var grid = new JsonGrid();
-        var json = JsonNode.Parse("""{"key":"value","another_key":123}""")!;
-        var data = json.AsObject().ToList();
+        var json = JsonNode.Parse("""{"key":"value","another_key":123}""")!.AsObject();
 
         // Act
-        grid.Data = data!;
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
 
         // Assert
-        Assert.AreEqual(2, grid.RowDefinitions.Count);
-        Assert.AreEqual(4, grid.Children.Count);
-
-        var borders = grid.Children.OfType<Border>().ToList();
-        Assert.AreEqual(4, borders.Count);
-
-        var textBlocks = borders.Select(b => b.Child).OfType<TextBlock>().ToList();
-        Assert.AreEqual(4, textBlocks.Count);
-
-        Assert.AreEqual("key", textBlocks[0].Text);
-        Assert.AreEqual("value", textBlocks[1].Text);
-        Assert.AreEqual("another_key", textBlocks[2].Text);
-        Assert.AreEqual("123", textBlocks[3].Text);
+        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "key"));
+        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "value"));
+        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "another_key"));
+        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "123"));
     }
 
     [TestMethod]
-    public void JsonGrid_HandlesNullJsonValue()
+    public async Task JsonGrid_HandlesNullJsonValue()
     {
         // Arrange
-        var grid = new JsonGrid();
-        var json = JsonNode.Parse("""{"key":null}""")!;
-        var data = json.AsObject().ToList();
+        var json = JsonNode.Parse("""{"key":null}""")!.AsObject();
 
         // Act
-        grid.Data = data!;
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
 
         // Assert
-        Assert.AreEqual(1, grid.RowDefinitions.Count);
-        Assert.AreEqual(2, grid.Children.Count);
-
-        var textBlocks = grid.Children.OfType<Border>().Select(b => b.Child).OfType<TextBlock>().ToList();
-        Assert.AreEqual(2, textBlocks.Count);
-
-        Assert.AreEqual("key", textBlocks[0].Text);
-        Assert.AreEqual(string.Empty, textBlocks[1].Text);
+        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "key"));
+        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == string.Empty));
     }
 
     [TestMethod]
-    public void JsonGrid_ClearsWithNullData()
+    public async Task JsonGrid_ClearsWithNullData()
     {
         // Arrange
-        var grid = new JsonGrid();
-        var json = JsonNode.Parse("""{"key":"value","another_key":123}""")!;
-        var data = json.AsObject().ToList();
-        grid.Data = data!;
-        Assert.AreEqual(2, grid.RowDefinitions.Count);
-        Assert.AreEqual(4, grid.Children.Count);
+        var json = JsonNode.Parse("""{"key":"value"}""")!.AsObject();
 
         // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
         grid.Data = null;
+        await UnitTestsUIContentHelper.WaitForIdle();
 
         // Assert
-        Assert.AreEqual(0, grid.RowDefinitions.Count);
-        Assert.AreEqual(0, grid.Children.Count);
+        Assert.IsNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "key"));
+        Assert.IsNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "value"));
     }
 
     [TestMethod]
-    public void JsonGrid_BindsToDataContext()
+    public async Task JsonGrid_BindsToDataContext()
     {
         // Arrange
-        var grid = new JsonGrid();
-        var json = JsonNode.Parse("""{"key":"value","another_key":123}""")!;
-        var data = json.AsObject().ToList();
+        var json = JsonNode.Parse("""{"key":"value","another_key":123}""")!.AsObject();
 
         // Act
-        grid.DataContext = data;
+        var grid = new JsonGrid().DataContext(json);
+        await LoadTestContent(grid);
 
         // Assert
-        Assert.AreSame(data!, grid.Data);
-        Assert.AreEqual(2, grid.RowDefinitions.Count);
-        Assert.AreEqual(4, grid.Children.Count);
+        Assert.AreSame(json!, grid.Data);
+        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "key"));
+        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "value"));
+        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "another_key"));
+        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "123"));
+    }
+
+    [TestMethod]
+    public async Task JsonGrid_SelectsItemOnSelection()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"first":"value1","second":"value2"}""")!.AsObject();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+        grid.SelectedIndex = 1;
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        // Assert
+        Assert.IsNotNull(grid.SelectedItem);
+        var selectedItem = (KeyValuePair<string, JsonNode>)grid.SelectedItem;
+        Assert.AreEqual("second", selectedItem.Key);
+        Assert.AreEqual("value2", selectedItem.Value?.ToString());
+    }
+
+    [TestMethod]
+    public async Task JsonGrid_HasContextMenu()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"key":"value"}""")!.AsObject();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+
+        // Assert
+        Assert.IsNotNull(grid.ContextFlyout);
+        Assert.IsInstanceOfType<MenuFlyout>(grid.ContextFlyout);
+        var menu = (MenuFlyout)grid.ContextFlyout;
+        Assert.HasCount(1, menu.Items);
+        Assert.IsInstanceOfType<MenuFlyoutItem>(menu.Items[0]);
+        var copyItem = (MenuFlyoutItem)menu.Items[0];
+        Assert.AreEqual("Copy", copyItem.Text);
+    }
+
+    [TestMethod]
+    public async Task JsonGrid_GetSelectedText_ReturnsKey()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"mykey":"myvalue"}""")!.AsObject();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+        grid.SelectedIndex = 0;
+        grid.CurrentColumn = grid.Columns[0];
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        // Assert
+        var selectedText = grid.GetSelectedText();
+        Assert.AreEqual("mykey", selectedText);
+    }
+
+    [TestMethod]
+    public async Task JsonGrid_GetSelectedText_ReturnsValue()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"mykey":"myvalue"}""")!.AsObject();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+        grid.SelectedIndex = 0;
+        grid.CurrentColumn = grid.Columns[1];
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        // Assert
+        var selectedText = grid.GetSelectedText();
+        Assert.AreEqual("myvalue", selectedText);
+    }
+
+    [TestMethod]
+    public async Task JsonGrid_GetSelectedText_ReturnsNull_WhenNoSelection()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"mykey":"myvalue"}""")!.AsObject();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+
+        // Assert
+        var selectedText = grid.GetSelectedText();
+        Assert.IsNull(selectedText);
+    }
+
+    [TestMethod]
+    public async Task JsonGrid_GetSelectedText_ReturnsMultipleRows()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"first":"value1","second":"value2","third":"value3"}""")!.AsObject();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+        grid.SelectedItems.Add(grid.Data![0]);
+        grid.SelectedItems.Add(grid.Data![1]);
+        grid.SelectedItems.Add(grid.Data![2]);
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        // Assert
+        var selectedText = grid.GetSelectedText();
+        Assert.AreEqual("first\tvalue1\nsecond\tvalue2\nthird\tvalue3", selectedText);
+    }
+
+    [TestMethod]
+    public async Task JsonGrid_CopySelection_CopiesKeyToClipboard()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"testkey":"testvalue"}""")!.AsObject();
+        var mockRuntime = MockRuntime();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+        grid.SelectedIndex = 0;
+        grid.CurrentColumn = grid.Columns[0];
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        var menu = (MenuFlyout)grid.ContextFlyout!;
+        var copyItem = (MenuFlyoutItem)menu.Items[0];
+        copyItem.Command?.Execute(null);
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        // Assert
+        mockRuntime.Clipboard.Verify(c => c.SetText("testkey"), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task JsonGrid_CopySelection_CopiesValueToClipboard()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"testkey":"testvalue"}""")!.AsObject();
+        var mockRuntime = MockRuntime();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+        grid.SelectedIndex = 0;
+        grid.CurrentColumn = grid.Columns[1];
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        var menu = (MenuFlyout)grid.ContextFlyout!;
+        var copyItem = (MenuFlyoutItem)menu.Items[0];
+        copyItem.Command?.Execute(null);
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        // Assert
+        mockRuntime.Clipboard.Verify(c => c.SetText("testvalue"), Times.Once);
     }
 }
