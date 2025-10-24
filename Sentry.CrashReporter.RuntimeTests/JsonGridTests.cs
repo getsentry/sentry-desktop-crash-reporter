@@ -83,4 +83,59 @@ public class JsonGridTests : RuntimeTestBase
         Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "another_key"));
         Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "123"));
     }
+
+    [TestMethod]
+    public async Task JsonGrid_SelectsItemOnSelection()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"first":"value1","second":"value2"}""")!.AsObject();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+        grid.SelectedIndex = 1;
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        // Assert
+        Assert.IsNotNull(grid.SelectedItem);
+        var selectedItem = (KeyValuePair<string, JsonNode>)grid.SelectedItem;
+        Assert.AreEqual("second", selectedItem.Key);
+        Assert.AreEqual("value2", selectedItem.Value?.ToString());
+    }
+
+    [TestMethod]
+    public async Task JsonGrid_HasCopyAccelerator()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"key":"value"}""")!.AsObject();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+
+        // Assert
+        Assert.HasCount(1, grid.KeyboardAccelerators);
+        var accelerator = grid.KeyboardAccelerators[0];
+        Assert.AreEqual(Windows.System.VirtualKey.C, accelerator.Key);
+    }
+
+    [TestMethod]
+    public async Task JsonGrid_HasContextMenu()
+    {
+        // Arrange
+        var json = JsonNode.Parse("""{"key":"value"}""")!.AsObject();
+
+        // Act
+        var grid = new JsonGrid().Data(json!);
+        await LoadTestContent(grid);
+
+        // Assert
+        Assert.IsNotNull(grid.ContextFlyout);
+        Assert.IsInstanceOfType<MenuFlyout>(grid.ContextFlyout);
+        var menu = (MenuFlyout)grid.ContextFlyout;
+        Assert.HasCount(1, menu.Items);
+        Assert.IsInstanceOfType<MenuFlyoutItem>(menu.Items[0]);
+        var copyItem = (MenuFlyoutItem)menu.Items[0];
+        Assert.AreEqual("Copy", copyItem.Text);
+    }
 }
