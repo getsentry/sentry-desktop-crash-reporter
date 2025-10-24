@@ -79,7 +79,7 @@ public class MainViewModelTests
     [TestCase(5, "", "User")]
     [TestCase(6, "", "Attachments")]
     [TestCase(7, "", "Envelope")]
-    [TestCase(7, "test.envelope", "Envelope (test.envelope)")]
+    [TestCase(7, "test.envelope", "Envelope")]
     public void MainViewModel_ResolveSubtitle(int index, string filePath, string expectedSubtitle)
     {
         // Arrange

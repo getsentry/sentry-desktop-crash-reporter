@@ -20,7 +20,6 @@ public partial class MainViewModel : ReactiveObject, ILoadable
     [ObservableAsProperty] private JsonObject? _extra;
     [ObservableAsProperty] private JsonObject? _sdk;
     [ObservableAsProperty] private List<Attachment>? _attachments;
-    [ObservableAsProperty] private string? _fileName = string.Empty;
 
     public event EventHandler? IsExecutingChanged;
 
@@ -31,7 +30,7 @@ public partial class MainViewModel : ReactiveObject, ILoadable
         this.WhenAnyValue(x => x.IsExecuting)
             .Subscribe(x => IsExecutingChanged?.Invoke(this, EventArgs.Empty));
 
-        _subtitleHelper = this.WhenAnyValue(x => x.SelectedIndex, x => x.FileName, x => x.Error, ResolveSubtitle)
+        _subtitleHelper = this.WhenAnyValue(x => x.SelectedIndex, x => x.Error, ResolveSubtitle)
             .ToProperty(this, x => x.Subtitle);
 
         _eventHelper = this.WhenAnyValue(x => x.Envelope)
@@ -66,10 +65,6 @@ public partial class MainViewModel : ReactiveObject, ILoadable
             .Select(envelope => envelope?.TryGetAttachments())
             .ToProperty(this, x => x.Attachments);
 
-        _fileNameHelper = this.WhenAnyValue(x => x.Envelope)
-            .Select(envelope => Path.GetFileName(envelope?.FilePath))
-            .ToProperty(this, x => x.FileName);
-
         IsExecuting = true;
 
         Observable.FromAsync(() => reporter.LoadAsync())
@@ -88,7 +83,7 @@ public partial class MainViewModel : ReactiveObject, ILoadable
                 });
     }
 
-    private static string ResolveSubtitle(int index, string? fileName, Exception? error)
+    private static string ResolveSubtitle(int index, Exception? error)
     {
         return (error, index) switch
         {
@@ -101,7 +96,8 @@ public partial class MainViewModel : ReactiveObject, ILoadable
             (_, 4) => "SDK",
             (_, 5) => "User",
             (_, 6) => "Attachments",
-            _ => string.IsNullOrEmpty(fileName) ? "Envelope" : $"Envelope ({fileName})",
+            (_, 7) => "Envelope",
+            _ => string.Empty
         };
     }
 }

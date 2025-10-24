@@ -29,6 +29,29 @@ public class EnvelopeViewModelTests
     }
 
     [Test]
+    [TestCase("")]
+    [TestCase("foo.envelope")]
+    [TestCase("/path/to/foo.envelope")]
+    public void FileNamePath(string filePath)
+    {
+        // Arrange
+        var envelope = new Envelope(new JsonObject(), [])
+        {
+            FilePath = filePath
+        };
+
+        // Act
+        var viewModel = new EnvelopeViewModel
+        {
+            Envelope = envelope
+        };
+
+        // Assert
+        Assert.That(viewModel.FilePath, Is.EqualTo(filePath));
+        Assert.That(viewModel.FileName, Is.EqualTo(System.IO.Path.GetFileName(filePath)));
+    }
+
+    [Test]
     [TestCase("", false)]
     [TestCase("foo.envelope", true)]
     public async Task CanLaunch(string filePath, bool expectedCanLaunch)
