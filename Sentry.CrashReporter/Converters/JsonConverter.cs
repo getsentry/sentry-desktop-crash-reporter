@@ -22,3 +22,12 @@ public partial class JsonToBoolConverter : EmptyObjectToObjectConverter
         };
     }
 }
+
+public partial class JsonToStringConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+        => (value as JsonNode)?.ToString() ?? string.Empty;
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+        => throw new NotSupportedException();
+}

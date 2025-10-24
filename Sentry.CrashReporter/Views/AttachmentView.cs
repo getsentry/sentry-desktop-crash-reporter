@@ -1,4 +1,3 @@
-using Sentry.CrashReporter.Controls;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.ViewModels;
 using CommunityConverters = CommunityToolkit.Common.Converters;
@@ -26,40 +25,18 @@ public class AttachmentView : ReactiveUserControl<AttachmentViewModel>
                 .DisposeWith(d);
         });
 
-        this.Content(new ScrollViewer()
+        this.Content(new UserControl()
             .DataContext(ViewModel, (view, vm) => view 
-                .Content(new StackPanel()
-                    .Orientation(Orientation.Vertical)
-                    .Spacing(8)
-                    .Children(new AttachmentGrid()
-                        .Data(x => x.Binding(() => vm.Attachments))
-                        .OnLaunch(a => _ = ViewModel?.Launch(a))))));
+                .Content(new AttachmentGrid()
+                    .Data(x => x.Binding(() => vm.Attachments))
+                    .OnLaunch(a => _ = ViewModel?.Launch(a)))));
     }
 }
 
-internal class AttachmentGrid : Grid
+internal class AttachmentGrid : DataGrid
 {
-    public AttachmentGrid()
-    {
-        ColumnDefinitions.Add(new ColumnDefinition().Width(new GridLength(1, GridUnitType.Star)));
-        ColumnDefinitions.Add(new ColumnDefinition().Width(GridLength.Auto));
-        ColumnDefinitions.Add(new ColumnDefinition().Width(GridLength.Auto));
-
-        DataContextChanged += (_, _) => TryAutoBind();
-    }
-
-    public static readonly DependencyProperty DataProperty =
-        DependencyProperty.Register(
-            nameof(Data),
-            typeof(List<Attachment>),
-            typeof(AttachmentGrid),
-            new PropertyMetadata(null, (d, e) =>
-            {
-                if (d is AttachmentGrid grid)
-                {
-                    grid.UpdateGrid(e.NewValue as List<Attachment>);
-                }
-            }));
+    public static readonly DependencyProperty DataProperty = DependencyProperty.Register(
+        nameof(Data), typeof(List<Attachment>), typeof(AttachmentGrid), new PropertyMetadata(null, OnDataChanged));
 
     public List<Attachment>? Data
     {
@@ -75,6 +52,61 @@ internal class AttachmentGrid : Grid
         return this;
     }
 
+    private static void OnDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is AttachmentGrid grid)
+        {
+            grid.ItemsSource = e.NewValue as List<Attachment>;
+        }
+    }
+
+    public AttachmentGrid()
+    {
+        DataContextChanged += (_, _) => TryAutoBind();
+        ActualThemeChanged += OnThemeChanged;
+        DoubleTapped += OnDoubleTapped;
+        RightTapped += OnRightTapped;
+
+        IsReadOnly = true;
+        AutoGenerateColumns = false;
+        GridLinesVisibility = DataGridGridLinesVisibility.None;
+        HeadersVisibility = DataGridHeadersVisibility.Column;
+        SelectionMode = DataGridSelectionMode.Single;
+        ItemsSource = Data;
+
+        UpdateAlternatingRowBackground();
+
+        var menuFlyout = new MenuFlyout();
+        var openMenuItem = new MenuFlyoutItem { Text = "Open" };
+        openMenuItem.Click += (_, _) => LaunchSelected();
+        menuFlyout.Items.Add(openMenuItem);
+        ContextFlyout = menuFlyout;
+
+        Columns.Add(new DataGridTemplateColumn
+        {
+            Header = "Filename",
+            Width = new DataGridLength(1, DataGridLengthUnitType.Star),
+            CellTemplate = new DataTemplate(() =>
+                new TextBlock()
+                    .WithSourceCodePro()
+                    .Margin(new Thickness(8, 0))
+                    .VerticalAlignment(VerticalAlignment.Center)
+                    .Text(x => x.Binding("Filename")))
+        });
+
+        Columns.Add(new DataGridTemplateColumn
+        {
+            Header = "Size",
+            Width = DataGridLength.Auto,
+            CellTemplate = new DataTemplate(() =>
+                new TextBlock()
+                    .WithSourceCodePro()
+                    .Margin(new Thickness(8, 0))
+                    .VerticalAlignment(VerticalAlignment.Center)
+                    .Text(x => x.Binding("Data.Length").Converter(new FileSizeConverter())))
+        });
+    }
+
     private void TryAutoBind()
     {
         if (ReadLocalValue(DataProperty) == DependencyProperty.UnsetValue &&
@@ -84,63 +116,46 @@ internal class AttachmentGrid : Grid
         }
     }
 
-    private void UpdateGrid(List<Attachment>? data)
+    private void OnThemeChanged(FrameworkElement sender, object args)
     {
-        Children.Clear();
-        RowDefinitions.Clear();
+        UpdateAlternatingRowBackground();
+    }
 
-        if (data is null)
+    private void UpdateAlternatingRowBackground()
+    {
+        if (Application.Current.Resources.TryGetValue("SystemControlBackgroundListLowBrush", out var brush))
         {
-            return;
+            AlternatingRowBackground = (Brush)brush;
         }
+    }
 
-        var row = 0;
-        var evenBrush = ThemeResource.Get<Brush>("SystemControlTransparentBrush");
-        var oddBrush = ThemeResource.Get<Brush>("SystemControlBackgroundListLowBrush");
-
-        foreach (var item in data)
+    private void OnRightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        if (e.OriginalSource is FrameworkElement { DataContext: Attachment item } && ItemsSource is List<Attachment> items)
         {
-            RowDefinitions.Add(new RowDefinition().Height(GridLength.Auto));
-
-            Children.Add(new Border()
-                .Grid(row: row, column: 0)
-                .Background(row % 2 == 0 ? evenBrush : oddBrush)
-                .CornerRadius(new CornerRadius(2, 0, 0, 2))
-                .Padding(new Thickness(4, 2, 8, 2))
-                .Child(new TextBlock()
-                    .WithTextSelection()
-                    .WithSourceCodePro()
-                    .Text(item.Filename)));
-
-            Children.Add(new Border()
-                .Grid(row: row, column: 1)
-                .Background(row % 2 == 0 ? evenBrush : oddBrush)
-                .CornerRadius(new CornerRadius(2, 0, 0, 2))
-                .Padding(new Thickness(4, 2, 8, 2))
-                .Child(new TextBlock()
-                    .WithTextSelection()
-                    .WithSourceCodePro()
-                    .Text(CommunityConverters.ToFileSizeString(item.Data.Length))));
-
-            Children.Add(new Border()
-                .Grid(row: row, column: 2)
-                .Background(row % 2 == 0 ? evenBrush : oddBrush)
-                .CornerRadius(new CornerRadius(0, 2, 2, 0))
-                .Padding(new Thickness(8, 2, 4, 2))
-                .Child(new Button()
-                    .ToolTip("Open")
-                    .Content(new FontAwesomeIcon(FA.ArrowUpRightFromSquare).FontSize(12))
-                    .Background(Colors.Transparent)
-                    .BorderBrush(Colors.Transparent)
-                    .Resources(r => r.Add("ButtonBackgroundPointerOver", new SolidColorBrush(Colors.Transparent))
-                        .Add("ButtonBackgroundPressed", new SolidColorBrush(Colors.Transparent))
-                        .Add("ButtonBackgroundDisabled", new SolidColorBrush(Colors.Transparent))
-                        .Add("ButtonBorderBrushPointerOver", new SolidColorBrush(Colors.Transparent))
-                        .Add("ButtonBorderBrushPressed", new SolidColorBrush(Colors.Transparent))
-                        .Add("ButtonBorderBrushDisabled", new SolidColorBrush(Colors.Transparent)))
-                    .Command(ReactiveCommand.Create(() => Launch?.Invoke(item)))));
-
-            row++;
+            SelectedIndex = items.IndexOf(item);
         }
+    }
+
+    private void OnDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+    {
+        LaunchSelected();
+    }
+
+    private void LaunchSelected()
+    {
+        if (SelectedItem is Attachment attachment)
+        {
+            Launch?.Invoke(attachment);
+        }
+    }
+
+    private sealed class FileSizeConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+            => value is int length ? CommunityConverters.ToFileSizeString(length) : string.Empty;
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+            => throw new NotSupportedException();
     }
 }

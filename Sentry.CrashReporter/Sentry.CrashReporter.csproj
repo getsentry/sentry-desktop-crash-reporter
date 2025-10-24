@@ -99,6 +99,7 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="ReactiveUI.Uno.WinUI" />
+        <PackageReference Include="Uno.CommunityToolkit.WinUI.UI.Controls.DataGrid" />
     </ItemGroup>
 
     <ItemGroup>
