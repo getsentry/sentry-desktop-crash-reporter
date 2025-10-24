@@ -36,7 +36,19 @@ public sealed class EnvelopeView : ReactivePage<EnvelopeViewModel>
                                 new TextBlock()
                                     .WithTextSelection()
                                     .WithSourceCodePro()
-                                    .Text(x => x.Binding(() => vm.Formatted?.Header)),
+                                    .Margin(0, 0, 0, 16)
+                                    .ToolTip( b => b.ToolTip(() => vm.FilePath))
+                                    .Text(x => x.Binding(() => vm.FileName).Convert(fn => $"{fn}:")),
+                                new Border()
+                                    .Padding(ThemeResource.Get<Thickness>("ExpanderHeaderPadding"))
+                                    .Background(ThemeResource.Get<Brush>("ExpanderContentBackground"))
+                                    .BorderBrush(ThemeResource.Get<Brush>("ExpanderHeaderBorderBrush"))
+                                    .BorderThickness(ThemeResource.Get<Thickness>("ExpanderHeaderBorderThickness"))
+                                    .CornerRadius(ThemeResource.Get<CornerRadius>("ControlCornerRadius"))
+                                    .Child(new TextBlock()
+                                        .WithTextSelection()
+                                        .WithSourceCodePro()
+                                        .Text(x => x.Binding(() => vm.Formatted?.Header))),
                                 new ItemsControl()
                                     .ItemsSource(x => x.Binding(() => vm.Formatted?.Items))
                                     .ItemTemplate(() =>

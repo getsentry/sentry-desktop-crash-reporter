@@ -101,7 +101,8 @@ public partial class MainViewModel : ReactiveObject, ILoadable
             (_, 4) => "SDK",
             (_, 5) => "User",
             (_, 6) => "Attachments",
-            _ => string.IsNullOrEmpty(fileName) ? "Envelope" : $"Envelope ({fileName})",
+            (_, 7) => "Envelope",
+            _ => string.Empty
         };
     }
 }

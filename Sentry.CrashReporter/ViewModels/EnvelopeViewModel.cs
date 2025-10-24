@@ -1,3 +1,5 @@
+using Path = System.IO.Path;
+
 namespace Sentry.CrashReporter.ViewModels;
 
 public partial class EnvelopeViewModel : ReactiveObject
@@ -5,6 +7,7 @@ public partial class EnvelopeViewModel : ReactiveObject
     [Reactive] private Envelope? _envelope;
     [ObservableAsProperty] private string? _eventId = string.Empty;
     [ObservableAsProperty] private string? _filePath = string.Empty;
+    [ObservableAsProperty] private string? _fileName = string.Empty;
     [ObservableAsProperty] private FormattedEnvelope? _formatted;
     private readonly IObservable<bool> _canLaunch;
 
@@ -16,6 +19,10 @@ public partial class EnvelopeViewModel : ReactiveObject
         _filePathHelper = this.WhenAnyValue(x => x.Envelope)
             .Select(e => e?.FilePath)
             .ToProperty(this, x => x.FilePath);
+
+        _fileNameHelper = this.WhenAnyValue(x => x.FilePath)
+            .Select(Path.GetFileName)
+            .ToProperty(this, x => x.FileName);
 
         _formattedHelper = this.WhenAnyValue(x => x.Envelope, e => e?.Format())
             .ToProperty(this, x => x.Formatted);
