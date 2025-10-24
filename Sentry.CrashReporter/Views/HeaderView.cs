@@ -1,5 +1,6 @@
 using CommunityToolkit.WinUI.Converters;
 using Sentry.CrashReporter.Controls;
+using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.ViewModels;
 
 namespace Sentry.CrashReporter.Views;
@@ -46,7 +47,7 @@ public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
                                     new IconLabel(FA.Bug)
                                         .Margin(8, 4)
                                         .Name("exceptionLabel")
-                                        .ToolTip(x => x.Binding(() => vm.Exception).Convert(e => e?.Value ?? "Exception"))
+                                        .ToolTip(b => b.ToolTip(() => vm.Exception, e => e?.Value ?? "Exception"))
                                         .Text(x => x.Binding(() => vm.Exception).Convert(e => e?.Type ?? string.Empty))
                                         .Visibility(x => x.Binding(() => vm.Exception)
                                             .Convert(e => string.IsNullOrEmpty(e?.Type) ? Visibility.Collapsed : Visibility.Visible)),

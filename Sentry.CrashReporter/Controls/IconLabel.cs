@@ -17,10 +17,6 @@ public class IconLabel : StackPanel
         DependencyProperty.Register(nameof(Brand), typeof(string), typeof(IconLabel),
             new PropertyMetadata(null, OnPropertyChanged));
 
-    public static readonly DependencyProperty ToolTipProperty =
-        DependencyProperty.Register(nameof(ToolTip), typeof(string), typeof(IconLabel),
-            new PropertyMetadata(null, OnPropertyChanged));
-
     public static readonly DependencyProperty TextProperty =
         DependencyProperty.Register(nameof(Text), typeof(string), typeof(IconLabel),
             new PropertyMetadata(null, OnPropertyChanged));
@@ -63,12 +59,6 @@ public class IconLabel : StackPanel
     {
         get => (string?)GetValue(BrandProperty);
         set => SetValue(BrandProperty, value);
-    }
-
-    public string? ToolTip
-    {
-        get => (string?)GetValue(ToolTipProperty);
-        set => SetValue(ToolTipProperty, value);
     }
 
     public string? Text
@@ -151,7 +141,5 @@ public class IconLabel : StackPanel
             }
             Children.Add(textBlock);
         }
-
-        ToolTipService.SetToolTip(this, ToolTip);
     }
 }

@@ -1,4 +1,5 @@
 using Sentry.CrashReporter.Controls;
+using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.ViewModels;
 
 namespace Sentry.CrashReporter.Views;
