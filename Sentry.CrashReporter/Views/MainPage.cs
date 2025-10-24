@@ -37,8 +37,7 @@ public sealed class MainPage : Page
             ToolTip: "Feedback",
             Region: "feedback",
             Visibility: (_, x) => x.Binding(() => Visibility.Visible),
-            Builder: vm => new FeedbackView()
-                .Envelope(x => x.Binding(() => vm.Envelope))
+            Builder: vm => new FeedbackView().Envelope(x => x.Binding(() => vm.Envelope))
         ),
         new(
             Title: "Tags",
@@ -46,8 +45,7 @@ public sealed class MainPage : Page
             ToolTip: "Tags",
             Region: "tags",
             Visibility: (vm, x) => x.Binding(() => vm.Tags).Converter(ToVisibility),
-            Builder: vm => new JsonGrid()
-                .Data(x => x.Binding(() => vm.Tags))
+            Builder: vm => new JsonGrid().Data(x => x.Binding(() => vm.Tags))
         ),
         new(
             Title: "Contexts",
@@ -55,8 +53,7 @@ public sealed class MainPage : Page
             ToolTip: "Contexts",
             Region: "contexts",
             Visibility: (vm, x) => x.Binding(() => vm.Contexts).Converter(ToVisibility),
-            Builder: vm => new JsonGrid()
-                .Data(x => x.Binding(() => vm.Contexts))
+            Builder: vm => new JsonGrid().Data(x => x.Binding(() => vm.Contexts))
         ),
         new(
             Title: "Additional Data",
@@ -64,8 +61,7 @@ public sealed class MainPage : Page
             ToolTip: "Additional Data",
             Region: "extra",
             Visibility: (vm, x) => x.Binding(() => vm.Extra).Converter(ToVisibility),
-            Builder: vm => new JsonGrid()
-                .Data(x => x.Binding(() => vm.Extra))
+            Builder: vm => new JsonGrid().Data(x => x.Binding(() => vm.Extra))
         ),
         new(
             Title: "SDK",
@@ -73,8 +69,7 @@ public sealed class MainPage : Page
             ToolTip: "SDK",
             Region: "sdk",
             Visibility: (vm, x) => x.Binding(() => vm.Sdk).Converter(ToVisibility),
-            Builder: vm => new JsonGrid()
-                .Data(x => x.Binding(() => vm.Sdk))
+            Builder: vm => new JsonGrid().Data(x => x.Binding(() => vm.Sdk))
         ),
         new(
             Title: "User",
@@ -82,8 +77,7 @@ public sealed class MainPage : Page
             ToolTip: "User",
             Region: "user",
             Visibility: (vm, x) => x.Binding(() => vm.User).Converter(ToVisibility),
-            Builder: vm => new JsonGrid()
-                .Data(x => x.Binding(() => vm.User))
+            Builder: vm => new JsonGrid().Data(x => x.Binding(() => vm.User))
         ),
         new(
             Title: "Attachments",
@@ -91,8 +85,7 @@ public sealed class MainPage : Page
             ToolTip: "Attachments",
             Region: "attachments",
             Visibility: (vm, x) => x.Binding(() => vm.Attachments).Converter(ToVisibility),
-            Builder: vm => new AttachmentView()
-                .Envelope(x => x.Binding(() => vm.Envelope))
+            Builder: vm => new AttachmentView().Envelope(x => x.Binding(() => vm.Envelope))
         ),
         new(
             Title: "Envelope",
@@ -100,8 +93,7 @@ public sealed class MainPage : Page
             ToolTip: "Envelope",
             Region: "envelope",
             Visibility: (_, x) => x.Binding(() => Visibility.Visible),
-            Builder: vm => new EnvelopeView()
-                .Envelope(x => x.Binding(() => vm.Envelope))
+            Builder: vm => new EnvelopeView().Envelope(x => x.Binding(() => vm.Envelope))
         )
     ];
 
