@@ -11,7 +11,7 @@ This is the problem we set out to solve with
 a cross-platform crash reporter for native desktop applications using the
 [Sentry Native SDK](https://docs.sentry.io/platforms/native/).
 
-![Sentry Desktop Crash Reporter](https://github.com/getsentry/sentry-desktop-crash-reporter/blob/main/.screenshots/all.png)
+![Sentry Desktop Crash Reporter](https://github.com/getsentry/sentry-desktop-crash-reporter/blob/main/.github/screenshots/all.png)
 
 ## The Challenge
 
