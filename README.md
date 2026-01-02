@@ -74,7 +74,7 @@ dotnet publish -f net9.0-desktop -r win-x64 Sentry.CrashReporter/Sentry.CrashRep
 To run the crash reporter directly during development:
 
 ```bash
-dotnet run -f net9.0-desktop Sentry.CrashReporter/Sentry.CrashReporter.csproj
+dotnet run -p Sentry.CrashReporter/Sentry.CrashReporter.csproj -f net9.0-desktop
 ```
 
 ## Usage
