@@ -28,18 +28,23 @@ public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
                 .DisposeWith(d);
         });
 
-        this.Content(new Grid()
+        this.Content(new StackPanel()
+            .Orientation(Orientation.Vertical)
+            .Spacing(8)
             .DataContext(ViewModel, (view, vm) => view
-                .ColumnDefinitions("*,Auto")
                 .Children(
-                    new StackPanel()
-                        .Grid(0)
-                        .Orientation(Orientation.Vertical)
-                        .Spacing(8)
+                    new Grid()
+                        .ColumnDefinitions("*,Auto")
                         .Children(
                             new TextBlock()
+                                .Grid(0)
                                 .Text("Report a Bug")
                                 .Style(ThemeResource.Get<Style>("TitleTextBlockStyle")),
+                            new Image()
+                                .Grid(1)
+                                .Source(ThemeResource.Get<ImageSource>("SentryGlyphIcon"))
+                                .Width(34)
+                                .Height(30)),
                             new WrapPanel()
                                 .Margin(-4, 0)
                                 .Orientation(Orientation.Horizontal)
@@ -69,12 +74,7 @@ public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
                                         .Name("environmentLabel")
                                         .ToolTip("Environment")
                                         .Text(x => x.Binding(() => vm.Environment))
-                                        .Visibility(x => x.Binding(() => vm.Environment).Converter(ToVisibility)))),
-                    new Image()
-                        .Grid(1)
-                        .Source(ThemeResource.Get<ImageSource>("SentryGlyphIcon"))
-                        .Width(68)
-                        .Height(60))));
+                                        .Visibility(x => x.Binding(() => vm.Environment).Converter(ToVisibility))))));
     }
 
     private static string ToBrand(string? value)
