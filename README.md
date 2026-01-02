@@ -25,6 +25,58 @@ A reference implementation of an external crash reporter for desktop application
 * **Crash Information:** Displays crash details from the attached memory dump.
 * **Attachments**: Allows users to preview crash report attachments, such as screenshots.
 
+## Building
+
+### Prerequisites
+
+- [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) or later
+
+### Development Build
+
+To build the project for development:
+
+```bash
+dotnet build -f net9.0-desktop Sentry.CrashReporter/Sentry.CrashReporter.csproj
+```
+
+### Release Build
+
+To build a release version for your platform:
+
+#### Windows (x64)
+```bash
+dotnet publish -f net9.0-desktop -r win-x64 Sentry.CrashReporter/Sentry.CrashReporter.csproj
+```
+
+#### macOS (ARM64)
+```bash
+dotnet publish -f net9.0-desktop -r osx-arm64 Sentry.CrashReporter/Sentry.CrashReporter.csproj
+```
+
+#### macOS (x64)
+```bash
+dotnet publish -f net9.0-desktop -r osx-x64 Sentry.CrashReporter/Sentry.CrashReporter.csproj
+```
+
+#### Linux (x64)
+```bash
+dotnet publish -f net9.0-desktop -r linux-x64 Sentry.CrashReporter/Sentry.CrashReporter.csproj
+```
+
+The built binaries will be placed in the `bin` directory. For published builds, you can specify a custom output directory with the `-o` flag:
+
+```bash
+dotnet publish -f net9.0-desktop -r win-x64 Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./output
+```
+
+### Running
+
+To run the crash reporter directly during development:
+
+```bash
+dotnet run -f net9.0-desktop Sentry.CrashReporter/Sentry.CrashReporter.csproj
+```
+
 ## Usage
 
 ```c
