@@ -67,14 +67,12 @@ public partial class MainViewModel : ReactiveObject, ILoadable
             .Subscribe(
                 onNext: value =>
                 {
-                    Console.WriteLine("### OnNext");
                     Envelope = value;
                     Error = null;
                     IsExecuting = false;
                 },
                 onError: ex =>
                 {
-                    Console.WriteLine("### OnError");
                     Error = ex;
                     IsExecuting = false;
                 });
