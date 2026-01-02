@@ -1,0 +1,21 @@
+name: Update dependencies
+
+on:
+  schedule:
+    - cron: '15 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write      # To modify files and create commits
+  pull-requests: write # To create and update pull requests
+  actions: write       # To cancel previous workflow runs
+
+jobs:
+  uno-sdk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: getsentry/github-workflows/updater@v3
+        with:
+          path: .github/scripts/update-uno-sdk.ps1
+          name: Uno.Sdk
+          api-token: ${{ secrets.GITHUB_TOKEN }}
