@@ -30,10 +30,9 @@ A reference implementation of an external crash reporter for desktop application
 ### Prerequisites
 
 - [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) or later
+- Run [`uno-check`](https://platform.uno/docs/articles/uno-check.html) to verify and install additional requirements
 
 ### Development Build
-
-To build the project for development:
 
 ```bash
 dotnet build -f net9.0-desktop Sentry.CrashReporter/Sentry.CrashReporter.csproj
@@ -41,37 +40,13 @@ dotnet build -f net9.0-desktop Sentry.CrashReporter/Sentry.CrashReporter.csproj
 
 ### Release Build
 
-To build a release version for your platform:
-
-#### Windows (x64)
 ```bash
-dotnet publish -f net9.0-desktop -r win-x64 Sentry.CrashReporter/Sentry.CrashReporter.csproj
+dotnet publish -f net9.0-desktop -r <RID> Sentry.CrashReporter/Sentry.CrashReporter.csproj
 ```
 
-#### macOS (ARM64)
-```bash
-dotnet publish -f net9.0-desktop -r osx-arm64 Sentry.CrashReporter/Sentry.CrashReporter.csproj
-```
-
-#### macOS (x64)
-```bash
-dotnet publish -f net9.0-desktop -r osx-x64 Sentry.CrashReporter/Sentry.CrashReporter.csproj
-```
-
-#### Linux (x64)
-```bash
-dotnet publish -f net9.0-desktop -r linux-x64 Sentry.CrashReporter/Sentry.CrashReporter.csproj
-```
-
-The built binaries will be placed in the `bin` directory. For published builds, you can specify a custom output directory with the `-o` flag:
-
-```bash
-dotnet publish -f net9.0-desktop -r win-x64 Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./output
-```
+Replace `<RID>` with your target platform runtime identifier (e.g., `win-x64`, `osx-arm64`, `linux-x64`). See the [.NET RID Catalog](https://learn.microsoft.com/en-us/dotnet/core/rid-catalog) for more options.
 
 ### Running
-
-To run the crash reporter directly during development:
 
 ```bash
 dotnet run -p Sentry.CrashReporter/Sentry.CrashReporter.csproj -f net9.0-desktop
