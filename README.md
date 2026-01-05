@@ -32,25 +32,19 @@ A reference implementation of an external crash reporter for desktop application
 - [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) or later
 - Run [`uno-check`](https://platform.uno/docs/articles/uno-check.html) to verify and install additional requirements
 
-### Development Build
+### Running
 
 ```bash
-dotnet build -f net9.0-desktop Sentry.CrashReporter/Sentry.CrashReporter.csproj
+dotnet run --project Sentry.CrashReporter/Sentry.CrashReporter.csproj -f net9.0-desktop -- Sentry.CrashReporter.Tests/data/inproc.envelope
 ```
 
-### Release Build
+### Build
 
 ```bash
 dotnet publish -f net9.0-desktop -r <RID> Sentry.CrashReporter/Sentry.CrashReporter.csproj
 ```
 
 Replace `<RID>` with your target platform runtime identifier (e.g., `win-x64`, `osx-arm64`, `linux-x64`). See the [.NET RID Catalog](https://learn.microsoft.com/en-us/dotnet/core/rid-catalog) for more options.
-
-### Running
-
-```bash
-dotnet run -p Sentry.CrashReporter/Sentry.CrashReporter.csproj -f net9.0-desktop
-```
 
 ## Usage
 
