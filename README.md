@@ -25,20 +25,20 @@ A reference implementation of an external crash reporter for desktop application
 * **Crash Information:** Displays crash details from the attached memory dump.
 * **Attachments**: Allows users to preview crash report attachments, such as screenshots.
 
-## Building
+## Build
 
 ### Prerequisites
 
 - [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) or later
 - Run [`uno-check`](https://platform.uno/docs/articles/uno-check.html) to verify and install additional requirements
 
-### Running
+### Develop
 
 ```bash
 dotnet run --project Sentry.CrashReporter/Sentry.CrashReporter.csproj -f net9.0-desktop -- Sentry.CrashReporter.Tests/data/inproc.envelope
 ```
 
-### Build
+### Deploy
 
 ```bash
 dotnet publish -f net9.0-desktop -r <RID> Sentry.CrashReporter/Sentry.CrashReporter.csproj
