@@ -18,4 +18,5 @@ jobs:
         with:
           path: scripts/update-uno-sdk.ps1
           name: Uno.Sdk
+          changelog-entry: false
           api-token: ${{ secrets.GITHUB_TOKEN }}
