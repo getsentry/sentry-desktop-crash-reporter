@@ -16,6 +16,6 @@ jobs:
     steps:
       - uses: getsentry/github-workflows/updater@v3
         with:
-          path: .github/scripts/update-uno-sdk.ps1
+          path: scripts/update-uno-sdk.ps1
           name: Uno.Sdk
           api-token: ${{ secrets.GITHUB_TOKEN }}
