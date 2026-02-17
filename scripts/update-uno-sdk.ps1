@@ -1,7 +1,7 @@
 Set-StrictMode -Version latest
 $ErrorActionPreference = 'Stop'
 
-$path = "$PSScriptRoot/../../global.json"
+$path = "$PSScriptRoot/../global.json"
 
 function Get-Json($key)
 {
