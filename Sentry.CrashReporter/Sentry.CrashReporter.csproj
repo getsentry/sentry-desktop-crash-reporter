@@ -69,12 +69,12 @@
 
 
     <ItemGroup>
-        <Content Include="Assets\SentryGlyph.png" />
-        <Content Include="Assets\SentryGlyph.scale-200.png" />
-        <Content Include="Assets\SentryGlyph.dark.png" />
-        <Content Include="Assets\SentryGlyph.dark.scale-200.png" />
-        <Content Include="Assets\SentryGlyph.light.png" />
-        <Content Include="Assets\SentryGlyph.light.scale-200.png" />
+        <Content Include="Assets\AppLogo.png" />
+        <Content Include="Assets\AppLogo.scale-200.png" />
+        <Content Include="Assets\AppLogo.dark.png" />
+        <Content Include="Assets\AppLogo.dark.scale-200.png" />
+        <Content Include="Assets\AppLogo.light.png" />
+        <Content Include="Assets\AppLogo.light.scale-200.png" />
         <Content Include="Assets\Fonts\SourceCodePro\SourceCodePro-Regular.ttf">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>

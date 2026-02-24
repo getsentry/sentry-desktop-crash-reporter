@@ -4,10 +4,10 @@
 
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
-            <ImageSource x:Key="SentryGlyphIcon">ms-appx:///Assets/SentryGlyph.light.png</ImageSource>
+            <ImageSource x:Key="AppLogoIcon">ms-appx:///Assets/AppLogo.light.png</ImageSource>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
-            <ImageSource x:Key="SentryGlyphIcon">ms-appx:///Assets/SentryGlyph.dark.png</ImageSource>
+            <ImageSource x:Key="AppLogoIcon">ms-appx:///Assets/AppLogo.dark.png</ImageSource>
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>
