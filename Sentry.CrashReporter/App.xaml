@@ -1,4 +1,4 @@
-<Application x:Class="Sentry.CrashReporter.App"
+﻿<Application x:Class="Sentry.CrashReporter.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
@@ -10,22 +10,22 @@
                 <ResourceDictionary Source="ms-appx:///Styles/Images.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <Color x:Key="SystemAccentColor">#8866FF</Color>
-            <Color x:Key="SystemAccentColorLight1">#9C7FFF</Color>
-            <Color x:Key="SystemAccentColorLight2">#7554FF</Color>
-            <Color x:Key="SystemAccentColorLight3">#B08CFF</Color>
-            <Color x:Key="SystemAccentColorDark1">#7554FF</Color>
-            <Color x:Key="SystemAccentColorDark2">#5A3FCC</Color>
-            <Color x:Key="SystemAccentColorDark3">#3F2B99</Color>
+            <Color x:Key="SystemAccentColor">#28C840</Color>
+            <Color x:Key="SystemAccentColorLight1">#3AD450</Color>
+            <Color x:Key="SystemAccentColorLight2">#55DC6A</Color>
+            <Color x:Key="SystemAccentColorLight3">#78E588</Color>
+            <Color x:Key="SystemAccentColorDark1">#22B038</Color>
+            <Color x:Key="SystemAccentColorDark2">#1C962F</Color>
+            <Color x:Key="SystemAccentColorDark3">#167C27</Color>
 
             <SolidColorBrush x:Key="SystemAccentColorBrush" Color="{StaticResource SystemAccentColor}" />
-            <SolidColorBrush x:Key="AccentButtonForeground" Color="#FFFFFF" />
-            <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#FFFFFF" />
-            <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#FFFFFF" Opacity="0.9" />
-            <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#FFFFFF" Opacity="0.75" />
+            <SolidColorBrush x:Key="AccentButtonForeground" Color="#000000" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#000000" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#000000" Opacity="0.9" />
+            <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#000000" Opacity="0.75" />
 
-            <x:String x:Key="WindowTitle">Sentry Crash Reporter</x:String>
-            <x:String x:Key="HeaderText">Report a Bug</x:String>
+            <x:String x:Key="WindowTitle">My Crash Reporter</x:String>
+            <x:String x:Key="HeaderText">Something Went Wrong</x:String>
 
             <!-- ReSharper disable Xaml.LanguageLevel -->
             <x:Double x:Key="ExpanderChevronButtonSize">20</x:Double>
