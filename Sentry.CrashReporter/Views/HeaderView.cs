@@ -38,11 +38,11 @@ public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
                         .Children(
                             new TextBlock()
                                 .Grid(0)
-                                .Text("Report a Bug")
+                                .Text(StaticResource.Get<string>("HeaderText"))
                                 .Style(ThemeResource.Get<Style>("TitleTextBlockStyle")),
                             new Image()
                                 .Grid(1)
-                                .Source(ThemeResource.Get<ImageSource>("SentryGlyphIcon"))
+                                .Source(ThemeResource.Get<ImageSource>("AppLogoIcon"))
                                 .Width(34)
                                 .Height(30)),
                             new WrapPanel()

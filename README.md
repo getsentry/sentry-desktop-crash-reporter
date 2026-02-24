@@ -25,6 +25,11 @@ A reference implementation of an external crash reporter for desktop application
 * **Crash Information:** Displays crash details from the attached memory dump.
 * **Attachments**: Allows users to preview crash report attachments, such as screenshots.
 
+## Customize
+
+See [CUSTOMIZATION.md](CUSTOMIZATION.md) for instructions on rebranding the crash
+reporter with your own logo, colors, and window title.
+
 ## Build
 
 ### Prerequisites
