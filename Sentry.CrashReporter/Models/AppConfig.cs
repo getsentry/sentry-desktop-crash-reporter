@@ -44,7 +44,7 @@ public record AppConfig
             try
             {
                 using var stream = File.OpenRead(path);
-                var doc = JsonDocument.Parse(stream);
+                using var doc = JsonDocument.Parse(stream);
                 if (doc.RootElement.TryGetProperty("AppConfig", out var section))
                 {
                     return JsonSerializer.Deserialize(section.GetRawText(), AppConfigJsonContext.Default.AppConfig);
