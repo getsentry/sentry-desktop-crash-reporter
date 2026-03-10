@@ -26,6 +26,9 @@
 
             <x:String x:Key="WindowTitle">Sentry Crash Reporter</x:String>
             <x:String x:Key="HeaderText">Report a Bug</x:String>
+            <x:String x:Key="HeaderDescription" xml:space="preserve"> </x:String>
+            <x:String x:Key="CancelButton">Cancel</x:String>
+            <x:String x:Key="SubmitButton">Submit</x:String>
 
             <!-- ReSharper disable Xaml.LanguageLevel -->
             <x:Double x:Key="ExpanderChevronButtonSize">20</x:Double>

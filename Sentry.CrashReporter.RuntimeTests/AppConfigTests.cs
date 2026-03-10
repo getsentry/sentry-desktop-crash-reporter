@@ -138,6 +138,92 @@ public class AppConfigTests
     }
 
     [TestMethod]
+    public void Apply_HeaderDescription_SetsResource()
+    {
+        var config = new AppConfig { HeaderDescription = "Please describe what happened." };
+        var resources = new ResourceDictionary();
+
+        config.Apply(resources);
+
+        Assert.AreEqual("Please describe what happened.", resources["HeaderDescription"]);
+    }
+
+    [TestMethod]
+    public void Apply_NoHeaderDescription_DoesNotSetResource()
+    {
+        var config = new AppConfig();
+        var resources = new ResourceDictionary
+        {
+            ["HeaderDescription"] = "Original"
+        };
+
+        config.Apply(resources);
+
+        Assert.AreEqual("Original", resources["HeaderDescription"]);
+    }
+
+    [TestMethod]
+    public void Apply_CancelButtonText_SetsResource()
+    {
+        var config = new AppConfig { CancelButton = "Dismiss" };
+        var resources = new ResourceDictionary();
+
+        config.Apply(resources);
+
+        Assert.AreEqual("Dismiss", resources["CancelButton"]);
+    }
+
+    [TestMethod]
+    public void Apply_EmptyCancelButtonText_SetsEmptyString()
+    {
+        var config = new AppConfig { CancelButton = "" };
+        var resources = new ResourceDictionary();
+
+        config.Apply(resources);
+
+        Assert.AreEqual("", resources["CancelButton"]);
+    }
+
+    [TestMethod]
+    public void Apply_NoCancelButtonText_DoesNotSetResource()
+    {
+        var config = new AppConfig();
+        var resources = new ResourceDictionary
+        {
+            ["CancelButton"] = "Original"
+        };
+
+        config.Apply(resources);
+
+        Assert.AreEqual("Original", resources["CancelButton"]);
+    }
+
+    [TestMethod]
+    public void Apply_SubmitButtonText_SetsResource()
+    {
+        var config = new AppConfig { SubmitButton = "Send" };
+        var resources = new ResourceDictionary();
+
+        config.Apply(resources);
+
+        Assert.AreEqual("Send", resources["SubmitButton"]);
+    }
+
+    [TestMethod]
+    public void Apply_NoSubmitButtonText_DoesNotSetResource()
+    {
+        var config = new AppConfig();
+        var resources = new ResourceDictionary
+        {
+            ["SubmitButton"] = "Original"
+        };
+
+        config.Apply(resources);
+
+        Assert.AreEqual("Original", resources["SubmitButton"]);
+    }
+
+    [TestMethod]
     public void Apply_EmptyConfig_DoesNotModifyResources()
     {
         var config = new AppConfig();

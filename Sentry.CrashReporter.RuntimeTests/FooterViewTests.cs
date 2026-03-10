@@ -144,6 +144,52 @@ public class FooterViewTests : RuntimeTestBase
     }
 
     [TestMethod]
+    public async Task FooterView_EmptyCancelLabel_HidesCancelButton()
+    {
+        // Arrange
+        _ = MockRuntime();
+        Application.Current.Resources["CancelButton"] = "";
+
+        // Act
+        var view = new FooterView();
+        await LoadTestContent(view);
+
+        // Assert
+        var cancelButton = view.FindFirstDescendant<Button>("cancelButton");
+        Assert.IsNotNull(cancelButton);
+        Assert.AreEqual(Visibility.Collapsed, cancelButton.Visibility);
+
+        // Cleanup
+        Application.Current.Resources["CancelButton"] = "Cancel";
+    }
+
+    [TestMethod]
+    public async Task FooterView_CustomButtonLabels()
+    {
+        // Arrange
+        _ = MockRuntime();
+        Application.Current.Resources["CancelButton"] = "Dismiss";
+        Application.Current.Resources["SubmitButton"] = "Send";
+
+        // Act
+        var view = new FooterView();
+        await LoadTestContent(view);
+
+        // Assert
+        var cancelButton = view.FindFirstDescendant<Button>("cancelButton");
+        Assert.IsNotNull(cancelButton);
+        Assert.AreEqual("Dismiss", cancelButton.Content);
+
+        var submitButton = view.FindFirstDescendant<Button>("submitButton");
+        Assert.IsNotNull(submitButton);
+        Assert.AreEqual("Send", submitButton.Content);
+
+        // Cleanup
+        Application.Current.Resources["CancelButton"] = "Cancel";
+        Application.Current.Resources["SubmitButton"] = "Submit";
+    }
+
+    [TestMethod]
     public async Task FooterView_Cancel_ClosesWindow()
     {
         // Arrange

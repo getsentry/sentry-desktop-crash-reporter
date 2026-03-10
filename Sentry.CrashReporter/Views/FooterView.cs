@@ -35,13 +35,15 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
                         .Content(x => x.Binding(() => vm.Status).Convert(status => BuildStatusLabel(vm, status).Name("statusLabel"))),
                     new Button()
                         .Grid(1)
-                        .Content("Cancel")
+                        .Content(x => x.StaticResource("CancelButton"))
                         .Name("cancelButton")
+                        .Visibility(string.IsNullOrEmpty(Application.Current.Resources["CancelButton"].ToString())
+                            ? Visibility.Collapsed : Visibility.Visible)
                         .Command(x => x.Binding(() => vm.CancelCommand))
                         .Background(Colors.Transparent),
                     new Button()
                         .Grid(2)
-                        .Content("Submit")
+                        .Content(x => x.StaticResource("SubmitButton"))
                         .Name("submitButton")
                         .AutomationProperties(automationId: "submitButton")
                         .Command(x => x.Binding(() => vm.SubmitCommand))
