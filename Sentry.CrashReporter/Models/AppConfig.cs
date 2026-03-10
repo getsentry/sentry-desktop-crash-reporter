@@ -59,9 +59,8 @@ public record AppConfig
 
     public void Apply(ResourceDictionary resources)
     {
-        if (SystemAccentColor is not null)
+        if (ColorExtensions.TryParseHex(SystemAccentColor) is { } accent)
         {
-            var accent = ColorExtensions.ParseHex(SystemAccentColor);
             resources["SystemAccentColor"] = accent;
             resources["SystemAccentColorLight1"] = ColorExtensions.TryParseHex(SystemAccentColorLight1) ?? ColorExtensions.Lighten(accent, 0.10f);
             resources["SystemAccentColorLight2"] = ColorExtensions.TryParseHex(SystemAccentColorLight2) ?? ColorExtensions.Lighten(accent, 0.20f);
