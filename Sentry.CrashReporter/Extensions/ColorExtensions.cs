@@ -57,12 +57,14 @@ internal static class ColorExtensions
             Blend(color.B, 0, amount));
     }
 
+    // https://www.w3.org/TR/WCAG20/#contrast-ratiodef
     internal static Color ContrastForeground(Color background)
     {
         var luminance = RelativeLuminance(background);
         return luminance > 0.179 ? Black : White;
     }
 
+    // https://en.wikipedia.org/wiki/Relative_luminance
     private static double RelativeLuminance(Color color)
     {
         return 0.2126 * Linearize(color.R) +
@@ -70,6 +72,7 @@ internal static class ColorExtensions
                0.0722 * Linearize(color.B);
     }
 
+    // https://en.wikipedia.org/wiki/SRGB#From_sRGB_to_CIE_XYZ
     private static double Linearize(byte channel)
     {
         var s = channel / 255.0;
