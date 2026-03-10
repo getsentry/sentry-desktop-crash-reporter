@@ -107,7 +107,7 @@ public partial class App : Application
             );
         MainWindow = builder.Window;
 
-        var envelopeDir = Path.GetDirectoryName(args.Arguments);
+        var envelopeDir = Path.GetDirectoryName(Services.GetService<IStorageFile>()?.Path);
         var databaseDir = Path.GetDirectoryName(envelopeDir);
         AppConfig.Load(envelopeDir, databaseDir, AppContext.BaseDirectory)?.Apply(Resources);
 
