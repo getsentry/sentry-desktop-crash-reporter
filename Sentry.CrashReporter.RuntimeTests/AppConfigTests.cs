@@ -17,8 +17,8 @@ public class AppConfigTests
 
         var accent = ColorExtensions.ParseHex("#FF6600");
         Assert.AreEqual(accent, resources["SystemAccentColor"]);
-        Assert.AreEqual(ColorExtensions.Lighten(accent, 0.15f), resources["SystemAccentColorLight1"]);
-        Assert.AreEqual(ColorExtensions.Lighten(accent, 0.10f), resources["SystemAccentColorLight2"]);
+        Assert.AreEqual(ColorExtensions.Lighten(accent, 0.10f), resources["SystemAccentColorLight1"]);
+        Assert.AreEqual(ColorExtensions.Lighten(accent, 0.20f), resources["SystemAccentColorLight2"]);
         Assert.AreEqual(ColorExtensions.Lighten(accent, 0.30f), resources["SystemAccentColorLight3"]);
         Assert.AreEqual(ColorExtensions.Darken(accent, 0.10f), resources["SystemAccentColorDark1"]);
         Assert.AreEqual(ColorExtensions.Darken(accent, 0.20f), resources["SystemAccentColorDark2"]);

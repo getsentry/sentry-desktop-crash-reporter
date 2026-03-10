@@ -63,8 +63,8 @@ public record AppConfig
         {
             var accent = ColorExtensions.ParseHex(SystemAccentColor);
             resources["SystemAccentColor"] = accent;
-            resources["SystemAccentColorLight1"] = ColorExtensions.TryParseHex(SystemAccentColorLight1) ?? ColorExtensions.Lighten(accent, 0.15f);
-            resources["SystemAccentColorLight2"] = ColorExtensions.TryParseHex(SystemAccentColorLight2) ?? ColorExtensions.Lighten(accent, 0.10f);
+            resources["SystemAccentColorLight1"] = ColorExtensions.TryParseHex(SystemAccentColorLight1) ?? ColorExtensions.Lighten(accent, 0.10f);
+            resources["SystemAccentColorLight2"] = ColorExtensions.TryParseHex(SystemAccentColorLight2) ?? ColorExtensions.Lighten(accent, 0.20f);
             resources["SystemAccentColorLight3"] = ColorExtensions.TryParseHex(SystemAccentColorLight3) ?? ColorExtensions.Lighten(accent, 0.30f);
             resources["SystemAccentColorDark1"] = ColorExtensions.TryParseHex(SystemAccentColorDark1) ?? ColorExtensions.Darken(accent, 0.10f);
             resources["SystemAccentColorDark2"] = ColorExtensions.TryParseHex(SystemAccentColorDark2) ?? ColorExtensions.Darken(accent, 0.20f);
