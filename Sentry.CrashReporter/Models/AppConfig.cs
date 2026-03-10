@@ -91,7 +91,7 @@ public record AppConfig
         ApplyLogoOverride(resources, LogoDark, "Dark");
     }
 
-    private static void ApplyLogoOverride(ResourceDictionary resources, string? logoPath, string themeKey)
+    private void ApplyLogoOverride(ResourceDictionary resources, string? logoPath, string themeKey)
     {
         if (logoPath is null)
         {
@@ -104,6 +104,7 @@ public record AppConfig
 
         if (!File.Exists(fullPath))
         {
+            this.Log().LogWarning($"{themeKey} logo not found: {fullPath}");
             return;
         }
 
