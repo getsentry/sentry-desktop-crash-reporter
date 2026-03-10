@@ -2,23 +2,19 @@ using System.Globalization;
 
 namespace Sentry.CrashReporter.Extensions;
 
-internal static class ColorExtensions
+public static class ColorExtensions
 {
-    internal static Color ParseHex(string hex)
+    public static Color ParseHex(string hex)
     {
         return TryParseHex(hex) ?? throw new FormatException($"Invalid hex color: {hex}");
     }
 
-    internal static Color? TryParseHex(string? hex)
+    public static Color? TryParseHex(string? hex)
     {
-        if (hex is null)
-        {
-            return null;
-        }
-        var h = hex.TrimStart('#');
+        var h = hex?.TrimStart('#');
         try
         {
-            return h.Length switch
+            return h?.Length switch
             {
                 6 => Color.FromArgb(
                     0xFF,
@@ -39,7 +35,7 @@ internal static class ColorExtensions
         }
     }
 
-    internal static Color Lighten(Color color, float amount)
+    public static Color Lighten(Color color, float amount)
     {
         return Color.FromArgb(
             color.A,
@@ -48,7 +44,7 @@ internal static class ColorExtensions
             Blend(color.B, 255, amount));
     }
 
-    internal static Color Darken(Color color, float amount)
+    public static Color Darken(Color color, float amount)
     {
         return Color.FromArgb(
             color.A,
@@ -58,10 +54,10 @@ internal static class ColorExtensions
     }
 
     // https://www.w3.org/TR/WCAG20/#contrast-ratiodef
-    internal static Color ContrastForeground(Color background)
+    public static Color ContrastForeground(Color background)
     {
         var luminance = RelativeLuminance(background);
-        return luminance > 0.179 ? Black : White;
+        return luminance > 0.179 ? Colors.Black : Colors.White;
     }
 
     // https://en.wikipedia.org/wiki/Relative_luminance
@@ -81,7 +77,4 @@ internal static class ColorExtensions
 
     private static byte Blend(byte from, byte to, float amount) =>
         (byte)(from + (to - from) * Math.Clamp(amount, 0f, 1f));
-
-    private static readonly Color White = Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF);
-    private static readonly Color Black = Color.FromArgb(0xFF, 0x00, 0x00, 0x00);
 }
