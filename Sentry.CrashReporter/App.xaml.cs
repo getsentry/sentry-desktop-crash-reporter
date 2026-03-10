@@ -105,7 +105,7 @@ public partial class App : Application
             );
         MainWindow = builder.Window;
 
-        MainWindow.Title = Resources["WindowTitle"] as string;
+        MainWindow.Title = (Resources["WindowTitle"] as string)!;
         MainWindow.Resize(900, 600);
         MainWindow.SetPreferredMinSize(600, 400);
         MainWindow.UseSystemTheme();
