@@ -53,7 +53,7 @@ public record AppConfig
             catch (Exception ex)
             {
                 // never fail to launch due to custom config parsing
-                typeof(AppConfig).Log().LogWarning(ex, "Failed to load: {Path}", path);
+                typeof(AppConfig).Log().LogWarning(ex, "Failed to load config: {Path}", path);
             }
         }
         return null;
@@ -93,9 +93,9 @@ public record AppConfig
         ApplyLogoOverride(resources, LogoDark, "Dark");
     }
 
-    private void ApplyLogoOverride(ResourceDictionary resources, string? logoPath, string themeKey)
+    private static void ApplyLogoOverride(ResourceDictionary resources, string? logoPath, string themeKey)
     {
-        if (logoPath is null)
+        if (string.IsNullOrEmpty(logoPath))
         {
             return;
         }
@@ -104,21 +104,22 @@ public record AppConfig
             ? logoPath
             : Path.Combine(AppContext.BaseDirectory, logoPath);
 
-        if (!File.Exists(fullPath))
+        try
         {
-            this.Log().LogWarning("{Theme} not found: {Path}", themeKey, fullPath);
-            return;
+            var imageSource = new BitmapImage(new Uri(fullPath));
+
+            var imagesDict = resources.MergedDictionaries
+                .FirstOrDefault(d => d.Source?.OriginalString.Contains("Images.xaml") == true);
+
+            if (imagesDict?.ThemeDictionaries.TryGetValue(themeKey, out var themeObj) == true &&
+                themeObj is ResourceDictionary themeDict)
+            {
+                themeDict["AppLogoIcon"] = imageSource;
+            }
         }
-
-        var imageSource = new BitmapImage(new Uri(fullPath));
-
-        var imagesDict = resources.MergedDictionaries
-            .FirstOrDefault(d => d.Source?.OriginalString.Contains("Images.xaml") == true);
-
-        if (imagesDict?.ThemeDictionaries.TryGetValue(themeKey, out var themeObj) == true &&
-            themeObj is ResourceDictionary themeDict)
+        catch (Exception ex)
         {
-            themeDict["AppLogoIcon"] = imageSource;
+            typeof(AppConfig).Log().LogWarning(ex, "Failed to load {Theme} logo: {Path}", themeKey, fullPath);
         }
     }
 }
