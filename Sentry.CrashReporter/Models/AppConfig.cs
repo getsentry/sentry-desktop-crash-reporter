@@ -50,8 +50,10 @@ public record AppConfig
                     return JsonSerializer.Deserialize(section.GetRawText(), AppConfigJsonContext.Default.AppConfig);
                 }
             }
-            catch (Exception e) when (e is IOException or JsonException)
+            catch (Exception ex)
             {
+                // never fail to launch due to custom config parsing
+                typeof(AppConfig).Log().LogWarning(ex, "Failed to load: {Path}", path);
             }
         }
         return null;
@@ -104,7 +106,7 @@ public record AppConfig
 
         if (!File.Exists(fullPath))
         {
-            this.Log().LogWarning($"{themeKey} logo not found: {fullPath}");
+            this.Log().LogWarning("{Theme} not found: {Path}", themeKey, fullPath);
             return;
         }
 
