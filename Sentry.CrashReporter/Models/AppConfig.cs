@@ -32,7 +32,7 @@ public record AppConfig
     {
         foreach (var dir in searchPaths)
         {
-            if (dir is null)
+            if (string.IsNullOrEmpty(dir))
             {
                 continue;
             }
