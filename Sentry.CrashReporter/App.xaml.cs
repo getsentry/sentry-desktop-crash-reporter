@@ -2,6 +2,7 @@ using System.Net;
 using Microsoft.Extensions.Http.Resilience;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.Services;
+using Path = System.IO.Path;
 using Sentry.CrashReporter.ViewModels;
 using Sentry.CrashReporter.Views;
 
@@ -99,11 +100,16 @@ public partial class App : Application
                 .UseConfiguration(configure: configBuilder =>
                     configBuilder
                         .EmbeddedSource<App>()
+                        .ContentSource("appsettings.json")
                         .Section<AppConfig>()
                 )
                 .UseNavigation(RegisterRoutes)
             );
         MainWindow = builder.Window;
+
+        var envelopeDir = Path.GetDirectoryName(Services.GetService<IStorageFile>()?.Path);
+        var databaseDir = Path.GetDirectoryName(envelopeDir);
+        AppConfig.Load(envelopeDir, databaseDir, AppContext.BaseDirectory)?.Apply(Resources);
 
         MainWindow.Title = (Resources["WindowTitle"] as string)!;
         MainWindow.Resize(900, 600);
