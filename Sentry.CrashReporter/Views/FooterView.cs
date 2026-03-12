@@ -37,7 +37,7 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
                         .Grid(1)
                         .Content(x => x.StaticResource("CancelButton"))
                         .Name("cancelButton")
-                        .Visibility(string.IsNullOrEmpty(Application.Current.Resources["CancelButton"].ToString())
+                        .Visibility(string.IsNullOrEmpty(Application.Current.Resources["CancelButton"]?.ToString())
                             ? Visibility.Collapsed : Visibility.Visible)
                         .Command(x => x.Binding(() => vm.CancelCommand))
                         .Background(Colors.Transparent),
