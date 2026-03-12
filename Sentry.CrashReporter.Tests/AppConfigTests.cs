@@ -113,9 +113,65 @@ public class AppConfigTests
         Assert.That(result, Is.Not.Null);
         Assert.That(result!.WindowTitle, Is.EqualTo("Only Title"));
         Assert.That(result.HeaderText, Is.Null);
+        Assert.That(result.HeaderDescription, Is.Null);
+        Assert.That(result.CancelButton, Is.Null);
+        Assert.That(result.SubmitButton, Is.Null);
         Assert.That(result.LogoLight, Is.Null);
         Assert.That(result.LogoDark, Is.Null);
         Assert.That(result.SystemAccentColor, Is.Null);
+    }
+
+    [Test]
+    public void Load_HeaderDescription_ReturnsValue()
+    {
+        var dir = WriteConfig("""
+        {
+          "AppConfig": {
+            "HeaderDescription": "Please describe what happened."
+          }
+        }
+        """);
+
+        var result = AppConfig.Load(dir);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.HeaderDescription, Is.EqualTo("Please describe what happened."));
+    }
+
+    [Test]
+    public void Load_ButtonLabels_ReturnsValues()
+    {
+        var dir = WriteConfig("""
+        {
+          "AppConfig": {
+            "CancelButton": "Dismiss",
+            "SubmitButton": "Send"
+          }
+        }
+        """);
+
+        var result = AppConfig.Load(dir);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.CancelButton, Is.EqualTo("Dismiss"));
+        Assert.That(result.SubmitButton, Is.EqualTo("Send"));
+    }
+
+    [Test]
+    public void Load_EmptyCancelButtonText_ReturnsEmptyString()
+    {
+        var dir = WriteConfig("""
+        {
+          "AppConfig": {
+            "CancelButton": ""
+          }
+        }
+        """);
+
+        var result = AppConfig.Load(dir);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.CancelButton, Is.EqualTo(""));
     }
 
     [Test]

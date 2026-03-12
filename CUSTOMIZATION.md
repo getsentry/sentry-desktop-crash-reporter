@@ -124,6 +124,9 @@ settings into the sentry-native database directory.
 |-----|-------------|
 | `WindowTitle` | Window title bar text. |
 | `HeaderText` | Header text shown in the main view. |
+| `HeaderDescription` | Description text below the header. Hidden when empty. |
+| `CancelButton` | Cancel button label. Set to empty string to hide the button. |
+| `SubmitButton` | Submit button label. |
 | `LogoLight` | Path to a custom logo image for light theme (relative to the binary or absolute). |
 | `LogoDark` | Path to a custom logo image for dark theme (relative to the binary or absolute). |
 | `SystemAccentColor` | Primary brand color (`#RRGGBB` or `#AARRGGBB`). |

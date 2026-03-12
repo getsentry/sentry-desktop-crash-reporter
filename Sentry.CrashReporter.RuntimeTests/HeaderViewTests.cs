@@ -33,6 +33,43 @@ public class HeaderViewTests : RuntimeTestBase
     }
 
     [TestMethod]
+    public async Task HeaderView_DescriptionHiddenWhenEmpty()
+    {
+        // Arrange
+        _ = MockRuntime();
+
+        // Act
+        var view = new HeaderView();
+        await LoadTestContent(view);
+
+        // Assert
+        var description = view.FindFirstDescendant<FrameworkElement>(d => d.Name == "headerDescription");
+        Assert.IsNotNull(description);
+        Assert.AreEqual(Visibility.Collapsed, description.Visibility);
+    }
+
+    [TestMethod]
+    public async Task HeaderView_DescriptionVisibleWhenSet()
+    {
+        // Arrange
+        _ = MockRuntime();
+        Application.Current.Resources["HeaderDescription"] = "Please describe what happened.";
+
+        // Act
+        var view = new HeaderView();
+        await LoadTestContent(view);
+
+        // Assert
+        var description = view.FindFirstDescendant<TextBlock>(d => d.Name == "headerDescription");
+        Assert.IsNotNull(description);
+        Assert.AreEqual(Visibility.Visible, description.Visibility);
+        Assert.AreEqual("Please describe what happened.", description.Text);
+
+        // Cleanup
+        Application.Current.Resources["HeaderDescription"] = "";
+    }
+
+    [TestMethod]
     public async Task HeaderView_DisplaysException()
     {
         // Arrange

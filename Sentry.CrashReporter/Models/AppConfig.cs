@@ -15,6 +15,9 @@ public record AppConfig
     public string? Environment { get; init; }
     public string? WindowTitle { get; init; }
     public string? HeaderText { get; init; }
+    public string? HeaderDescription { get; init; }
+    public string? CancelButton { get; init; }
+    public string? SubmitButton { get; init; }
     public string? SystemAccentColor { get; init; }
     public string? SystemAccentColorLight1 { get; init; }
     public string? SystemAccentColorLight2 { get; init; }
@@ -87,6 +90,21 @@ public record AppConfig
         if (HeaderText is not null)
         {
             resources["HeaderText"] = HeaderText;
+        }
+
+        if (HeaderDescription is not null)
+        {
+            resources["HeaderDescription"] = HeaderDescription;
+        }
+
+        if (CancelButton is not null)
+        {
+            resources["CancelButton"] = CancelButton;
+        }
+
+        if (SubmitButton is not null)
+        {
+            resources["SubmitButton"] = SubmitButton;
         }
 
         ApplyLogoOverride(resources, LogoLight, "Light");

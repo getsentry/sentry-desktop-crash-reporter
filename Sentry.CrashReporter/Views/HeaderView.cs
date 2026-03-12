@@ -45,6 +45,13 @@ public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
                                 .Source(ThemeResource.Get<ImageSource>("AppLogoIcon"))
                                 .Width(34)
                                 .Height(30)),
+                        new TextBlock()
+                            .Name("headerDescription")
+                            .Text(StaticResource.Get<string>("HeaderDescription"))
+                            .TextWrapping(TextWrapping.Wrap)
+                            .Style(ThemeResource.Get<Style>("BodyTextBlockStyle"))
+                            .Visibility(string.IsNullOrWhiteSpace(Application.Current.Resources["HeaderDescription"]?.ToString())
+                                ? Visibility.Collapsed : Visibility.Visible),
                             new WrapPanel()
                                 .Margin(-4, 0)
                                 .Orientation(Orientation.Horizontal)
