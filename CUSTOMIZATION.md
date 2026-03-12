@@ -79,3 +79,54 @@ Both are defined as string resources in `App.xaml`:
 <x:String x:Key="WindowTitle">Sentry Crash Reporter</x:String>
 <x:String x:Key="HeaderText">Report a Bug</x:String>
 ```
+
+## Runtime Customization
+
+Instead of editing source files and rebuilding, you can override the look-and-feel
+at runtime by placing an `appsettings.json` file in one of the search locations.
+Values in this file override the compiled-in defaults from `App.xaml`.
+
+### Search order
+
+The crash reporter looks for `appsettings.json` in the following locations (first
+match wins):
+
+1. The envelope's directory (e.g. `.sentry-native/external/`)
+2. The envelope's parent directory (e.g. `.sentry-native/`)
+3. The application directory (next to the binary)
+
+This allows sentry-native integrations (e.g. sentry-unreal) to write per-project
+settings into the sentry-native database directory.
+
+### Example
+
+```
+.sentry-native/
+├── appsettings.json
+└── ...
+```
+
+```json
+{
+  "AppConfig": {
+    "WindowTitle": "My Crash Reporter",
+    "HeaderText": "Something Went Wrong",
+    "LogoLight": "branding/logo-light.png",
+    "LogoDark": "branding/logo-dark.png",
+    "SystemAccentColor": "#4CAF50"
+  }
+}
+```
+
+### Supported keys
+
+| Key | Description |
+|-----|-------------|
+| `WindowTitle` | Window title bar text. |
+| `HeaderText` | Header text shown in the main view. |
+| `LogoLight` | Path to a custom logo image for light theme (relative to the binary or absolute). |
+| `LogoDark` | Path to a custom logo image for dark theme (relative to the binary or absolute). |
+| `SystemAccentColor` | Primary brand color (`#RRGGBB` or `#AARRGGBB`). |
+| `SystemAccentColorLight1` – `Light3` | Optional light variants. Auto-derived if omitted. |
+| `SystemAccentColorDark1` – `Dark3` | Optional dark variants. Auto-derived if omitted. |
+| `AccentButtonForeground` | Button text color. Auto-derived from contrast if omitted. |
