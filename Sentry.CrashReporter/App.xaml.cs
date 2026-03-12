@@ -111,7 +111,7 @@ public partial class App : Application
         var databaseDir = Path.GetDirectoryName(envelopeDir);
         AppConfig.Load(envelopeDir, databaseDir, AppContext.BaseDirectory)?.Apply(Resources);
 
-        MainWindow.Title = Resources["WindowTitle"] as string;
+        MainWindow.Title = (Resources["WindowTitle"] as string)!;
         MainWindow.Resize(900, 600);
         MainWindow.SetPreferredMinSize(600, 400);
         MainWindow.UseSystemTheme();
