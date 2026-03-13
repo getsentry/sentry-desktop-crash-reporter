@@ -6,6 +6,7 @@ internal static class Win32Extensions
 {
     private const uint SC_CLOSE = 0xF060;
     private const uint MF_GRAYED = 0x00000001;
+    private const uint MF_DISABLED = 0x00000002;
     private const uint MF_ENABLED = 0x00000000;
 
     internal static void SetClosable(object nativeWindow, bool closable)
@@ -18,7 +19,7 @@ internal static class Win32Extensions
         var hMenu = GetSystemMenu(win32Window.Hwnd, false);
         if (hMenu != IntPtr.Zero)
         {
-            EnableMenuItem(hMenu, SC_CLOSE, closable ? MF_ENABLED : MF_GRAYED);
+            EnableMenuItem(hMenu, SC_CLOSE, closable ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
         }
     }
 
