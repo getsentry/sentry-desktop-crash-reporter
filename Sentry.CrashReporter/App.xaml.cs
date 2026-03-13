@@ -49,6 +49,8 @@ public partial class App : Application
             args.Outcome.Result?.StatusCode == HttpStatusCode.RequestTimeout);
     }
 
+    public static bool CanClose =>
+        (Application.Current as App)?.Resources["WindowClosable"] as bool? != false;
     public Window? MainWindow { get; private set; }
     protected IHost? Host { get; private set; }
     public static IServiceProvider Services { get; internal set; } = Ioc.Default;
@@ -119,6 +121,10 @@ public partial class App : Application
         MainWindow.UseStudio();
 #endif
         MainWindow.SetWindowIcon();
+
+        var windowService = Services.GetRequiredService<IWindowService>();
+        windowService.Register(MainWindow);
+        windowService.SetClosable(CanClose);
 
         Host = await builder.NavigateAsync<ShellPage>();
     }

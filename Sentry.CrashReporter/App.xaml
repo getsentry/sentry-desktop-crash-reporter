@@ -25,6 +25,7 @@
             <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#FFFFFF" Opacity="0.75" />
 
             <x:String x:Key="WindowTitle">Sentry Crash Reporter</x:String>
+            <x:Boolean x:Key="WindowClosable">True</x:Boolean>
             <x:String x:Key="HeaderText">Report a Bug</x:String>
             <x:String x:Key="HeaderDescription" xml:space="preserve"> </x:String>
             <x:String x:Key="CancelButton">Cancel</x:String>

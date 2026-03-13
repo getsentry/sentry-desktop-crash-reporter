@@ -116,6 +116,7 @@ public class AppConfigTests
         Assert.That(result.HeaderDescription, Is.Null);
         Assert.That(result.CancelButton, Is.Null);
         Assert.That(result.SubmitButton, Is.Null);
+        Assert.That(result.WindowClosable, Is.Null);
         Assert.That(result.LogoLight, Is.Null);
         Assert.That(result.LogoDark, Is.Null);
         Assert.That(result.SystemAccentColor, Is.Null);
@@ -211,6 +212,24 @@ public class AppConfigTests
         var result = AppConfig.Load(first, second);
 
         Assert.That(result!.WindowTitle, Is.EqualTo("First"));
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public void Load_WindowClosable_ReturnsValue(bool closable)
+    {
+        var dir = WriteConfig($$"""
+        {
+          "AppConfig": {
+            "WindowClosable": {{closable.ToString().ToLowerInvariant()}}
+          }
+        }
+        """);
+
+        var result = AppConfig.Load(dir);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.WindowClosable, Is.EqualTo(closable));
     }
 
     [Test]

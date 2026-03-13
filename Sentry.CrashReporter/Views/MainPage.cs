@@ -2,6 +2,7 @@ using CommunityToolkit.WinUI.Converters;
 using Sentry.CrashReporter.Controls;
 using Sentry.CrashReporter.Converters;
 using Sentry.CrashReporter.Extensions;
+using Sentry.CrashReporter.Services;
 using Sentry.CrashReporter.ViewModels;
 
 namespace Sentry.CrashReporter.Views;
@@ -176,7 +177,10 @@ public sealed class MainPage : Page
             closeAccelerator.Invoked += (_, ev) =>
             {
                 ev.Handled = true;
-                ((App)Application.Current)?.MainWindow?.Close();
+                if (App.CanClose)
+                {
+                    App.Services.GetRequiredService<IWindowService>().Close();
+                }
             };
             accelerators.Add(closeAccelerator);
         }
