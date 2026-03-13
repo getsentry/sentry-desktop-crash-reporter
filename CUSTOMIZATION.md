@@ -71,14 +71,18 @@ The text color on accent-colored buttons (`App.xaml:22-25`):
 <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#FFFFFF" Opacity="0.75" />
 ```
 
-## Window Title & Header Text
+## Window Title, Header Text & Close Behavior
 
-Both are defined as string resources in `App.xaml`:
+These are defined as resources in `App.xaml`:
 
 ```xml
 <x:String x:Key="WindowTitle">Sentry Crash Reporter</x:String>
+<x:Boolean x:Key="WindowClosable">True</x:Boolean>
 <x:String x:Key="HeaderText">Report a Bug</x:String>
 ```
+
+Setting `WindowClosable` to `False` disables the native close button and hides
+the Cancel button.
 
 ## Runtime Customization
 
@@ -110,6 +114,7 @@ settings into the sentry-native database directory.
 {
   "AppConfig": {
     "WindowTitle": "My Crash Reporter",
+    "WindowClosable": false,
     "HeaderText": "Something Went Wrong",
     "LogoLight": "branding/logo-light.png",
     "LogoDark": "branding/logo-dark.png",
@@ -123,6 +128,7 @@ settings into the sentry-native database directory.
 | Key | Description |
 |-----|-------------|
 | `WindowTitle` | Window title bar text. |
+| `WindowClosable` | Whether the window can be closed by the user. Defaults to `true`. |
 | `HeaderText` | Header text shown in the main view. |
 | `HeaderDescription` | Description text below the header. Hidden when empty. |
 | `CancelButton` | Cancel button label. Set to empty string to hide the button. |

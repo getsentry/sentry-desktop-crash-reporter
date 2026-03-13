@@ -1,3 +1,4 @@
+using Uno.UI.Xaml;
 using Windows.Foundation;
 using Windows.Graphics;
 using Windows.Graphics.Display;
@@ -30,6 +31,30 @@ public static class WindowExtensions
 #if !__WASM__
         var view = ApplicationView.GetForCurrentView();
         view.SetPreferredMinSize(new Size(width, height));
+#endif
+    }
+
+    public static void SetClosable(this Window window, bool closable)
+    {
+#if !__WASM__
+        var nativeWindow = window.GetNativeWindow();
+        if (nativeWindow is null)
+        {
+            return;
+        }
+
+        if (OperatingSystem.IsLinux())
+        {
+            X11Extensions.SetClosable(nativeWindow, closable);
+        }
+        else if (OperatingSystem.IsWindows())
+        {
+            Win32Extensions.SetClosable(nativeWindow, closable);
+        }
+        else if (OperatingSystem.IsMacOS())
+        {
+            CocoaExtensions.SetClosable(nativeWindow, closable);
+        }
 #endif
     }
 }

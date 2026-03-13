@@ -26,6 +26,7 @@ public record AppConfig
     public string? SystemAccentColorDark2 { get; init; }
     public string? SystemAccentColorDark3 { get; init; }
     public string? AccentButtonForeground { get; init; }
+    public bool? WindowClosable { get; init; }
     public string? LogoLight { get; init; }
     public string? LogoDark { get; init; }
 
@@ -105,6 +106,11 @@ public record AppConfig
         if (SubmitButton is not null)
         {
             resources["SubmitButton"] = SubmitButton;
+        }
+
+        if (WindowClosable is not null)
+        {
+            resources["WindowClosable"] = WindowClosable;
         }
 
         ApplyLogoOverride(resources, LogoLight, "Light");
