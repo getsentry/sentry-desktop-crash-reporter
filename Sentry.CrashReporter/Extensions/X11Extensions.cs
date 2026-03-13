@@ -5,8 +5,12 @@ namespace Sentry.CrashReporter.Extensions;
 internal static class X11Extensions
 {
     private const nint MWM_HINTS_FUNCTIONS = 0x01;
+    private const nint MWM_HINTS_DECORATIONS = 0x02;
     private const nint MWM_FUNC_ALL = 0x01;
     private const nint MWM_FUNC_CLOSE = 0x20;
+    private const nint MWM_DECOR_ALL = 0x01;
+    private const nint MWM_DECOR_MENU = 0x10;
+    private const int PropModeReplace = 0;
 
     internal static void SetClosable(object nativeWindow, bool closable)
     {
@@ -42,17 +46,19 @@ internal static class X11Extensions
                 XFree(propPtr);
             }
 
-            hints[0] |= MWM_HINTS_FUNCTIONS;
+            hints[0] |= MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
             if (closable)
             {
                 hints[1] = MWM_FUNC_ALL;
+                hints[2] = MWM_DECOR_ALL;
             }
             else
             {
-                hints[1] = MWM_FUNC_ALL | MWM_FUNC_CLOSE; // all except close
+                hints[1] = MWM_FUNC_ALL | MWM_FUNC_CLOSE;
+                hints[2] = MWM_DECOR_ALL | MWM_DECOR_MENU;
             }
 
-            XChangeProperty(display, windowId, atom, atom, 32, 0 /* PropModeReplace */, hints, 5);
+            XChangeProperty(display, windowId, atom, atom, 32, PropModeReplace, hints, 5);
             XFlush(display);
         }
         finally
