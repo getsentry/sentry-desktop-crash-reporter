@@ -84,7 +84,8 @@ public class Minidump : KaitaiStruct
         MdLinuxEnviron = 1197932551,
         MdLinuxAuxv = 1197932552,
         MdLinuxMaps = 1197932553,
-        MdLinuxDsoDebug = 1197932554
+        MdLinuxDsoDebug = 1197932554,
+        SentryStacktrace = 1400438785
     }
 
     public Minidump(KaitaiStream p__io, KaitaiStruct p__parent = null, Minidump p__root = null) :
@@ -558,6 +559,13 @@ public class Minidump : KaitaiStruct
                         _data = new SystemInfo(io___raw_data, this, M_Root);
                         break;
                     }
+                    case StreamTypes.SentryStacktrace:
+                    {
+                        M_RawData = m_io.ReadBytes(LenData);
+                        var io___raw_data = new KaitaiStream(M_RawData);
+                        _data = new StacktraceStream(io___raw_data, this, M_Root);
+                        break;
+                    }
                     default:
                     {
                         _data = m_io.ReadBytes(LenData);
@@ -758,6 +766,97 @@ public class Minidump : KaitaiStruct
 
         public Minidump M_Root { get; }
 
+        public Dir M_Parent { get; }
+    }
+
+    public class StacktraceFrame
+    {
+        public ulong InstructionAddr { get; }
+        public string Symbol { get; }
+
+        public StacktraceFrame(ulong instructionAddr, string symbol)
+        {
+            InstructionAddr = instructionAddr;
+            Symbol = symbol;
+        }
+    }
+
+    public class StacktraceThread
+    {
+        public uint ThreadId { get; }
+        public List<StacktraceFrame> Frames { get; }
+
+        public StacktraceThread(uint threadId, List<StacktraceFrame> frames)
+        {
+            ThreadId = threadId;
+            Frames = frames;
+        }
+    }
+
+    public class StacktraceStream : KaitaiStruct
+    {
+        public StacktraceStream(KaitaiStream p__io, Dir p__parent = null, Minidump p__root = null) :
+            base(p__io)
+        {
+            M_Parent = p__parent;
+            M_Root = p__root;
+            _read();
+        }
+
+        private static long Align8(long pos) => (pos + 7) & ~7;
+
+        private void _read()
+        {
+            Version = m_io.ReadU4le();
+            var threadCount = m_io.ReadU4le();
+            var frameCount = m_io.ReadU4le();
+            var symbolByteCount = m_io.ReadU4le();
+
+            var threadIds = new uint[threadCount];
+            var startFrames = new uint[threadCount];
+            var frameCounts = new uint[threadCount];
+            for (var i = 0; i < threadCount; i++)
+            {
+                threadIds[i] = m_io.ReadU4le();
+                startFrames[i] = m_io.ReadU4le();
+                frameCounts[i] = m_io.ReadU4le();
+            }
+
+            m_io.Seek(Align8(m_io.Pos));
+
+            var addrs = new ulong[frameCount];
+            var symOffsets = new uint[frameCount];
+            var symLengths = new uint[frameCount];
+            for (var i = 0; i < frameCount; i++)
+            {
+                addrs[i] = m_io.ReadU8le();
+                symOffsets[i] = m_io.ReadU4le();
+                symLengths[i] = m_io.ReadU4le();
+            }
+
+            m_io.Seek(Align8(m_io.Pos));
+
+            var symbolData = m_io.ReadBytes(symbolByteCount);
+
+            Threads = new List<StacktraceThread>((int)threadCount);
+            for (var t = 0; t < threadCount; t++)
+            {
+                var frames = new List<StacktraceFrame>((int)frameCounts[t]);
+                for (var f = 0; f < frameCounts[t]; f++)
+                {
+                    var idx = startFrames[t] + f;
+                    var symbol = symLengths[idx] > 0
+                        ? Encoding.UTF8.GetString(symbolData, (int)symOffsets[idx], (int)symLengths[idx])
+                        : string.Empty;
+                    frames.Add(new StacktraceFrame(addrs[idx], symbol));
+                }
+                Threads.Add(new StacktraceThread(threadIds[t], frames));
+            }
+        }
+
+        public uint Version { get; private set; }
+        public List<StacktraceThread> Threads { get; private set; }
+        public Minidump M_Root { get; }
         public Dir M_Parent { get; }
     }
 

@@ -18,6 +18,7 @@ public partial class MainViewModel : ReactiveObject, ILoadable
     [ObservableAsProperty] private JsonObject? _extra;
     [ObservableAsProperty] private JsonObject? _sdk;
     [ObservableAsProperty] private List<Attachment>? _attachments;
+    [ObservableAsProperty] private Minidump.StacktraceStream? _stacktrace;
 
     public event EventHandler? IsExecutingChanged;
 
@@ -59,6 +60,10 @@ public partial class MainViewModel : ReactiveObject, ILoadable
         _attachmentsHelper = this.WhenAnyValue(x => x.Envelope)
             .Select(envelope => envelope?.TryGetAttachments())
             .ToProperty(this, x => x.Attachments);
+
+        _stacktraceHelper = this.WhenAnyValue(x => x.Envelope)
+            .Select(envelope => envelope?.TryGetStacktrace())
+            .ToProperty(this, x => x.Stacktrace);
 
         IsExecuting = true;
 

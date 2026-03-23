@@ -179,6 +179,20 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
         return null;
     }
 
+    public uint? TryGetCrashedThreadId()
+    {
+        return TryGetMinidump()?.Streams.Select(s => s.Data)
+            .OfType<Minidump.ExceptionStream>()
+            .FirstOrDefault()?.ThreadId;
+    }
+
+    public Minidump.StacktraceStream? TryGetStacktrace()
+    {
+        return TryGetMinidump()?.Streams.Select(s => s.Data)
+            .OfType<Minidump.StacktraceStream>()
+            .FirstOrDefault();
+    }
+
     public FormattedEnvelope Format(JsonSerializerOptions? options = null)
     {
         options ??= new JsonSerializerOptions { WriteIndented = true };

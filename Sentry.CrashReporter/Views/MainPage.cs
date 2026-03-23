@@ -89,6 +89,15 @@ public sealed class MainPage : Page
             Builder: vm => new AttachmentView().Envelope(x => x.Binding(() => vm.Envelope))
         ),
         new(
+            Title: "Stacktrace",
+            Icon: FA.RectangleList,
+            ToolTip: "Stacktrace",
+            Region: "stacktrace",
+            Visibility: (vm, x) => x.Binding(() => vm.Stacktrace)
+                .Convert(st => st?.Threads.Count > 0 ? Visibility.Visible : Visibility.Collapsed),
+            Builder: vm => new StacktraceView().Envelope(x => x.Binding(() => vm.Envelope))
+        ),
+        new(
             Title: "Envelope",
             Icon: FA.Code,
             ToolTip: "Envelope",
