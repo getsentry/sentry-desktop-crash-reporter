@@ -254,7 +254,7 @@ public class MainPageTests : RuntimeTestBase
     public async Task MainPage_Stacktrace()
     {
         // Arrange
-        await using var file = File.OpenRead("data/crashpad.envelope");
+        await using var file = OpenTestFile("data/crashpad.envelope");
         var envelope = await Envelope.FromFileStreamAsync(file);
         var mockRuntime = MockRuntime(envelope);
         var viewModel = new MainViewModel(mockRuntime.Reporter.Object)

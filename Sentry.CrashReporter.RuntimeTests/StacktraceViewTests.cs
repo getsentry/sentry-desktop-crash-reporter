@@ -24,7 +24,7 @@ public class StacktraceViewTests : RuntimeTestBase
     public async Task StacktraceView_HasNavButtons()
     {
         // Arrange
-        await using var file = File.OpenRead("data/crashpad.envelope");
+        await using var file = OpenTestFile("data/crashpad.envelope");
         var envelope = await Envelope.FromFileStreamAsync(file);
         _ = MockRuntime(envelope);
 
@@ -43,7 +43,7 @@ public class StacktraceViewTests : RuntimeTestBase
     public async Task StacktraceView_HasThreadComboBox()
     {
         // Arrange
-        await using var file = File.OpenRead("data/crashpad.envelope");
+        await using var file = OpenTestFile("data/crashpad.envelope");
         var envelope = await Envelope.FromFileStreamAsync(file);
         _ = MockRuntime(envelope);
 
@@ -61,7 +61,7 @@ public class StacktraceViewTests : RuntimeTestBase
     public async Task StacktraceView_DefaultsToCrashedThread()
     {
         // Arrange
-        await using var file = File.OpenRead("data/crashpad.envelope");
+        await using var file = OpenTestFile("data/crashpad.envelope");
         var envelope = await Envelope.FromFileStreamAsync(file);
         _ = MockRuntime(envelope);
 
@@ -82,7 +82,7 @@ public class StacktraceViewTests : RuntimeTestBase
     public async Task StacktraceView_DisplaysFrameAddress()
     {
         // Arrange
-        await using var file = File.OpenRead("data/crashpad.envelope");
+        await using var file = OpenTestFile("data/crashpad.envelope");
         var envelope = await Envelope.FromFileStreamAsync(file);
         _ = MockRuntime(envelope);
 
@@ -99,7 +99,7 @@ public class StacktraceViewTests : RuntimeTestBase
     public async Task StacktraceView_DisplaysFrameSymbol()
     {
         // Arrange
-        await using var file = File.OpenRead("data/crashpad.envelope");
+        await using var file = OpenTestFile("data/crashpad.envelope");
         var envelope = await Envelope.FromFileStreamAsync(file);
         _ = MockRuntime(envelope);
 
@@ -116,7 +116,7 @@ public class StacktraceViewTests : RuntimeTestBase
     public async Task StacktraceView_CrashedThreadHasBugIcon()
     {
         // Arrange
-        await using var file = File.OpenRead("data/crashpad.envelope");
+        await using var file = OpenTestFile("data/crashpad.envelope");
         var envelope = await Envelope.FromFileStreamAsync(file);
         _ = MockRuntime(envelope);
 
@@ -133,7 +133,7 @@ public class StacktraceViewTests : RuntimeTestBase
     public async Task StacktraceView_FrameGridHasContextMenu()
     {
         // Arrange
-        await using var file = File.OpenRead("data/crashpad.envelope");
+        await using var file = OpenTestFile("data/crashpad.envelope");
         var envelope = await Envelope.FromFileStreamAsync(file);
         _ = MockRuntime(envelope);
 
@@ -156,7 +156,7 @@ public class StacktraceViewTests : RuntimeTestBase
     public async Task StacktraceView_FrameGridHasTwoColumns()
     {
         // Arrange
-        await using var file = File.OpenRead("data/crashpad.envelope");
+        await using var file = OpenTestFile("data/crashpad.envelope");
         var envelope = await Envelope.FromFileStreamAsync(file);
         _ = MockRuntime(envelope);
 
@@ -174,7 +174,7 @@ public class StacktraceViewTests : RuntimeTestBase
     public async Task StacktraceView_GetSelectedText_ReturnsAddress()
     {
         // Arrange
-        await using var file = File.OpenRead("data/crashpad.envelope");
+        await using var file = OpenTestFile("data/crashpad.envelope");
         var envelope = await Envelope.FromFileStreamAsync(file);
         _ = MockRuntime(envelope);
 
@@ -196,7 +196,7 @@ public class StacktraceViewTests : RuntimeTestBase
     public async Task StacktraceView_GetSelectedText_ReturnsSymbol()
     {
         // Arrange
-        await using var file = File.OpenRead("data/crashpad.envelope");
+        await using var file = OpenTestFile("data/crashpad.envelope");
         var envelope = await Envelope.FromFileStreamAsync(file);
         _ = MockRuntime(envelope);
 
@@ -218,7 +218,7 @@ public class StacktraceViewTests : RuntimeTestBase
     public async Task StacktraceView_GetSelectedText_ReturnsNull_WhenNoSelection()
     {
         // Arrange
-        await using var file = File.OpenRead("data/crashpad.envelope");
+        await using var file = OpenTestFile("data/crashpad.envelope");
         var envelope = await Envelope.FromFileStreamAsync(file);
         _ = MockRuntime(envelope);
 
@@ -236,7 +236,7 @@ public class StacktraceViewTests : RuntimeTestBase
     public async Task StacktraceView_CopySelection()
     {
         // Arrange
-        await using var file = File.OpenRead("data/crashpad.envelope");
+        await using var file = OpenTestFile("data/crashpad.envelope");
         var envelope = await Envelope.FromFileStreamAsync(file);
         var mockRuntime = MockRuntime(envelope);
 

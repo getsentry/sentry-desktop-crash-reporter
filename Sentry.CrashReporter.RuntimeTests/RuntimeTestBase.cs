@@ -1,3 +1,5 @@
+using Path = System.IO.Path;
+
 namespace Sentry.CrashReporter.RuntimeTests;
 
 public record MockRuntime(Mock<ICrashReporter> Reporter, Mock<IWindowService> Window, Mock<IClipboardService> Clipboard);
@@ -23,6 +25,9 @@ public class RuntimeTestBase
         await UnitTestsUIContentHelper.WaitForLoaded(element);
         await UnitTestsUIContentHelper.WaitForIdle();
     }
+
+    protected static FileStream OpenTestFile(string path) =>
+        File.OpenRead(Path.Combine(AppContext.BaseDirectory, path));
 
     protected static MockRuntime MockRuntime(Envelope? envelope = null)
     {
