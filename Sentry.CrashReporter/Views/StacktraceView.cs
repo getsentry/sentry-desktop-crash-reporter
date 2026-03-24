@@ -165,6 +165,7 @@ internal class StacktraceFrameGrid : DataGrid
             ItemsSource is List<StacktraceFrameItem> items)
         {
             SelectedIndex = items.IndexOf(item);
+            CurrentColumn = Columns[e.GetPosition(this).X < Columns[0].ActualWidth ? 0 : 1];
         }
     }
 
