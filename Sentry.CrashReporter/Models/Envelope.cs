@@ -112,6 +112,12 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
     public JsonObject Header { get; } = header;
     public IReadOnlyList<EnvelopeItem> Items { get; } = items;
 
+    private readonly Lazy<Minidump?> _minidump = new(() =>
+    {
+        var item = items.FirstOrDefault(i => i.TryGetHeader("attachment_type") == "event.minidump");
+        return item is not null ? Minidump.FromBytes(item.Payload) : null;
+    });
+
     public string? TryGetDsn()
     {
         return TryGetHeader("dsn");
@@ -138,16 +144,7 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
         return Items.FirstOrDefault(i => i.TryGetType() == "event");
     }
 
-    public Minidump? TryGetMinidump()
-    {
-        var item = Items.FirstOrDefault(i => i.TryGetHeader("attachment_type") == "event.minidump");
-        if (item is null)
-        {
-            return null;
-        }
-
-        return Minidump.FromBytes(item.Payload);
-    }
+    public Minidump? TryGetMinidump() => _minidump.Value;
 
     public List<Attachment> TryGetAttachments()
     {
