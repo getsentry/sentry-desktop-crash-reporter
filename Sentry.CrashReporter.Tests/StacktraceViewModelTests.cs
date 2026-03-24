@@ -28,7 +28,7 @@ public class StacktraceViewModelTests
 
         // Assert
         Assert.That(viewModel.Threads, Is.Not.Null);
-        Assert.That(viewModel.Threads, Has.Count.EqualTo(12));
+        Assert.That(viewModel.Threads, Has.Count.EqualTo(14));
     }
 
     [Test]
@@ -42,7 +42,7 @@ public class StacktraceViewModelTests
         var viewModel = new StacktraceViewModel { Envelope = envelope };
 
         // Assert
-        Assert.That(viewModel.Threads![0].ThreadId, Is.EqualTo("0x1E17A7"));
+        Assert.That(viewModel.Threads![0].ThreadId, Is.EqualTo("0x2CFC"));
     }
 
     [Test]
@@ -88,9 +88,9 @@ public class StacktraceViewModelTests
 
         // Assert
         Assert.That(viewModel.Frames, Is.Not.Null);
-        Assert.That(viewModel.Frames, Has.Count.EqualTo(35));
-        Assert.That(viewModel.Frames![0].Address, Is.EqualTo("0x10469E538"));
-        Assert.That(viewModel.Frames[0].Symbol, Is.EqualTo("_ZL13trigger_crashv"));
+        Assert.That(viewModel.Frames, Has.Count.EqualTo(48));
+        Assert.That(viewModel.Frames![0].Address, Is.EqualTo("0x7FFC9BFA2766"));
+        Assert.That(viewModel.Frames[0].Symbol, Is.EqualTo("memset"));
     }
 
     [Test]

@@ -54,7 +54,7 @@ public class StacktraceViewTests : RuntimeTestBase
         // Assert
         var comboBox = view.FindFirstDescendant<ComboBox>(cb => cb.Name == "threadComboBox");
         Assert.IsNotNull(comboBox);
-        Assert.AreEqual(12, comboBox.Items.Count);
+        Assert.AreEqual(14, comboBox.Items.Count);
     }
 
     [TestMethod]
@@ -91,7 +91,7 @@ public class StacktraceViewTests : RuntimeTestBase
         await LoadTestContent(view);
 
         // Assert
-        var address = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "0x10469E538");
+        var address = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "0x7FFC9BFA2766");
         Assert.IsNotNull(address);
     }
 
@@ -108,7 +108,7 @@ public class StacktraceViewTests : RuntimeTestBase
         await LoadTestContent(view);
 
         // Assert
-        var symbol = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "_ZL13trigger_crashv");
+        var symbol = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "memset");
         Assert.IsNotNull(symbol);
     }
 
@@ -189,7 +189,7 @@ public class StacktraceViewTests : RuntimeTestBase
 
         // Assert
         var selectedText = grid.GetSelectedText();
-        Assert.AreEqual("0x10469E538", selectedText);
+        Assert.AreEqual("0x7FFC9BFA2766", selectedText);
     }
 
     [TestMethod]
@@ -211,7 +211,7 @@ public class StacktraceViewTests : RuntimeTestBase
 
         // Assert
         var selectedText = grid.GetSelectedText();
-        Assert.AreEqual("_ZL13trigger_crashv", selectedText);
+        Assert.AreEqual("memset", selectedText);
     }
 
     [TestMethod]
@@ -255,6 +255,6 @@ public class StacktraceViewTests : RuntimeTestBase
         await UnitTestsUIContentHelper.WaitForIdle();
 
         // Assert
-        mockRuntime.Clipboard.Verify(c => c.SetText("0x10469E538"), Times.Once);
+        mockRuntime.Clipboard.Verify(c => c.SetText("0x7FFC9BFA2766"), Times.Once);
     }
 }

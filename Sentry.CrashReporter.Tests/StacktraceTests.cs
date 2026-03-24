@@ -14,11 +14,13 @@ public class StacktraceTests
 
         // Assert
         stacktrace.Should().NotBeNull();
-        stacktrace!.Threads.Should().HaveCount(12);
-        stacktrace.Threads[0].ThreadId.Should().Be(1972135);
-        stacktrace.Threads[0].Frames.Should().HaveCount(35);
-        stacktrace.Threads[0].Frames[0].Symbol.Should().Be("_ZL13trigger_crashv");
-        stacktrace.Threads[0].Frames[0].InstructionAddr.Should().Be(0x10469E538);
+        stacktrace!.Threads.Should().HaveCount(14);
+        stacktrace.Threads[0].ThreadId.Should().Be(11516);
+        stacktrace.Threads[0].Frames.Should().HaveCount(48);
+        stacktrace.Threads[0].Frames[0].Symbol.Should().Be("memset");
+        stacktrace.Threads[0].Frames[0].InstructionAddr.Should().Be(0x7FFC9BFA2766);
+        stacktrace.Threads[0].Frames[1].Symbol.Should().Be("trigger_crash");
+        stacktrace.Threads[0].Frames[1].InstructionAddr.Should().Be(0x7FF74BC381CF);
     }
 
     [Test]
@@ -50,11 +52,11 @@ public class StacktraceTests
 
         // Assert
         stacktrace!.Threads.Select(t => t.Frames.Count).Should()
-            .BeEquivalentTo([35, 1, 3, 3, 5, 9, 3, 10, 8, 8, 8, 8]);
+            .BeEquivalentTo([48, 4, 4, 4, 4, 4, 4, 4, 6, 7, 7, 8, 8, 8]);
     }
 
     [Test]
-    public async Task ParseCrashpad_StacktraceStream_EmptySymbol()
+    public async Task ParseCrashpad_StacktraceStream_SecondThreadFirstFrame()
     {
         // Arrange
         await using var file = File.OpenRead("data/crashpad.envelope");
@@ -65,8 +67,8 @@ public class StacktraceTests
         var frame = stacktrace!.Threads[1].Frames[0];
 
         // Assert
-        frame.Symbol.Should().BeEmpty();
-        frame.InstructionAddr.Should().Be(0x18CDDEB94);
+        frame.Symbol.Should().Be("ZwWaitForWorkViaWorkerFactory");
+        frame.InstructionAddr.Should().Be(0x7FFCC5BC5744);
     }
 
     [Test]
@@ -81,7 +83,7 @@ public class StacktraceTests
 
         // Assert
         crashedThreadId.Should().NotBeNull();
-        crashedThreadId.Should().Be(1972135u);
+        crashedThreadId.Should().Be(11516u);
     }
 
     [Test]
