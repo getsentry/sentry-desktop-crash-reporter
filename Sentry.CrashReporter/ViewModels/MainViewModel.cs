@@ -68,7 +68,8 @@ public partial class MainViewModel : ReactiveObject, ILoadable
                 var payload = envelope?.TryGetEvent()?.TryParseAsJson();
                 if (payload?.TryGetProperty("threads.values") is JsonArray { Count: > 0 }) return true;
                 return payload?.TryGetProperty("exception.values") is JsonArray exceptions &&
-                       exceptions.OfType<JsonObject>().Any(ex => ex.TryGetProperty("stacktrace") is not null);
+                       exceptions.OfType<JsonObject>().Any(ex =>
+                           ex.TryGetProperty("stacktrace.frames") is JsonArray { Count: > 0 });
             })
             .ToProperty(this, x => x.HasStacktrace);
 
