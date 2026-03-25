@@ -105,7 +105,7 @@ public partial class StacktraceViewModel : ReactiveObject
                 .Select(t =>
                 {
                     var id = NodeToString(t.TryGetProperty("id")) ?? "";
-                    var crashed = t.TryGetProperty("crashed") is JsonValue v && v.GetValue<bool>();
+                    var crashed = NodeToBool(t.TryGetProperty("crashed"));
                     var frames = t.TryGetProperty("stacktrace.frames");
                     if (frames is null)
                         exceptionFrames.TryGetValue(id, out frames);
@@ -121,6 +121,14 @@ public partial class StacktraceViewModel : ReactiveObject
             .Where(t => t.Frames.Count > 0)
             .ToList();
         return result.Count > 0 ? result : null;
+    }
+
+    private static bool NodeToBool(JsonNode? node)
+    {
+        if (node is not JsonValue v) return false;
+        if (v.TryGetValue(out bool b)) return b;
+        if (v.TryGetValue(out long l)) return l != 0;
+        return v.TryGetValue(out string? s) && bool.TryParse(s, out var parsed) && parsed;
     }
 
     private static string? NodeToString(JsonNode? node) => node switch
