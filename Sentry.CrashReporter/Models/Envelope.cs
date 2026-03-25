@@ -165,8 +165,9 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
             return new EnvelopeException(inproc.TryGetString("type"), inproc.TryGetString("value"));
         }
 
-        if (TryGetMinidump()?.Streams.Select(s => s.Data)
-                .OfType<Minidump.ExceptionStream>()
+        if (TryGetMinidump()?.Streams
+                .Where(s => s.StreamType == Minidump.StreamTypes.Exception)
+                .Select(s => (Minidump.ExceptionStream)s.Data)
                 .FirstOrDefault() is { } minidump)
         {
             var code = minidump.ExceptionRec.Code.AsExceptionCode(os ?? string.Empty);
@@ -178,15 +179,17 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
 
     public uint? TryGetCrashedThreadId()
     {
-        return TryGetMinidump()?.Streams.Select(s => s.Data)
-            .OfType<Minidump.ExceptionStream>()
+        return TryGetMinidump()?.Streams
+            .Where(s => s.StreamType == Minidump.StreamTypes.Exception)
+            .Select(s => (Minidump.ExceptionStream)s.Data)
             .FirstOrDefault()?.ThreadId;
     }
 
     public Minidump.StacktraceStream? TryGetStacktrace()
     {
-        return TryGetMinidump()?.Streams.Select(s => s.Data)
-            .OfType<Minidump.StacktraceStream>()
+        return TryGetMinidump()?.Streams
+            .Where(s => s.StreamType == Minidump.StreamTypes.SentryStacktrace)
+            .Select(s => (Minidump.StacktraceStream)s.Data)
             .FirstOrDefault();
     }
 
