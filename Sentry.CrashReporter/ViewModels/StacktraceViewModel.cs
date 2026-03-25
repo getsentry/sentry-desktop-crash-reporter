@@ -1,4 +1,6 @@
 using System.Reactive;
+using System.Text.Json.Nodes;
+using Sentry.CrashReporter.Extensions;
 
 namespace Sentry.CrashReporter.ViewModels;
 
@@ -12,6 +14,7 @@ public partial class StacktraceViewModel : ReactiveObject
     [ObservableAsProperty] private List<StacktraceThreadItem>? _threads;
     [ObservableAsProperty] private StacktraceThreadItem? _selectedThread;
     [ObservableAsProperty] private List<StacktraceFrameItem>? _frames;
+    [ObservableAsProperty] private bool _hasMultipleThreads;
 
     public ReactiveCommand<Unit, Unit> PreviousThread { get; }
     public ReactiveCommand<Unit, Unit> NextThread { get; }
@@ -22,17 +25,20 @@ public partial class StacktraceViewModel : ReactiveObject
             .Select(envelope =>
             {
                 var stacktrace = envelope?.TryGetStacktrace();
-                if (stacktrace is null) return null;
+                if (stacktrace is not null)
+                {
+                    var crashedThreadId = envelope?.TryGetCrashedThreadId();
+                    return stacktrace.Threads
+                        .Select(t => new StacktraceThreadItem(
+                            $"0x{t.ThreadId:X}",
+                            t.ThreadId == crashedThreadId,
+                            t.Frames.Select(f => new StacktraceFrameItem(
+                                $"0x{f.InstructionAddr:X}",
+                                f.Symbol)).ToList()))
+                        .ToList();
+                }
 
-                var crashedThreadId = envelope?.TryGetCrashedThreadId();
-                return stacktrace.Threads
-                    .Select(t => new StacktraceThreadItem(
-                        $"0x{t.ThreadId:X}",
-                        t.ThreadId == crashedThreadId,
-                        t.Frames.Select(f => new StacktraceFrameItem(
-                            $"0x{f.InstructionAddr:X}",
-                            f.Symbol)).ToList()))
-                    .ToList();
+                return TryGetThreadsFromEvent(envelope);
             })
             .ToProperty(this, x => x.Threads);
 
@@ -55,6 +61,10 @@ public partial class StacktraceViewModel : ReactiveObject
             .Select(thread => thread?.Frames)
             .ToProperty(this, x => x.Frames);
 
+        _hasMultipleThreadsHelper = this.WhenAnyValue(x => x.Threads)
+            .Select(threads => threads is { Count: > 1 })
+            .ToProperty(this, x => x.HasMultipleThreads);
+
         var canGoPrevious = this.WhenAnyValue(x => x.SelectedThreadIndex)
             .Select(i => i > 0);
         PreviousThread = ReactiveCommand.Create(() => { SelectedThreadIndex--; }, canGoPrevious);
@@ -63,5 +73,71 @@ public partial class StacktraceViewModel : ReactiveObject
             .Select(((List<StacktraceThreadItem>? threads, int index) t) =>
                 t.threads is not null && t.index < t.threads.Count - 1);
         NextThread = ReactiveCommand.Create(() => { SelectedThreadIndex++; }, canGoNext);
+    }
+
+    private static List<StacktraceThreadItem>? TryGetThreadsFromEvent(Envelope? envelope)
+    {
+        var payload = envelope?.TryGetEvent()?.TryParseAsJson();
+        if (payload is null) return null;
+
+        var exceptions = payload.TryGetProperty("exception.values") as JsonArray;
+        var threads = payload.TryGetProperty("threads.values") as JsonArray;
+
+        if (threads is null && exceptions is null) return null;
+
+        // Index exception stacktraces by thread_id
+        var exceptionFrames = new Dictionary<string, JsonNode>();
+        if (exceptions is not null)
+        {
+            foreach (var ex in exceptions.OfType<JsonObject>())
+            {
+                var threadId = NodeToString(ex.TryGetProperty("thread_id"));
+                if (threadId is not null && ex.TryGetProperty("stacktrace.frames") is { } frames)
+                {
+                    exceptionFrames[threadId] = frames;
+                }
+            }
+        }
+
+        if (threads is { Count: > 0 })
+        {
+            return threads.OfType<JsonObject>()
+                .Select(t =>
+                {
+                    var id = NodeToString(t.TryGetProperty("id")) ?? "";
+                    var crashed = t.TryGetProperty("crashed") is JsonValue v && v.GetValue<bool>();
+                    var frames = t.TryGetProperty("stacktrace.frames");
+                    if (frames is null)
+                        exceptionFrames.TryGetValue(id, out frames);
+                    return new StacktraceThreadItem(id, crashed, ParseFrames(frames));
+                })
+                .ToList();
+        }
+
+        // No threads interface — create entries from exceptions with stacktraces
+        var result = exceptions!.OfType<JsonObject>()
+            .Select(ex => new StacktraceThreadItem(
+                "", true, ParseFrames(ex.TryGetProperty("stacktrace.frames"))))
+            .Where(t => t.Frames.Count > 0)
+            .ToList();
+        return result.Count > 0 ? result : null;
+    }
+
+    private static string? NodeToString(JsonNode? node) => node switch
+    {
+        JsonValue v when v.TryGetValue(out string? s) => s,
+        JsonValue v when v.TryGetValue(out long l) => l.ToString(),
+        _ => null
+    };
+
+    private static List<StacktraceFrameItem> ParseFrames(JsonNode? framesNode)
+    {
+        if (framesNode is not JsonArray frames) return [];
+        return frames.OfType<JsonObject>()
+            .Reverse()
+            .Select(f => new StacktraceFrameItem(
+                f.TryGetString("instruction_addr") ?? "",
+                f.TryGetString("function") ?? ""))
+            .ToList();
     }
 }

@@ -189,4 +189,89 @@ public class StacktraceViewModelTests
         Assert.That(viewModel.SelectedThread, Is.Null);
         Assert.That(viewModel.Frames, Is.Null);
     }
+
+    [Test]
+    public async Task Init_WithEventStacktrace()
+    {
+        // Arrange
+        await using var file = File.OpenRead("data/stacktrace.envelope");
+        var envelope = await Envelope.FromFileStreamAsync(file);
+
+        // Act
+        var viewModel = new StacktraceViewModel { Envelope = envelope };
+
+        // Assert
+        Assert.That(viewModel.Threads, Has.Count.EqualTo(3));
+    }
+
+    [Test]
+    public async Task Init_EventStacktrace_CrashedThread()
+    {
+        // Arrange
+        await using var file = File.OpenRead("data/stacktrace.envelope");
+        var envelope = await Envelope.FromFileStreamAsync(file);
+
+        // Act
+        var viewModel = new StacktraceViewModel { Envelope = envelope };
+
+        // Assert — crashed thread gets frames from exception via thread_id
+        Assert.That(viewModel.Threads![0].ThreadId, Is.EqualTo("1000"));
+        Assert.That(viewModel.Threads[0].Crashed, Is.True);
+        Assert.That(viewModel.Threads[0].Frames, Has.Count.EqualTo(7));
+        Assert.That(viewModel.Threads[0].Frames[0].Address, Is.EqualTo("0x400500"));
+        Assert.That(viewModel.Threads[0].Frames[0].Symbol, Is.EqualTo("crash_here"));
+        Assert.That(viewModel.SelectedThreadIndex, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task Init_EventStacktrace_WorkerThread()
+    {
+        // Arrange
+        await using var file = File.OpenRead("data/stacktrace.envelope");
+        var envelope = await Envelope.FromFileStreamAsync(file);
+
+        // Act
+        var viewModel = new StacktraceViewModel { Envelope = envelope };
+
+        // Assert
+        Assert.That(viewModel.Threads![1].ThreadId, Is.EqualTo("1001"));
+        Assert.That(viewModel.Threads[1].Crashed, Is.False);
+        Assert.That(viewModel.Threads[1].Frames, Has.Count.EqualTo(4));
+        Assert.That(viewModel.Threads[1].Frames[0].Symbol, Is.EqualTo("futex_wait"));
+    }
+
+    [Test]
+    public void Init_ExceptionOnlyStacktrace()
+    {
+        // Arrange — no threads interface, only exception with stacktrace
+        var envelope = new Envelope(new JsonObject(), [
+            new EnvelopeItem(new JsonObject { ["type"] = "event" },
+                Encoding.UTF8.GetBytes(new JsonObject
+                {
+                    ["exception"] = new JsonObject
+                    {
+                        ["values"] = new JsonArray(
+                            new JsonObject
+                            {
+                                ["type"] = "SIGSEGV",
+                                ["stacktrace"] = new JsonObject
+                                {
+                                    ["frames"] = new JsonArray(
+                                        new JsonObject { ["instruction_addr"] = "0x1234", ["function"] = "segfault" })
+                                }
+                            })
+                    }
+                }.ToJsonString()))
+        ]);
+
+        // Act
+        var viewModel = new StacktraceViewModel { Envelope = envelope };
+
+        // Assert
+        Assert.That(viewModel.Threads, Has.Count.EqualTo(1));
+        Assert.That(viewModel.Threads![0].Crashed, Is.True);
+        Assert.That(viewModel.Threads[0].Frames, Has.Count.EqualTo(1));
+        Assert.That(viewModel.Threads[0].Frames[0].Symbol, Is.EqualTo("segfault"));
+    }
+
 }

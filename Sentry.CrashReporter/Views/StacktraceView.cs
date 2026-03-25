@@ -38,6 +38,8 @@ public class StacktraceView : ReactiveUserControl<StacktraceViewModel>
                         .Grid(row: 0)
                         .ColumnSpacing(4)
                         .ColumnDefinitions("Auto,Auto,*")
+                        .Visibility(x => x.Binding(() => vm.HasMultipleThreads)
+                            .Converter(BoolToVisibility))
                         .Children(
                             new Button()
                                 .Grid(column: 0)

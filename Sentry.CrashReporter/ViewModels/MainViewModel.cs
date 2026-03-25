@@ -18,7 +18,7 @@ public partial class MainViewModel : ReactiveObject, ILoadable
     [ObservableAsProperty] private JsonObject? _extra;
     [ObservableAsProperty] private JsonObject? _sdk;
     [ObservableAsProperty] private List<Attachment>? _attachments;
-    [ObservableAsProperty] private Minidump.StacktraceStream? _stacktrace;
+    [ObservableAsProperty] private bool _hasStacktrace;
 
     public event EventHandler? IsExecutingChanged;
 
@@ -61,9 +61,16 @@ public partial class MainViewModel : ReactiveObject, ILoadable
             .Select(envelope => envelope?.TryGetAttachments())
             .ToProperty(this, x => x.Attachments);
 
-        _stacktraceHelper = this.WhenAnyValue(x => x.Envelope)
-            .Select(envelope => envelope?.TryGetStacktrace())
-            .ToProperty(this, x => x.Stacktrace);
+        _hasStacktraceHelper = this.WhenAnyValue(x => x.Envelope)
+            .Select(envelope =>
+            {
+                if (envelope?.TryGetStacktrace() is not null) return true;
+                var payload = envelope?.TryGetEvent()?.TryParseAsJson();
+                if (payload?.TryGetProperty("threads.values") is JsonArray { Count: > 0 }) return true;
+                return payload?.TryGetProperty("exception.values") is JsonArray exceptions &&
+                       exceptions.OfType<JsonObject>().Any(ex => ex.TryGetProperty("stacktrace") is not null);
+            })
+            .ToProperty(this, x => x.HasStacktrace);
 
         IsExecuting = true;
 
