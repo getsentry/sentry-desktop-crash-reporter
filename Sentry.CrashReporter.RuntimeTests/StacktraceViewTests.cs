@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Sentry.CrashReporter.ViewModels;
 
 namespace Sentry.CrashReporter.RuntimeTests;
@@ -230,6 +231,65 @@ public class StacktraceViewTests : RuntimeTestBase
 
         // Assert
         Assert.IsNull(grid.GetSelectedText());
+    }
+
+    [TestMethod]
+    public async Task StacktraceView_EventStacktrace_DisplaysFrames()
+    {
+        // Arrange
+        await using var file = OpenTestFile("data/stacktrace.envelope");
+        var envelope = await Envelope.FromFileStreamAsync(file);
+        _ = MockRuntime(envelope);
+
+        // Act
+        var view = new StacktraceView().Envelope(envelope);
+        await LoadTestContent(view);
+
+        // Assert
+        var address = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "0x400500");
+        Assert.IsNotNull(address);
+        var symbol = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "crash_here");
+        Assert.IsNotNull(symbol);
+    }
+
+    [TestMethod]
+    public async Task StacktraceView_HidesNavWhenSingleThread()
+    {
+        // Arrange
+        var envelope = new Envelope(new JsonObject(), [
+            new EnvelopeItem(new JsonObject { ["type"] = "event" },
+                System.Text.Encoding.UTF8.GetBytes(new JsonObject
+                {
+                    ["exception"] = new JsonObject
+                    {
+                        ["values"] = new JsonArray(
+                            new JsonObject
+                            {
+                                ["stacktrace"] = new JsonObject
+                                {
+                                    ["frames"] = new JsonArray(
+                                        new JsonObject { ["instruction_addr"] = "0x1234", ["function"] = "crash" })
+                                }
+                            })
+                    }
+                }.ToJsonString()))
+        ]);
+        _ = MockRuntime(envelope);
+
+        // Act
+        var view = new StacktraceView().Envelope(envelope);
+        await LoadTestContent(view);
+
+        // Assert
+        var prevButton = view.FindFirstDescendant<Button>(b => b.Name == "previousThreadButton");
+        var nextButton = view.FindFirstDescendant<Button>(b => b.Name == "nextThreadButton");
+        var comboBox = view.FindFirstDescendant<ComboBox>(cb => cb.Name == "threadComboBox");
+        Assert.IsNotNull(prevButton);
+        Assert.IsNotNull(nextButton);
+        Assert.IsNotNull(comboBox);
+        Assert.AreEqual(Visibility.Collapsed, prevButton.FindFirstAncestor<Grid>()!.Visibility);
+        Assert.AreEqual(Visibility.Collapsed, nextButton.FindFirstAncestor<Grid>()!.Visibility);
+        Assert.AreEqual(Visibility.Collapsed, comboBox.FindFirstAncestor<Grid>()!.Visibility);
     }
 
     [TestMethod]
