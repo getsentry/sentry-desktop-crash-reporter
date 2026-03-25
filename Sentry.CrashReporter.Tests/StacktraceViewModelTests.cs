@@ -274,4 +274,26 @@ public class StacktraceViewModelTests
         Assert.That(viewModel.Threads[0].Frames[0].Symbol, Is.EqualTo("segfault"));
     }
 
+    [Test]
+    public void Init_EmptyThreadsNoExceptions()
+    {
+        // Arrange
+        var envelope = new Envelope(new JsonObject(), [
+            new EnvelopeItem(new JsonObject { ["type"] = "event" },
+                Encoding.UTF8.GetBytes(new JsonObject
+                {
+                    ["threads"] = new JsonObject
+                    {
+                        ["values"] = new JsonArray()
+                    }
+                }.ToJsonString()))
+        ]);
+
+        // Act
+        var viewModel = new StacktraceViewModel { Envelope = envelope };
+
+        // Assert
+        Assert.That(viewModel.Threads, Is.Null);
+    }
+
 }

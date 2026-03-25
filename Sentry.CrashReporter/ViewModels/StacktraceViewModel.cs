@@ -83,7 +83,7 @@ public partial class StacktraceViewModel : ReactiveObject
         var exceptions = payload.TryGetProperty("exception.values") as JsonArray;
         var threads = payload.TryGetProperty("threads.values") as JsonArray;
 
-        if (threads is null && exceptions is null) return null;
+        if (threads is not { Count: > 0 } && exceptions is null) return null;
 
         // Index exception stacktraces by thread_id
         var exceptionFrames = new Dictionary<string, JsonNode>();
