@@ -90,7 +90,7 @@ public sealed class MainPage : Page
         ),
         new(
             Title: "Stacktrace",
-            Icon: FA.RectangleList,
+            Icon: FA.List,
             ToolTip: "Stacktrace",
             Region: "stacktrace",
             Visibility: (vm, x) => x.Binding(() => vm.HasStacktrace)
