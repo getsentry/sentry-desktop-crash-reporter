@@ -27,6 +27,11 @@
       "compatibleTargetFramework": "desktop",
       "commandLineArgs": "$(SolutionDir)/Sentry.CrashReporter.Tests/data/crashpad.envelope"
     },
+    "Sentry.CrashReporter (Desktop, native.envelope)": {
+      "commandName": "Project",
+      "compatibleTargetFramework": "desktop",
+      "commandLineArgs": "$(SolutionDir)/Sentry.CrashReporter.Tests/data/native.envelope"
+    },
     "Sentry.CrashReporter (Desktop, invalid.envelope)": {
       "commandName": "Project",
       "compatibleTargetFramework": "desktop",

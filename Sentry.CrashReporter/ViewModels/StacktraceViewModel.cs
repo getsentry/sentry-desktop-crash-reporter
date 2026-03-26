@@ -87,14 +87,18 @@ public partial class StacktraceViewModel : ReactiveObject
 
         // Index exception stacktraces by thread_id
         var exceptionFrames = new Dictionary<string, JsonNode>();
+        JsonNode? unmatchedExceptionFrames = null;
         if (exceptions is not null)
         {
             foreach (var ex in exceptions.OfType<JsonObject>())
             {
                 var threadId = NodeToString(ex.TryGetProperty("thread_id"));
-                if (threadId is not null && ex.TryGetProperty("stacktrace.frames") is { } frames)
+                if (ex.TryGetProperty("stacktrace.frames") is { } frames)
                 {
-                    exceptionFrames[threadId] = frames;
+                    if (threadId is not null)
+                        exceptionFrames[threadId] = frames;
+                    else
+                        unmatchedExceptionFrames ??= frames;
                 }
             }
         }
@@ -107,8 +111,8 @@ public partial class StacktraceViewModel : ReactiveObject
                     var id = NodeToString(t.TryGetProperty("id")) ?? "";
                     var crashed = NodeToBool(t.TryGetProperty("crashed"));
                     var frames = t.TryGetProperty("stacktrace.frames");
-                    if (frames is null)
-                        exceptionFrames.TryGetValue(id, out frames);
+                    if (frames is null && !exceptionFrames.TryGetValue(id, out frames) && crashed)
+                        frames = unmatchedExceptionFrames;
                     return new StacktraceThreadItem(id, crashed, ParseFrames(frames));
                 })
                 .ToList();

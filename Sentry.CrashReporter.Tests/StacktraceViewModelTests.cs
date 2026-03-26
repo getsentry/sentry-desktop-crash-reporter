@@ -275,6 +275,24 @@ public class StacktraceViewModelTests
     }
 
     [Test]
+    public async Task Init_NativeWithoutMinidump_CrashedThreadHasExceptionFrames()
+    {
+        // Arrange — crashed thread has no stacktrace, exception has no thread_id
+        await using var file = File.OpenRead("data/native.envelope");
+        var envelope = await Envelope.FromFileStreamAsync(file);
+
+        // Act
+        var viewModel = new StacktraceViewModel { Envelope = envelope };
+
+        // Assert
+        Assert.That(viewModel.Threads, Has.Count.EqualTo(15));
+        Assert.That(viewModel.Threads![0].ThreadId, Is.EqualTo("18732"));
+        Assert.That(viewModel.Threads[0].Crashed, Is.True);
+        Assert.That(viewModel.Threads[0].Frames, Has.Count.EqualTo(28));
+        Assert.That(viewModel.Threads[0].Frames[0].Symbol, Is.EqualTo("trigger_crash"));
+    }
+
+    [Test]
     public void Init_EmptyThreadsNoExceptions()
     {
         // Arrange
