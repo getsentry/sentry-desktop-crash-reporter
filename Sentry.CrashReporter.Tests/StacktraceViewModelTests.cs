@@ -293,6 +293,26 @@ public class StacktraceViewModelTests
     }
 
     [Test]
+    public async Task Init_NativeThreadNames()
+    {
+        // Arrange
+        await using var file = File.OpenRead("data/native.envelope");
+        var envelope = await Envelope.FromFileStreamAsync(file);
+
+        // Act
+        var viewModel = new StacktraceViewModel { Envelope = envelope };
+
+        // Assert — named threads
+        Assert.That(viewModel.Threads![0].Name, Is.EqualTo("main"));
+        Assert.That(viewModel.Threads[1].Name, Is.EqualTo("sentry-http"));
+        Assert.That(viewModel.Threads[2].Name, Is.EqualTo("ThreadPoolWorker"));
+        // Assert — unnamed threads
+        Assert.That(viewModel.Threads[3].Name, Is.Null);
+        Assert.That(viewModel.Threads[6].Name, Is.Null);
+        Assert.That(viewModel.Threads[11].Name, Is.Null);
+    }
+
+    [Test]
     public void Init_EmptyThreadsNoExceptions()
     {
         // Arrange
