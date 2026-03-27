@@ -313,6 +313,47 @@ public class StacktraceViewModelTests
     }
 
     [Test]
+    public void Init_ThreadsWithoutStacktraces_OnlyCrashedThreadHasFrames()
+    {
+        // Arrange — threads have no stacktraces, only exception does
+        var envelope = new Envelope(new JsonObject(), [
+            new EnvelopeItem(new JsonObject { ["type"] = "event" },
+                Encoding.UTF8.GetBytes(new JsonObject
+                {
+                    ["exception"] = new JsonObject
+                    {
+                        ["values"] = new JsonArray(
+                            new JsonObject
+                            {
+                                ["type"] = "SIGSEGV",
+                                ["stacktrace"] = new JsonObject
+                                {
+                                    ["frames"] = new JsonArray(
+                                        new JsonObject { ["instruction_addr"] = "0x1234", ["function"] = "crash" })
+                                }
+                            })
+                    },
+                    ["threads"] = new JsonObject
+                    {
+                        ["values"] = new JsonArray(
+                            new JsonObject { ["id"] = 100, ["crashed"] = true },
+                            new JsonObject { ["id"] = 101, ["crashed"] = false },
+                            new JsonObject { ["id"] = 102, ["crashed"] = false })
+                    }
+                }.ToJsonString()))
+        ]);
+
+        // Act
+        var viewModel = new StacktraceViewModel { Envelope = envelope };
+
+        // Assert — only the crashed thread (with exception frames) is returned
+        Assert.That(viewModel.Threads, Has.Count.EqualTo(1));
+        Assert.That(viewModel.Threads![0].Crashed, Is.True);
+        Assert.That(viewModel.Threads[0].Frames, Has.Count.EqualTo(1));
+        Assert.That(viewModel.HasMultipleThreads, Is.False);
+    }
+
+    [Test]
     public void Init_EmptyThreadsNoExceptions()
     {
         // Arrange
