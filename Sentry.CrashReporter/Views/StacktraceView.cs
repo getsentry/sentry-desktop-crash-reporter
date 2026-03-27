@@ -10,6 +10,7 @@ namespace Sentry.CrashReporter.Views;
 public class StacktraceView : ReactiveUserControl<StacktraceViewModel>
 {
     private static readonly BoolToVisibilityConverter BoolToVisibility = new();
+    private static readonly StringVisibilityConverter StringToVisibility = new();
     public static readonly DependencyProperty EnvelopeProperty = DependencyProperty.Register(
         nameof(Envelope), typeof(Envelope), typeof(StacktraceView), new PropertyMetadata(null));
 
@@ -77,7 +78,14 @@ public class StacktraceView : ReactiveUserControl<StacktraceViewModel>
                                                 .WithSourceCodePro()
                                                 .VerticalAlignment(VerticalAlignment.Center)
                                                 .Text(x => x.Binding("ThreadId")
-                                                    .Convert<string>(id => $"Thread {id}"))))),
+                                                    .Convert<string>(id => $"Thread {id}")),
+                                            new TextBlock()
+                                                .WithSourceCodePro()
+                                                .VerticalAlignment(VerticalAlignment.Center)
+                                                .Text(x => x.Binding("Name")
+                                                    .Convert<string>(name => name is not null ? $"\u2014 {name}" : ""))
+                                                .Visibility(x => x.Binding("Name")
+                                                    .Converter(StringToVisibility))))),
                     new StacktraceFrameGrid()
                         .Grid(row: 1)
                         .Name("frameGrid")
