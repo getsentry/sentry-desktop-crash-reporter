@@ -24,6 +24,7 @@ public class MainViewModelTests
         Assert.That(viewModel.Extra, Is.Null.Or.Empty);
         Assert.That(viewModel.Sdk, Is.Null.Or.Empty);
         Assert.That(viewModel.Attachments, Is.Null.Or.Empty);
+        Assert.That(viewModel.HasStacktrace, Is.False);
         mockReporter.Verify(r => r.LoadAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 

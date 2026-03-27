@@ -249,4 +249,26 @@ public class MainPageTests : RuntimeTestBase
         Assert.IsNotNull(view);
         Assert.AreEqual(Visibility.Visible, view.Visibility);
     }
+
+    [TestMethod]
+    public async Task MainPage_Stacktrace()
+    {
+        // Arrange
+        await using var file = OpenTestFile("data/crashpad.envelope");
+        var envelope = await Envelope.FromFileStreamAsync(file);
+        var mockRuntime = MockRuntime(envelope);
+        var viewModel = new MainViewModel(mockRuntime.Reporter.Object)
+        {
+            SelectedIndex = Array.FindIndex(MainPage.Views, v => v.Region == "stacktrace")
+        };
+
+        // Act
+        var page = new MainPage { DataContext = viewModel };
+        await LoadTestContent(page);
+
+        // Assert
+        var view = page.FindFirstDescendant<StacktraceView>();
+        Assert.IsNotNull(view);
+        Assert.AreEqual(Visibility.Visible, view.Visibility);
+    }
 }

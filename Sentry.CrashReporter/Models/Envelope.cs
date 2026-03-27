@@ -112,6 +112,12 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
     public JsonObject Header { get; } = header;
     public IReadOnlyList<EnvelopeItem> Items { get; } = items;
 
+    private readonly Lazy<Minidump?> _minidump = new(() =>
+    {
+        var item = items.FirstOrDefault(i => i.TryGetHeader("attachment_type") == "event.minidump");
+        return item is not null ? Minidump.FromBytes(item.Payload) : null;
+    });
+
     public string? TryGetDsn()
     {
         return TryGetHeader("dsn");
@@ -138,16 +144,7 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
         return Items.FirstOrDefault(i => i.TryGetType() == "event");
     }
 
-    public Minidump? TryGetMinidump()
-    {
-        var item = Items.FirstOrDefault(i => i.TryGetHeader("attachment_type") == "event.minidump");
-        if (item is null)
-        {
-            return null;
-        }
-
-        return Minidump.FromBytes(item.Payload);
-    }
+    public Minidump? TryGetMinidump() => _minidump.Value;
 
     public List<Attachment> TryGetAttachments()
     {
@@ -168,15 +165,38 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
             return new EnvelopeException(inproc.TryGetString("type"), inproc.TryGetString("value"));
         }
 
-        if (TryGetMinidump()?.Streams.Select(s => s.Data)
-                .OfType<Minidump.ExceptionStream>()
-                .FirstOrDefault() is { } minidump)
+        if (TryGetStream<Minidump.ExceptionStream>(Minidump.StreamTypes.Exception) is { } minidump)
         {
             var code = minidump.ExceptionRec.Code.AsExceptionCode(os ?? string.Empty);
             return new EnvelopeException(code?.Type, code?.Value);
         }
 
         return null;
+    }
+
+    public uint? TryGetCrashedThreadId()
+    {
+        return TryGetStream<Minidump.ExceptionStream>(Minidump.StreamTypes.Exception)?.ThreadId;
+    }
+
+    public Minidump.StacktraceStream? TryGetStacktrace()
+    {
+        return TryGetStream<Minidump.StacktraceStream>(Minidump.StreamTypes.SentryStacktrace);
+    }
+
+    private T? TryGetStream<T>(Minidump.StreamTypes type) where T : class
+    {
+        try
+        {
+            return TryGetMinidump()?.Streams
+                .Where(s => s.StreamType == type)
+                .Select(s => (T)s.Data)
+                .FirstOrDefault();
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     public FormattedEnvelope Format(JsonSerializerOptions? options = null)
