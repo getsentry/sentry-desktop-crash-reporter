@@ -105,7 +105,7 @@ public partial class StacktraceViewModel : ReactiveObject
 
         if (threads is { Count: > 0 })
         {
-            return threads.OfType<JsonObject>()
+            var threadItems = threads.OfType<JsonObject>()
                 .Select(t =>
                 {
                     var id = NodeToString(t.TryGetProperty("id")) ?? "";
@@ -115,7 +115,9 @@ public partial class StacktraceViewModel : ReactiveObject
                         frames = unmatchedExceptionFrames;
                     return new StacktraceThreadItem(id, crashed, ParseFrames(frames));
                 })
+                .Where(t => t.Frames.Count > 0)
                 .ToList();
+            return threadItems.Count > 0 ? threadItems : null;
         }
 
         // No threads interface — create entries from exceptions with stacktraces

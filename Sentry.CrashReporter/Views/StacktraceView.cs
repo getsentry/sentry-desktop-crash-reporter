@@ -38,8 +38,10 @@ public class StacktraceView : ReactiveUserControl<StacktraceViewModel>
                         .Grid(row: 0)
                         .ColumnSpacing(4)
                         .ColumnDefinitions("Auto,Auto,*")
-                        .Visibility(x => x.Binding(() => vm.HasMultipleThreads)
-                            .Converter(BoolToVisibility))
+                        .Visibility(x => x.Binding(() => vm.Threads)
+                            .Convert(threads => threads is { Count: > 0 }
+                                && threads.Any(t => t.ThreadId.Length > 0)
+                                ? Visibility.Visible : Visibility.Collapsed))
                         .Children(
                             new Button()
                                 .Grid(column: 0)
@@ -57,6 +59,7 @@ public class StacktraceView : ReactiveUserControl<StacktraceViewModel>
                                 .Grid(column: 2)
                                 .Name("threadComboBox")
                                 .HorizontalAlignment(HorizontalAlignment.Stretch)
+                                .IsEnabled(x => x.Binding(() => vm.HasMultipleThreads))
                                 .ItemsSource(x => x.Binding(() => vm.Threads))
                                 .SelectedIndex(x => x.Binding(() => vm.SelectedThreadIndex).TwoWay())
                                 .ItemTemplate(() =>
