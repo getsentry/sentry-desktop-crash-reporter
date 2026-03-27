@@ -5,7 +5,7 @@ using Sentry.CrashReporter.Extensions;
 namespace Sentry.CrashReporter.ViewModels;
 
 public record StacktraceFrameItem(string Address, string Symbol);
-public record StacktraceThreadItem(string ThreadId, bool Crashed, List<StacktraceFrameItem> Frames);
+public record StacktraceThreadItem(string ThreadId, string? Name, bool Crashed, List<StacktraceFrameItem> Frames);
 
 public partial class StacktraceViewModel : ReactiveObject
 {
@@ -31,6 +31,7 @@ public partial class StacktraceViewModel : ReactiveObject
                     return stacktrace.Threads
                         .Select(t => new StacktraceThreadItem(
                             $"0x{t.ThreadId:X}",
+                            null,
                             t.ThreadId == crashedThreadId,
                             t.Frames.Select(f => new StacktraceFrameItem(
                                 $"0x{f.InstructionAddr:X}",
@@ -109,11 +110,12 @@ public partial class StacktraceViewModel : ReactiveObject
                 .Select(t =>
                 {
                     var id = NodeToString(t.TryGetProperty("id")) ?? "";
+                    var name = t.TryGetString("name");
                     var crashed = NodeToBool(t.TryGetProperty("crashed"));
                     var frames = t.TryGetProperty("stacktrace.frames");
                     if (frames is null && !exceptionFrames.TryGetValue(id, out frames) && crashed)
                         frames = unmatchedExceptionFrames;
-                    return new StacktraceThreadItem(id, crashed, ParseFrames(frames));
+                    return new StacktraceThreadItem(id, name, crashed, ParseFrames(frames));
                 })
                 .ToList();
         }
@@ -121,7 +123,7 @@ public partial class StacktraceViewModel : ReactiveObject
         // No threads interface — create entries from exceptions with stacktraces
         var result = exceptions!.OfType<JsonObject>()
             .Select(ex => new StacktraceThreadItem(
-                "", true, ParseFrames(ex.TryGetProperty("stacktrace.frames"))))
+                "", null, true, ParseFrames(ex.TryGetProperty("stacktrace.frames"))))
             .Where(t => t.Frames.Count > 0)
             .ToList();
         return result.Count > 0 ? result : null;
