@@ -8,21 +8,26 @@ changelog:
   categories:
     - title: Breaking Changes
       labels:
-        - "Changelog: Breaking Change"
+        - breaking
       commit_patterns:
         - "^(?<type>\\w+(?:\\((?<scope>[^)]+)\\))?!:\\s*)"
     - title: Features
       labels:
-        - "Changelog: Feature"
+        - feature
       commit_patterns:
         - "^feat(?:\\([^\\)]+\\))?:\\s+"
     - title: Fixes
       labels:
-        - "Changelog: Bugfix"
+        - fix
       commit_patterns:
-        - "^(?:fix|bugfix)(?:\\([^\\)]+\\))?:\\s+"
+        - "^fix(?:\\([^\\)]+\\))?:\\s+"
+    - title: Improvements
+      labels:
+        - improvement
+      commit_patterns:
+        - "^perf(?:\\([^\\)]+\\))?:\\s+"
     - title: Dependencies
       labels:
-        - "Changelog: Dependency Update"
+        - dependencies
       commit_patterns:
         - "^chore\\(deps(?:-dev)?\\):\\s+"

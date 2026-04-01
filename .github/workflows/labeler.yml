@@ -1,0 +1,23 @@
+name: Auto-label
+on:
+  pull_request_target:
+    types: [opened, edited]
+permissions:
+  pull-requests: write
+jobs:
+  auto-label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add or remove skip-changelog label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          # Matches release.yml categories: feat, fix, perf, breaking (!), deps
+          if echo "$PR_TITLE" | grep -qP '^(feat|fix|perf)(\([^)]+\))?[!]?:\s|^\w+(\([^)]+\))?!:\s|^chore\(deps(-dev)?\):\s'; then
+            gh pr edit "$PR_NUMBER" --remove-label skip-changelog 2>/dev/null || true
+          else
+            gh pr edit "$PR_NUMBER" --add-label skip-changelog
+          fi
