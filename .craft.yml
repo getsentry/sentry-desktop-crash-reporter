@@ -1,0 +1,3 @@
+changelogPolicy: auto
+targets:
+  - name: github
