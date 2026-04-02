@@ -2,25 +2,13 @@ Set-StrictMode -Version latest
 $ErrorActionPreference = 'Stop'
 
 $path = "$PSScriptRoot/../global.json"
-
-function Get-Json($key)
-{
-    (Get-Content -Raw -Path $path | ConvertFrom-Json).$key
-}
-
-function Set-Json([string[]]$keys, $value)
-{
-    $json = $node = Get-Content -Raw -Path $path | ConvertFrom-Json
-    $keys | Select-Object -SkipLast 1 | ForEach-Object { $node = $node.$_ }
-    $node.($keys[-1]) = $value
-    $json | ConvertTo-Json -Depth 10 | Set-Content -Path $path -Encoding UTF8
-}
+$content = Get-Content -Raw -Path $path
 
 switch ("$($args[0])")
 {
     "get-version"
     {
-        (Get-Json 'msbuild-sdks').'Uno.Sdk'
+        ($content | ConvertFrom-Json).'msbuild-sdks'.'Uno.Sdk'
     }
     "get-repo"
     {
@@ -28,6 +16,7 @@ switch ("$($args[0])")
     }
     "set-version"
     {
-        Set-Json 'msbuild-sdks', 'Uno.Sdk' "$($args[1])"
+        $content -replace '(?<="Uno\.Sdk"\s*:\s*")[^"]*', "$($args[1])" |
+            Set-Content -Path $path -Encoding UTF8 -NoNewline
     }
 }
