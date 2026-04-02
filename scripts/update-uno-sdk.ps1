@@ -8,10 +8,11 @@ function Get-Json($key)
     (Get-Content -Raw -Path $path | ConvertFrom-Json).$key
 }
 
-function Set-Json($key, $value)
+function Set-Json([string[]]$keys, $value)
 {
-    $json = Get-Content -Raw -Path $path | ConvertFrom-Json
-    $json.$key = $value
+    $json = $node = Get-Content -Raw -Path $path | ConvertFrom-Json
+    $keys | Select-Object -SkipLast 1 | ForEach-Object { $node = $node.$_ }
+    $node.($keys[-1]) = $value
     $json | ConvertTo-Json -Depth 10 | Set-Content -Path $path -Encoding UTF8
 }
 
@@ -27,6 +28,6 @@ switch ("$($args[0])")
     }
     "set-version"
     {
-        Set-Json 'msbuild-sdks' @{ 'Uno.Sdk' = "$($args[1])" }
+        Set-Json 'msbuild-sdks', 'Uno.Sdk' "$($args[1])"
     }
 }
