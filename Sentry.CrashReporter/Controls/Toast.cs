@@ -5,6 +5,21 @@ public static class Toast
     private static TeachingTip? _toast;
     private static CancellationTokenSource? _hideCts;
 
+    public static Task Show(
+        FrameworkElement element,
+        string title,
+        string subtitle)
+    {
+        DependencyObject? current = element;
+        while (current is not null)
+        {
+            if (current is Page { Content: Panel root })
+                return Show(root, null, title, subtitle);
+            current = VisualTreeHelper.GetParent(current);
+        }
+        return Task.CompletedTask;
+    }
+
     public static async Task Show(
         Panel parent,
         FrameworkElement? target,
@@ -17,7 +32,7 @@ public static class Toast
         {
             _toast = new TeachingTip
             {
-                IsLightDismissEnabled = true
+                IsLightDismissEnabled = false
             };
             parent.Children.Add(_toast);
         }

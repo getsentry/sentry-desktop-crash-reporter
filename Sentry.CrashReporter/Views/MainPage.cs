@@ -46,7 +46,7 @@ public sealed class MainPage : Page
             ToolTip: "Tags",
             Region: "tags",
             Visibility: (vm, x) => x.Binding(() => vm.Tags).Converter(ToVisibility),
-            Builder: vm => new JsonGrid().Data(x => x.Binding(() => vm.Tags))
+            Builder: vm => new JsonGrid().Category("tags").Data(x => x.Binding(() => vm.Tags))
         ),
         new(
             Title: "Contexts",
@@ -54,7 +54,7 @@ public sealed class MainPage : Page
             ToolTip: "Contexts",
             Region: "contexts",
             Visibility: (vm, x) => x.Binding(() => vm.Contexts).Converter(ToVisibility),
-            Builder: vm => new JsonGrid().Data(x => x.Binding(() => vm.Contexts))
+            Builder: vm => new JsonGrid().Category("contexts").Data(x => x.Binding(() => vm.Contexts))
         ),
         new(
             Title: "Additional Data",
@@ -62,7 +62,7 @@ public sealed class MainPage : Page
             ToolTip: "Additional Data",
             Region: "extra",
             Visibility: (vm, x) => x.Binding(() => vm.Extra).Converter(ToVisibility),
-            Builder: vm => new JsonGrid().Data(x => x.Binding(() => vm.Extra))
+            Builder: vm => new JsonGrid().Category("entries").Data(x => x.Binding(() => vm.Extra))
         ),
         new(
             Title: "SDK",

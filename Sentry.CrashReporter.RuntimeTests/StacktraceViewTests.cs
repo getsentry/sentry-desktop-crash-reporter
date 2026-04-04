@@ -148,9 +148,29 @@ public class StacktraceViewTests : RuntimeTestBase
         Assert.IsNotNull(grid.ContextFlyout);
         Assert.IsInstanceOfType<MenuFlyout>(grid.ContextFlyout);
         var menu = (MenuFlyout)grid.ContextFlyout;
-        Assert.HasCount(1, menu.Items);
-        var copyItem = (MenuFlyoutItem)menu.Items[0];
-        Assert.AreEqual("Copy", copyItem.Text);
+        Assert.HasCount(2, menu.Items);
+        Assert.AreEqual("Copy", ((MenuFlyoutItem)menu.Items[0]).Text);
+        Assert.AreEqual("Select All", ((MenuFlyoutItem)menu.Items[1]).Text);
+    }
+
+    [TestMethod]
+    public async Task StacktraceView_HasKeyboardAccelerators()
+    {
+        // Arrange
+        await using var file = OpenTestFile("data/crashpad.envelope");
+        var envelope = await Envelope.FromFileStreamAsync(file);
+        _ = MockRuntime(envelope);
+
+        // Act
+        var view = new StacktraceView().Envelope(envelope);
+        await LoadTestContent(view);
+
+        // Assert
+        var accelerators = view.KeyboardAccelerators;
+        Assert.AreEqual(3, accelerators.Count);
+        Assert.IsNotNull(accelerators.FirstOrDefault(a => a.Key == Windows.System.VirtualKey.C));
+        Assert.IsNotNull(accelerators.FirstOrDefault(a => a.Key == Windows.System.VirtualKey.A));
+        Assert.IsNotNull(accelerators.FirstOrDefault(a => a.Key == Windows.System.VirtualKey.Escape));
     }
 
     [TestMethod]
@@ -172,7 +192,7 @@ public class StacktraceViewTests : RuntimeTestBase
     }
 
     [TestMethod]
-    public async Task StacktraceView_GetSelectedText_ReturnsAddress()
+    public async Task StacktraceView_GetSelectedText_ReturnsRow()
     {
         // Arrange
         await using var file = OpenTestFile("data/crashpad.envelope");
@@ -185,16 +205,15 @@ public class StacktraceViewTests : RuntimeTestBase
 
         var grid = view.FindFirstDescendant<StacktraceFrameGrid>()!;
         grid.SelectedIndex = 0;
-        grid.CurrentColumn = grid.Columns[0];
         await UnitTestsUIContentHelper.WaitForIdle();
 
         // Assert
         var selectedText = grid.GetSelectedText();
-        Assert.AreEqual("0x7FFC9BFA2766", selectedText);
+        Assert.AreEqual("0x7FFC9BFA2766\tmemset", selectedText);
     }
 
     [TestMethod]
-    public async Task StacktraceView_GetSelectedText_ReturnsSymbol()
+    public async Task StacktraceView_GetSelectedText_ReturnsMultipleRows()
     {
         // Arrange
         await using var file = OpenTestFile("data/crashpad.envelope");
@@ -206,13 +225,38 @@ public class StacktraceViewTests : RuntimeTestBase
         await LoadTestContent(view);
 
         var grid = view.FindFirstDescendant<StacktraceFrameGrid>()!;
-        grid.SelectedIndex = 0;
-        grid.CurrentColumn = grid.Columns[1];
+        var items = (List<StacktraceFrameItem>)grid.ItemsSource!;
+        grid.SelectedItems.Add(items[0]);
+        grid.SelectedItems.Add(items[1]);
         await UnitTestsUIContentHelper.WaitForIdle();
 
         // Assert
         var selectedText = grid.GetSelectedText();
-        Assert.AreEqual("memset", selectedText);
+        Assert.IsNotNull(selectedText);
+        var lines = selectedText.Split('\n');
+        Assert.AreEqual(2, lines.Length);
+    }
+
+    [TestMethod]
+    public async Task StacktraceView_GetAllText_ReturnsAllFrames()
+    {
+        // Arrange
+        await using var file = OpenTestFile("data/crashpad.envelope");
+        var envelope = await Envelope.FromFileStreamAsync(file);
+        _ = MockRuntime(envelope);
+
+        // Act
+        var view = new StacktraceView().Envelope(envelope);
+        await LoadTestContent(view);
+
+        var grid = view.FindFirstDescendant<StacktraceFrameGrid>()!;
+
+        // Assert
+        var allText = grid.GetAllText();
+        Assert.IsNotNull(allText);
+        var lines = allText.Split('\n');
+        Assert.IsTrue(lines.Length > 1);
+        Assert.IsTrue(lines[0].Contains('\t'));
     }
 
     [TestMethod]
@@ -306,7 +350,6 @@ public class StacktraceViewTests : RuntimeTestBase
 
         var grid = view.FindFirstDescendant<StacktraceFrameGrid>()!;
         grid.SelectedIndex = 0;
-        grid.CurrentColumn = grid.Columns[0];
         await UnitTestsUIContentHelper.WaitForIdle();
 
         var menu = (MenuFlyout)grid.ContextFlyout!;
@@ -315,6 +358,29 @@ public class StacktraceViewTests : RuntimeTestBase
         await UnitTestsUIContentHelper.WaitForIdle();
 
         // Assert
-        mockRuntime.Clipboard.Verify(c => c.SetText("0x7FFC9BFA2766"), Times.Once);
+        mockRuntime.Clipboard.Verify(c => c.SetText("0x7FFC9BFA2766\tmemset"), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task StacktraceView_CopyAll()
+    {
+        // Arrange
+        await using var file = OpenTestFile("data/crashpad.envelope");
+        var envelope = await Envelope.FromFileStreamAsync(file);
+        var mockRuntime = MockRuntime(envelope);
+
+        // Act
+        var view = new StacktraceView().Envelope(envelope);
+        await LoadTestContent(view);
+
+        var copyAllButton = view.FindFirstDescendant<Button>(b => b.Name == "copyAllButton")!;
+        copyAllButton.Command?.Execute(null);
+        await UnitTestsUIContentHelper.WaitForIdle();
+
+        // Assert
+        var grid = view.FindFirstDescendant<StacktraceFrameGrid>()!;
+        var allText = grid.GetAllText();
+        Assert.IsNotNull(allText);
+        mockRuntime.Clipboard.Verify(c => c.SetText(allText), Times.Once);
     }
 }

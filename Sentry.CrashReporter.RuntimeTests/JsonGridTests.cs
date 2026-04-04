@@ -117,14 +117,13 @@ public class JsonGridTests : RuntimeTestBase
         Assert.IsNotNull(grid.ContextFlyout);
         Assert.IsInstanceOfType<MenuFlyout>(grid.ContextFlyout);
         var menu = (MenuFlyout)grid.ContextFlyout;
-        Assert.HasCount(1, menu.Items);
-        Assert.IsInstanceOfType<MenuFlyoutItem>(menu.Items[0]);
-        var copyItem = (MenuFlyoutItem)menu.Items[0];
-        Assert.AreEqual("Copy", copyItem.Text);
+        Assert.HasCount(2, menu.Items);
+        Assert.AreEqual("Copy", ((MenuFlyoutItem)menu.Items[0]).Text);
+        Assert.AreEqual("Select All", ((MenuFlyoutItem)menu.Items[1]).Text);
     }
 
     [TestMethod]
-    public async Task JsonGrid_GetSelectedText_ReturnsKey()
+    public async Task JsonGrid_GetSelectedText_ReturnsRow()
     {
         // Arrange
         var json = JsonNode.Parse("""{"mykey":"myvalue"}""")!.AsObject();
@@ -133,30 +132,26 @@ public class JsonGridTests : RuntimeTestBase
         var grid = new JsonGrid().Data(json!);
         await LoadTestContent(grid);
         grid.SelectedIndex = 0;
-        grid.CurrentColumn = grid.Columns[0];
         await UnitTestsUIContentHelper.WaitForIdle();
 
         // Assert
         var selectedText = grid.GetSelectedText();
-        Assert.AreEqual("mykey", selectedText);
+        Assert.AreEqual("mykey\tmyvalue", selectedText);
     }
 
     [TestMethod]
-    public async Task JsonGrid_GetSelectedText_ReturnsValue()
+    public async Task JsonGrid_HasKeyboardAccelerators()
     {
-        // Arrange
-        var json = JsonNode.Parse("""{"mykey":"myvalue"}""")!.AsObject();
-
         // Act
-        var grid = new JsonGrid().Data(json!);
+        var grid = new JsonGrid();
         await LoadTestContent(grid);
-        grid.SelectedIndex = 0;
-        grid.CurrentColumn = grid.Columns[1];
-        await UnitTestsUIContentHelper.WaitForIdle();
 
         // Assert
-        var selectedText = grid.GetSelectedText();
-        Assert.AreEqual("myvalue", selectedText);
+        var accelerators = grid.KeyboardAccelerators;
+        Assert.AreEqual(3, accelerators.Count);
+        Assert.IsNotNull(accelerators.FirstOrDefault(a => a.Key == Windows.System.VirtualKey.C));
+        Assert.IsNotNull(accelerators.FirstOrDefault(a => a.Key == Windows.System.VirtualKey.A));
+        Assert.IsNotNull(accelerators.FirstOrDefault(a => a.Key == Windows.System.VirtualKey.Escape));
     }
 
     [TestMethod]
@@ -194,7 +189,7 @@ public class JsonGridTests : RuntimeTestBase
     }
 
     [TestMethod]
-    public async Task JsonGrid_CopySelection_CopiesKeyToClipboard()
+    public async Task JsonGrid_CopySelection_CopiesToClipboard()
     {
         // Arrange
         var json = JsonNode.Parse("""{"testkey":"testvalue"}""")!.AsObject();
@@ -204,7 +199,6 @@ public class JsonGridTests : RuntimeTestBase
         var grid = new JsonGrid().Data(json!);
         await LoadTestContent(grid);
         grid.SelectedIndex = 0;
-        grid.CurrentColumn = grid.Columns[0];
         await UnitTestsUIContentHelper.WaitForIdle();
 
         var menu = (MenuFlyout)grid.ContextFlyout!;
@@ -213,29 +207,6 @@ public class JsonGridTests : RuntimeTestBase
         await UnitTestsUIContentHelper.WaitForIdle();
 
         // Assert
-        mockRuntime.Clipboard.Verify(c => c.SetText("testkey"), Times.Once);
-    }
-
-    [TestMethod]
-    public async Task JsonGrid_CopySelection_CopiesValueToClipboard()
-    {
-        // Arrange
-        var json = JsonNode.Parse("""{"testkey":"testvalue"}""")!.AsObject();
-        var mockRuntime = MockRuntime();
-
-        // Act
-        var grid = new JsonGrid().Data(json!);
-        await LoadTestContent(grid);
-        grid.SelectedIndex = 0;
-        grid.CurrentColumn = grid.Columns[1];
-        await UnitTestsUIContentHelper.WaitForIdle();
-
-        var menu = (MenuFlyout)grid.ContextFlyout!;
-        var copyItem = (MenuFlyoutItem)menu.Items[0];
-        copyItem.Command?.Execute(null);
-        await UnitTestsUIContentHelper.WaitForIdle();
-
-        // Assert
-        mockRuntime.Clipboard.Verify(c => c.SetText("testvalue"), Times.Once);
+        mockRuntime.Clipboard.Verify(c => c.SetText("testkey\ttestvalue"), Times.Once);
     }
 }
