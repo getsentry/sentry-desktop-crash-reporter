@@ -83,23 +83,28 @@ jobs:
 
       - name: Build Sentry.CrashReporter
         shell: pwsh
-        run: dotnet publish -f net9.0-desktop -r ${{ matrix.rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./artifacts -bl:./artifacts/build.binlog
+        run: dotnet publish -f net9.0-desktop -r ${{ matrix.rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./artifacts -bl:./build.binlog
 
-      - name: Archive artifacts (tar.gz)
+      - name: Archive artifacts
         if: runner.os != 'Windows'
         shell: bash
-        run: tar -czf sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}.tar.gz -C ./artifacts .
-
-      - name: Archive artifacts (zip)
-        if: runner.os == 'Windows'
-        shell: bash
-        run: cd ./artifacts && 7z a ../sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}.zip .
+        run: |
+          mv ./artifacts ./build
+          mkdir ./artifacts
+          tar cf ./artifacts/artifacts.tar -C ./build .
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}
-          path: sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}.*
+          path: ./artifacts
+
+      - name: Upload Binlog
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: binlog-${{ matrix.rid }}
+          path: ./build.binlog
 
   unit_test:
     name: Unit Tests
@@ -129,7 +134,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload Test Results
-        if: always()
+        if: always() && github.ref_type != 'tag'
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: unit-test-results
@@ -169,7 +174,7 @@ jobs:
         run: .github/scripts/run-ui-tests.ps1
 
       - name: Upload Test Results
-        if: always()
+        if: always() && github.ref_type != 'tag'
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: ui-test-results
@@ -219,16 +224,16 @@ jobs:
           $content -replace 'encoding="utf-16"', 'encoding="utf-8"' | Set-Content -Path $filePath -Encoding utf8 -NoNewline
 
       - name: Upload Test Results
-        if: always()
+        if: always() && github.ref_type != 'tag'
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: Runtime-Test-Results
+          name: runtime-test-results
           path: |
             Sentry.CrashReporter.RuntimeTests/TestResults
 
       - name: Report Test Results
         uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.ref_type != 'tag' }}
         with:
           name: Runtime Tests
           path: Sentry.CrashReporter.RuntimeTests/TestResults/RuntimeTests.xml
