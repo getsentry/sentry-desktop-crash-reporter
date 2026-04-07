@@ -45,23 +45,34 @@ jobs:
     strategy:
       matrix:
        include:
-         - platform: 'macOS'
-           agent: 'macos-latest'
-           build_rid: 'osx-arm64'
-         - platform: 'Linux'
-           agent: 'ubuntu-latest'
-           build_rid: 'linux-x64'
-         - platform: 'Windows'
-           agent: 'windows-latest'
-           build_rid: 'win-x64'
+         - os: macos-latest
+           rid: osx-arm64
+         - os: ubuntu-latest
+           rid: linux-x64
+         - os: ubuntu-24.04-arm
+           rid: linux-arm64
+         - os: windows-latest
+           rid: win-x64
+         - os: windows-11-arm
+           rid: win-arm64
 
-    name: Release Build (${{ matrix.platform }})
+    name: Release Build (${{ matrix.rid }})
 
-    runs-on: ${{ matrix.agent }}
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+
+      - name: Set version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            echo "value=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Install Dependencies
         timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
@@ -71,14 +82,24 @@ jobs:
 
       - name: Build Sentry.CrashReporter
         shell: pwsh
-        run: dotnet publish -f net9.0-desktop -r ${{ matrix.build_rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./artifacts -bl:./artifacts/build.binlog
+        run: dotnet publish -f net9.0-desktop -r ${{ matrix.rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./artifacts -bl:./artifacts/build.binlog
+
+      - name: Archive artifacts (tar.gz)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: tar -czf sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}.tar.gz -C ./artifacts .
+
+      - name: Archive artifacts (zip)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: cd ./artifacts && zip -r ../sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}.zip .
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: release-${{ matrix.platform }}
+          name: sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}
           include-hidden-files: true
-          path: ./artifacts
+          path: sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}.*
 
   unit_test:
     name: Unit Tests
