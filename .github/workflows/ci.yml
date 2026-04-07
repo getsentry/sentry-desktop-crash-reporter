@@ -81,7 +81,7 @@ jobs:
         with:
           target-platform: "desktop"
 
-      - name: Build Sentry.CrashReporter
+      - name: Build Sentry.CrashReporter (Release)
         shell: pwsh
         run: dotnet publish -f net9.0-desktop -r ${{ matrix.rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./artifacts -bl:./build.binlog
 
