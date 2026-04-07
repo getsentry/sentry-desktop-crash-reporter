@@ -41,7 +41,7 @@ jobs:
         shell: pwsh
         run: msbuild ./Sentry.CrashReporter/Sentry.CrashReporter.csproj /r
 
-  release_build:
+  build:
     strategy:
       fail-fast: false
       matrix:
@@ -57,7 +57,7 @@ jobs:
          - os: windows-11-arm
            rid: win-arm64
 
-    name: Release Build (${{ matrix.rid }})
+    name: Build (${{ matrix.rid }})
 
     runs-on: ${{ matrix.os }}
     steps:
