@@ -91,7 +91,7 @@ jobs:
         run: |
           mv ./artifacts ./build
           mkdir ./artifacts
-          tar cf ./artifacts/artifacts.tar -C ./build .
+          tar cf ./artifacts/sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}.tar -C ./build .
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
