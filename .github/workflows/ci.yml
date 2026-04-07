@@ -93,7 +93,7 @@ jobs:
       - name: Archive artifacts (zip)
         if: runner.os == 'Windows'
         shell: bash
-        run: cd ./artifacts && zip -r ../sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}.zip .
+        run: cd ./artifacts && 7z a ../sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}.zip .
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
