@@ -65,7 +65,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set version
+      - name: Set Version
         id: version
         shell: bash
         run: |
@@ -85,7 +85,7 @@ jobs:
         shell: pwsh
         run: dotnet publish -f net9.0-desktop -r ${{ matrix.rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./artifacts -bl:./build.binlog
 
-      - name: Archive artifacts
+      - name: Archive Artifacts
         if: runner.os != 'Windows'
         shell: bash
         run: |
