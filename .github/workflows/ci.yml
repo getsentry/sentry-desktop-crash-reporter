@@ -83,15 +83,17 @@ jobs:
 
       - name: Build Sentry.CrashReporter (Release)
         shell: pwsh
-        run: dotnet publish -f net9.0-desktop -r ${{ matrix.rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./artifacts -bl:./build.binlog
+        run: dotnet publish -f net9.0-desktop -r ${{ matrix.rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./build -bl:./build.binlog
 
       - name: Archive Artifacts
-        if: runner.os != 'Windows'
         shell: bash
         run: |
-          mv ./artifacts ./build
           mkdir ./artifacts
-          tar cf ./artifacts/sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}.tar -C ./build .
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            cp -r ./build/* ./artifacts/
+          else
+            tar cf ./artifacts/sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}.tar -C ./build .
+          fi
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
