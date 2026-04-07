@@ -21,6 +21,20 @@ public partial class HeaderViewModel : ReactiveObject
     [ObservableAsProperty] private string? _environment = string.Empty;
     [ObservableAsProperty] private EnvelopeException? _exception;
 
+    public static string AppVersion { get; } = FormatVersion();
+
+    private static string FormatVersion()
+    {
+        var version = new Version(
+            Package.Current.Id.Version.Major,
+            Package.Current.Id.Version.Minor,
+            Package.Current.Id.Version.Build);
+        string commits = ThisAssembly.Git.Commits;
+        return commits == "0"
+            ? version.ToString()
+            : $"{version} ({ThisAssembly.Git.Commit})";
+    }
+
     public HeaderViewModel()
     {
         _eventHelper = this.WhenAnyValue(x => x.Envelope, e => e?.TryGetEvent())

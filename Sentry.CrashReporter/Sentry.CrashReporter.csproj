@@ -11,7 +11,7 @@
         <!-- App Identifier -->
         <ApplicationId>com.companyname.Sentry.CrashReporter</ApplicationId>
         <!-- Versions -->
-        <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+        <ApplicationDisplayVersion>0.0.0</ApplicationDisplayVersion>
         <ApplicationVersion>1</ApplicationVersion>
         <!-- Package Publisher -->
         <ApplicationPublisher>O=Sentry.CrashReporter</ApplicationPublisher>
@@ -99,6 +99,10 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="ReactiveUI.Uno.WinUI" />
+        <PackageReference Include="GitInfo">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Uno.CommunityToolkit.WinUI.UI.Controls.DataGrid" />
     </ItemGroup>
 
