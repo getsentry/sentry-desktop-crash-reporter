@@ -92,6 +92,7 @@ jobs:
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             cp -r ./build/* ./artifacts/
           else
+            # tar retains execute permissions & upload-artifact zips => works with tar zxvf
             tar cf ./artifacts/sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}.tar -C ./build .
           fi
 
