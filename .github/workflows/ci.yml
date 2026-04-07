@@ -41,27 +41,39 @@ jobs:
         shell: pwsh
         run: msbuild ./Sentry.CrashReporter/Sentry.CrashReporter.csproj /r
 
-  release_build:
+  build:
     strategy:
+      fail-fast: false
       matrix:
        include:
-         - platform: 'macOS'
-           agent: 'macos-latest'
-           build_rid: 'osx-arm64'
-         - platform: 'Linux'
-           agent: 'ubuntu-latest'
-           build_rid: 'linux-x64'
-         - platform: 'Windows'
-           agent: 'windows-latest'
-           build_rid: 'win-x64'
+         - os: macos-latest
+           rid: osx-arm64
+         - os: ubuntu-latest
+           rid: linux-x64
+         - os: ubuntu-24.04-arm
+           rid: linux-arm64
+         - os: windows-latest
+           rid: win-x64
+         - os: windows-11-arm
+           rid: win-arm64
 
-    name: Release Build (${{ matrix.platform }})
+    name: Build (${{ matrix.rid }})
 
-    runs-on: ${{ matrix.agent }}
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+
+      - name: Set Version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            echo "value=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Install Dependencies
         timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
@@ -69,16 +81,33 @@ jobs:
         with:
           target-platform: "desktop"
 
-      - name: Build Sentry.CrashReporter
+      - name: Build Sentry.CrashReporter (Release)
         shell: pwsh
-        run: dotnet publish -f net9.0-desktop -r ${{ matrix.build_rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./artifacts -bl:./artifacts/build.binlog
+        run: dotnet publish -f net9.0-desktop -r ${{ matrix.rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./build -bl:./build.binlog
+
+      - name: Archive Artifacts
+        shell: bash
+        run: |
+          mkdir ./artifacts
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            cp -r ./build/* ./artifacts/
+          else
+            # tar retains execute permissions & upload-artifact zips => works with tar zxvf
+            tar cf ./artifacts/sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}.tar -C ./build .
+          fi
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: release-${{ matrix.platform }}
-          include-hidden-files: true
+          name: sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}
           path: ./artifacts
+
+      - name: Upload Binlog
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: binlog-${{ matrix.rid }}
+          path: ./build.binlog
 
   unit_test:
     name: Unit Tests
@@ -108,7 +137,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload Test Results
-        if: always()
+        if: always() && github.ref_type != 'tag'
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: unit-test-results
@@ -148,7 +177,7 @@ jobs:
         run: .github/scripts/run-ui-tests.ps1
 
       - name: Upload Test Results
-        if: always()
+        if: always() && github.ref_type != 'tag'
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: ui-test-results
@@ -198,16 +227,16 @@ jobs:
           $content -replace 'encoding="utf-16"', 'encoding="utf-8"' | Set-Content -Path $filePath -Encoding utf8 -NoNewline
 
       - name: Upload Test Results
-        if: always()
+        if: always() && github.ref_type != 'tag'
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: Runtime-Test-Results
+          name: runtime-test-results
           path: |
             Sentry.CrashReporter.RuntimeTests/TestResults
 
       - name: Report Test Results
         uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.ref_type != 'tag' }}
         with:
           name: Runtime Tests
           path: Sentry.CrashReporter.RuntimeTests/TestResults/RuntimeTests.xml
