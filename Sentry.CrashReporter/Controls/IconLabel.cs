@@ -1,4 +1,3 @@
-using Windows.ApplicationModel.DataTransfer;
 using Sentry.CrashReporter.Extensions;
 
 namespace Sentry.CrashReporter.Controls;
@@ -120,10 +119,8 @@ public class IconLabel : StackPanel
             }
             icon.PointerPressed += (_, _) =>
             {
-                var dataPackage = new DataPackage();
-                dataPackage.SetText(Text ?? string.Empty);
-                Clipboard.SetContent(dataPackage);
-                _ = Toast.Show(this, null, "Copied to clipboard", Text ?? string.Empty);
+                ClipboardExtensions.SetText(Text ?? string.Empty);
+                _ = Toast.Show(this, "Copied to clipboard", Text ?? string.Empty);
             };
             Children.Add(icon);
         }

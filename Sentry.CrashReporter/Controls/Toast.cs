@@ -6,13 +6,16 @@ public static class Toast
     private static CancellationTokenSource? _hideCts;
 
     public static async Task Show(
-        Panel parent,
-        FrameworkElement? target,
+        FrameworkElement context,
         string title,
         string subtitle,
+        FrameworkElement? target = null,
         TeachingTipPlacementMode placement = TeachingTipPlacementMode.Bottom,
         TimeSpan? duration = null)
     {
+        var parent = FindParent(context);
+        if (parent is null) return;
+
         if (_toast is null)
         {
             _toast = new TeachingTip
@@ -33,9 +36,9 @@ public static class Toast
         _toast.IsOpen = true;
 
         if (target is not null)
-        {
             _toast.Target = target;
-        }
+        else
+            _toast.ClearValue(TeachingTip.TargetProperty);
 
         // ReSharper disable once MethodHasAsyncOverload
         _hideCts?.Cancel();
@@ -59,5 +62,18 @@ public static class Toast
         {
             _toast.IsOpen = false;
         }
+    }
+
+    private static Panel? FindParent(DependencyObject element)
+    {
+        Panel? parent = null;
+        DependencyObject? current = element;
+        while (current is not null)
+        {
+            if (current is Panel panel)
+                parent = panel;
+            current = VisualTreeHelper.GetParent(current);
+        }
+        return parent;
     }
 }

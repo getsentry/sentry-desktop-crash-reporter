@@ -15,9 +15,9 @@ public class ToastTests : RuntimeTestBase
         const string title = "My Toast";
         const string subtitle = "This is a toast";
 
-        var showTask = Toast.Show(panel, button, title, subtitle, duration: TimeSpan.FromMilliseconds(100));
+        var showTask = Toast.Show(button, title, subtitle, target: button, duration: TimeSpan.FromMilliseconds(100));
 
-        var toast = panel.Children.OfType<TeachingTip>().FirstOrDefault();
+        var toast = FindToast(button);
         Assert.IsNotNull(toast);
         Assert.AreSame(button, toast.Target);
         Assert.AreEqual(title, toast.Title);
@@ -37,9 +37,9 @@ public class ToastTests : RuntimeTestBase
         panel.Children.Add(button);
         await LoadTestContent(panel);
 
-        var showTask = Toast.Show(panel, button, "Title", "Subtitle", duration: TimeSpan.FromSeconds(10));
+        var showTask = Toast.Show(button, "Title", "Subtitle", target: button, duration: TimeSpan.FromSeconds(10));
 
-        var toast = panel.Children.OfType<TeachingTip>().FirstOrDefault();
+        var toast = FindToast(button);
         Assert.IsNotNull(toast);
         Assert.IsTrue(toast.IsOpen);
 
@@ -48,5 +48,20 @@ public class ToastTests : RuntimeTestBase
         Assert.IsFalse(toast.IsOpen);
 
         await showTask;
+    }
+
+    private static TeachingTip? FindToast(DependencyObject element)
+    {
+        DependencyObject? current = element;
+        while (current is not null)
+        {
+            if (current is Panel panel)
+            {
+                var tip = panel.Children.OfType<TeachingTip>().FirstOrDefault();
+                if (tip is not null) return tip;
+            }
+            current = VisualTreeHelper.GetParent(current);
+        }
+        return null;
     }
 }

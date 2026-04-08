@@ -28,6 +28,13 @@ public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
                 .DisposeWith(d);
         });
 
+        var versionText = $"Version {HeaderViewModel.AppVersion}";
+        var logo = new Image()
+            .Source(ThemeResource.Get<ImageSource>("AppLogoIcon"))
+            .ToolTip(versionText)
+            .Width(34)
+            .Height(30);
+
         this.Content(new StackPanel()
             .Orientation(Orientation.Vertical)
             .Spacing(8)
@@ -40,11 +47,7 @@ public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
                                 .Grid(0)
                                 .Text(StaticResource.Get<string>("HeaderText"))
                                 .Style(ThemeResource.Get<Style>("TitleTextBlockStyle")),
-                            new Image()
-                                .Grid(1)
-                                .Source(ThemeResource.Get<ImageSource>("AppLogoIcon"))
-                                .Width(34)
-                                .Height(30)),
+                            logo.Grid(1)),
                         new TextBlock()
                             .Name("headerDescription")
                             .Text(StaticResource.Get<string>("HeaderDescription"))
@@ -82,6 +85,12 @@ public sealed class HeaderView : ReactiveUserControl<HeaderViewModel>
                                         .ToolTip("Environment")
                                         .Text(x => x.Binding(() => vm.Environment))
                                         .Visibility(x => x.Binding(() => vm.Environment).Converter(ToVisibility))))));
+
+        logo.PointerPressed += (_, _) =>
+        {
+            ClipboardExtensions.SetText(versionText);
+            _ = Toast.Show(logo, "Copied to clipboard", versionText);
+        };
     }
 
     private static string ToBrand(string? value)
