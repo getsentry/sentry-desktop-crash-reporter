@@ -11,7 +11,6 @@
 # Sentry Desktop Crash Reporter
 
 [![CI](https://github.com/getsentry/sentry-desktop-crash-reporter/actions/workflows/ci.yml/badge.svg)](https://github.com/getsentry/sentry-desktop-crash-reporter/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/getsentry/sentry-desktop-crash-reporter/graph/badge.svg)](https://codecov.io/gh/getsentry/sentry-desktop-crash-reporter)
 
 A reference implementation of an external crash reporter for desktop applications using the [Sentry Native SDK](https://docs.sentry.io/platforms/native/).
 
