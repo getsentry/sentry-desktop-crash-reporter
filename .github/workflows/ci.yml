@@ -129,12 +129,13 @@ jobs:
 
       - name: Run Unit Tests
         shell: pwsh
-        run: dotnet test ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.SingleHit=true
+        run: dotnet test ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.SingleHit=true
 
       - name: Upload code coverage
         uses: getsentry/codecov-action@03112cc3b486a3397dc8d17a58680008721fc86f # v0.3.7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          files: '**/coverage.cobertura.xml'
 
       - name: Upload Test Results
         if: ${{ always() && !startsWith(github.ref_name, 'release/') }}
@@ -246,3 +247,4 @@ jobs:
         uses: getsentry/codecov-action@03112cc3b486a3397dc8d17a58680008721fc86f # v0.3.7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          files: '**/coverage.cobertura.xml'
