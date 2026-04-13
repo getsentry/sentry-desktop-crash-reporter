@@ -69,8 +69,8 @@ jobs:
         id: version
         shell: bash
         run: |
-          if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            echo "value=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          if [[ "${{ github.ref_name }}" == release/* ]]; then
+            echo "value=${GITHUB_REF_NAME#release/}" >> "$GITHUB_OUTPUT"
           else
             echo "value=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
           fi
@@ -103,7 +103,7 @@ jobs:
           path: ./artifacts
 
       - name: Upload Binlog
-        if: github.ref_type != 'tag'
+        if: ${{ !startsWith(github.ref_name, 'release/') }}
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: binlog-${{ matrix.rid }}
@@ -137,7 +137,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload Test Results
-        if: always() && github.ref_type != 'tag'
+        if: ${{ always() && !startsWith(github.ref_name, 'release/') }}
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: unit-test-results
@@ -177,7 +177,7 @@ jobs:
         run: .github/scripts/run-ui-tests.ps1
 
       - name: Upload Test Results
-        if: always() && github.ref_type != 'tag'
+        if: ${{ always() && !startsWith(github.ref_name, 'release/') }}
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: ui-test-results
@@ -227,7 +227,7 @@ jobs:
           $content -replace 'encoding="utf-16"', 'encoding="utf-8"' | Set-Content -Path $filePath -Encoding utf8 -NoNewline
 
       - name: Upload Test Results
-        if: always() && github.ref_type != 'tag'
+        if: ${{ always() && !startsWith(github.ref_name, 'release/') }}
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: runtime-test-results
@@ -236,7 +236,7 @@ jobs:
 
       - name: Report Test Results
         uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
-        if: ${{ !cancelled() && github.ref_type != 'tag' }}
+        if: ${{ !cancelled() && !startsWith(github.ref_name, 'release/') }}
         with:
           name: Runtime Tests
           path: Sentry.CrashReporter.RuntimeTests/TestResults/RuntimeTests.xml
