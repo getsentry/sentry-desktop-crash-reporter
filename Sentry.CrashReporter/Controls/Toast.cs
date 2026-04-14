@@ -54,12 +54,16 @@ public static class Toast
         else
             _toast.ClearValue(TeachingTip.TargetProperty);
 
-        _toast.DispatcherQueue.TryEnqueue(() => _toast.IsOpen = true);
-
         // ReSharper disable once MethodHasAsyncOverload
         _hideCts?.Cancel();
         _hideCts = new CancellationTokenSource();
         var token = _hideCts.Token;
+
+        _toast.DispatcherQueue.TryEnqueue(() =>
+        {
+            if (!token.IsCancellationRequested)
+                _toast.IsOpen = true;
+        });
 
         try
         {
