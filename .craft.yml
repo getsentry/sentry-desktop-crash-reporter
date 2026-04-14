@@ -1,4 +1,9 @@
 changelogPolicy: auto
 preReleaseCommand: pwsh scripts/bump-version.ps1
+artifactProvider:
+  name: github
+  config:
+    artifacts:
+      CI: /^sentry-desktop-crash-reporter-.*$/
 targets:
   - name: github
