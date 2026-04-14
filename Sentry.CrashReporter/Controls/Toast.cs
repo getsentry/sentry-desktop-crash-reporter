@@ -14,7 +14,7 @@ public static class Toast
         while (current is not null)
         {
             if (current is Page { Content: Panel root })
-                return Show(root, null, title, subtitle);
+                return Show(root, title, subtitle, null);
             current = VisualTreeHelper.GetParent(current);
         }
         return Task.CompletedTask;
@@ -24,7 +24,7 @@ public static class Toast
         FrameworkElement context,
         string title,
         string subtitle,
-        FrameworkElement? target = null,
+        FrameworkElement? target,
         TeachingTipPlacementMode placement = TeachingTipPlacementMode.Bottom,
         TimeSpan? duration = null)
     {
