@@ -4,7 +4,12 @@ using Sentry.CrashReporter.Extensions;
 
 namespace Sentry.CrashReporter.ViewModels;
 
-public record StacktraceFrameItem(string Address, string Symbol);
+public class StacktraceFrameItem(string Address, string Symbol)
+{
+    public string Address { get; } = Address;
+    public string Symbol { get; } = Symbol;
+    public override string ToString() => $"{Address}  {Symbol}";
+}
 public record StacktraceThreadItem(string ThreadId, string? Name, bool Crashed, List<StacktraceFrameItem> Frames);
 
 public partial class StacktraceViewModel : ReactiveObject

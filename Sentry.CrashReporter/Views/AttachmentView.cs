@@ -64,18 +64,12 @@ internal class AttachmentGrid : DataGrid
     public AttachmentGrid()
     {
         DataContextChanged += (_, _) => TryAutoBind();
-        ActualThemeChanged += OnThemeChanged;
         DoubleTapped += OnDoubleTapped;
         RightTapped += OnRightTapped;
 
-        IsReadOnly = true;
-        AutoGenerateColumns = false;
-        GridLinesVisibility = DataGridGridLinesVisibility.None;
-        HeadersVisibility = DataGridHeadersVisibility.Column;
+        this.AsDataTable();
         SelectionMode = DataGridSelectionMode.Single;
         ItemsSource = Data;
-
-        UpdateAlternatingRowBackground();
 
         ContextFlyout = new MenuFlyout
         {
@@ -120,19 +114,6 @@ internal class AttachmentGrid : DataGrid
             DataContext is List<Attachment> data)
         {
             Data = data;
-        }
-    }
-
-    private void OnThemeChanged(FrameworkElement sender, object args)
-    {
-        UpdateAlternatingRowBackground();
-    }
-
-    private void UpdateAlternatingRowBackground()
-    {
-        if (Application.Current.Resources.TryGetValue("SystemControlBackgroundListLowBrush", out var brush))
-        {
-            AlternatingRowBackground = (Brush)brush;
         }
     }
 

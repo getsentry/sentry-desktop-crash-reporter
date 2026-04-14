@@ -30,6 +30,13 @@ public class StacktraceView : ReactiveUserControl<StacktraceViewModel>
                 .DisposeWith(d);
         });
 
+        var frameGrid = new StacktraceFrameGrid()
+            .Name("frameGrid");
+
+        this.WithDataActions(frameGrid,
+            new DataAction("Copy", VirtualKey.C, frameGrid.CopySelection),
+            new DataAction("Select All", VirtualKey.A, frameGrid.DoSelectAll));
+
         this.Content(new Grid()
             .DataContext(ViewModel, (view, vm) => view
                 .RowSpacing(8)
@@ -86,10 +93,20 @@ public class StacktraceView : ReactiveUserControl<StacktraceViewModel>
                                                     .Convert<string>(name => name is not null ? $"\u2014 {name}" : ""))
                                                 .Visibility(x => x.Binding("Name")
                                                     .Converter(StringToVisibility))))),
-                    new StacktraceFrameGrid()
+                    frameGrid
                         .Grid(row: 1)
-                        .Name("frameGrid")
-                        .Data(x => x.Binding(() => vm.Frames)))));
+                        .Data(x => x.Binding(() => vm.Frames)),
+                    new Button()
+                        .Grid(row: 1)
+                        .Name("copyAllButton")
+                        .Content(new FontAwesomeIcon(FA.Copy).FontSize(12))
+                        .Command(new RelayCommand(frameGrid.CopyAll))
+                        .HorizontalAlignment(HorizontalAlignment.Right)
+                        .VerticalAlignment(VerticalAlignment.Top)
+                        .Margin(4, 4)
+                        .Padding(8, 4)
+                        .Opacity(0.6)
+                        .ToolTip("Copy stacktrace"))));
     }
 }
 
@@ -115,28 +132,8 @@ internal class StacktraceFrameGrid : DataGrid
 
     public StacktraceFrameGrid()
     {
-        ActualThemeChanged += (_, _) => UpdateAlternatingRowBackground();
+        this.AsDataTable();
         RightTapped += OnRightTapped;
-
-        IsReadOnly = true;
-        AutoGenerateColumns = false;
-        GridLinesVisibility = DataGridGridLinesVisibility.None;
-        HeadersVisibility = DataGridHeadersVisibility.Column;
-        SelectionMode = DataGridSelectionMode.Extended;
-
-        UpdateAlternatingRowBackground();
-
-        ContextFlyout = new MenuFlyout
-        {
-            Items =
-            {
-                new MenuFlyoutItem
-                {
-                    Text = "Copy",
-                    Command = new RelayCommand(CopySelection),
-                }
-            }
-        };
 
         Columns.Add(new DataGridTemplateColumn
         {
@@ -153,43 +150,59 @@ internal class StacktraceFrameGrid : DataGrid
         Columns.Add(new DataGridTemplateColumn
         {
             Header = "Symbol",
-            Width = new DataGridLength(1, DataGridLengthUnitType.Star),
+            Width = DataGridLength.Auto,
             CellTemplate = new DataTemplate(() =>
                 new TextBlock()
                     .WithSourceCodePro()
-                    .TextWrapping(TextWrapping.Wrap)
                     .Margin(new Thickness(8, 0))
                     .VerticalAlignment(VerticalAlignment.Center)
                     .Text(x => x.Binding("Symbol")))
         });
     }
 
-    private void UpdateAlternatingRowBackground()
-    {
-        if (Application.Current.Resources.TryGetValue("SystemControlBackgroundListLowBrush", out var brush))
-        {
-            AlternatingRowBackground = (Brush)brush;
-        }
-    }
-
     private void OnRightTapped(object sender, RightTappedRoutedEventArgs e)
     {
         if (e.OriginalSource is FrameworkElement { DataContext: StacktraceFrameItem item } &&
-            ItemsSource is List<StacktraceFrameItem> items)
+            ItemsSource is List<StacktraceFrameItem> items &&
+            !SelectedItems.Contains(item))
         {
             SelectedIndex = items.IndexOf(item);
             CurrentColumn = Columns[e.GetPosition(this).X < Columns[0].ActualWidth ? 0 : 1];
         }
     }
 
-    private void CopySelection()
+    internal void DoSelectAll()
+    {
+        if (ItemsSource is not List<StacktraceFrameItem> items) return;
+        SelectedItems.Clear();
+        foreach (var item in items)
+            SelectedItems.Add(item);
+    }
+
+    internal void CopySelection()
     {
         var text = GetSelectedText();
         if (!string.IsNullOrEmpty(text))
         {
             App.Services.GetRequiredService<IClipboardService>().SetText(text);
+            var subtitle = SelectedItems.Count == 1
+                ? text.Replace("\t", "  ")
+                : $"{SelectedItems.Count} frames";
+            _ = Toast.Show(this, "Copied to clipboard", subtitle);
         }
     }
+
+    internal void CopyAll()
+    {
+        var text = GetAllText();
+        if (!string.IsNullOrEmpty(text))
+        {
+            App.Services.GetRequiredService<IClipboardService>().SetText(text);
+            var count = ((List<StacktraceFrameItem>)ItemsSource!).Count;
+            _ = Toast.Show(this, "Copied to clipboard",$"{count} frames");
+        }
+    }
+
 
     internal string? GetSelectedText()
     {
@@ -201,14 +214,17 @@ internal class StacktraceFrameGrid : DataGrid
 
         if (SelectedItem is StacktraceFrameItem frame)
         {
-            return CurrentColumn?.DisplayIndex switch
-            {
-                0 => frame.Address,
-                1 => frame.Symbol,
-                _ => null
-            };
+            return $"{frame.Address}\t{frame.Symbol}";
         }
 
         return null;
+    }
+
+    internal string? GetAllText()
+    {
+        if (ItemsSource is not List<StacktraceFrameItem> items || items.Count == 0)
+            return null;
+
+        return string.Join("\n", items.Select(x => $"{x.Address}\t{x.Symbol}"));
     }
 }
