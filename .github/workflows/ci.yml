@@ -65,15 +65,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set Version
-        id: version
+      - name: Resolve Variables
+        id: vars
         shell: bash
         run: |
           if [[ "${{ github.ref_name }}" == release/* ]]; then
-            echo "value=${GITHUB_REF_NAME#release/}" >> "$GITHUB_OUTPUT"
+            version=${GITHUB_REF_NAME#release/}
           else
-            echo "value=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+            version=${GITHUB_SHA::7}
           fi
+          echo "artifact=sentry-desktop-crash-reporter-${version}-${{ matrix.rid }}" >> "$GITHUB_OUTPUT"
 
       - name: Install Dependencies
         timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
@@ -90,16 +91,15 @@ jobs:
         run: |
           mkdir ./artifacts
           if [[ "$RUNNER_OS" == "Windows" ]]; then
-            cp -r ./build/* ./artifacts/
+            (cd ./build && 7z a -tzip "../artifacts/${{ steps.vars.outputs.artifact }}.zip" .)
           else
-            # tar retains execute permissions & upload-artifact zips => works with tar zxvf
-            tar cf ./artifacts/sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}.tar -C ./build .
+            tar czf "./artifacts/${{ steps.vars.outputs.artifact }}.tar.gz" -C ./build .
           fi
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: sentry-desktop-crash-reporter-${{ steps.version.outputs.value }}-${{ matrix.rid }}
+          name: ${{ steps.vars.outputs.artifact }}
           path: ./artifacts
 
       - name: Upload Binlog
