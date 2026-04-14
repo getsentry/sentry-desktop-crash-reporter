@@ -56,8 +56,9 @@ public static class Toast
 
         // ReSharper disable once MethodHasAsyncOverload
         _hideCts?.Cancel();
-        _hideCts = new CancellationTokenSource();
-        var token = _hideCts.Token;
+        var cts = new CancellationTokenSource();
+        _hideCts = cts;
+        var token = cts.Token;
 
         _toast.DispatcherQueue.TryEnqueue(() =>
         {
@@ -68,8 +69,9 @@ public static class Toast
         try
         {
             await Task.Delay(duration ?? TimeSpan.FromSeconds(3), token);
-            _hideCts.Cancel();
-            _toast.IsOpen = false;
+            cts.Cancel();
+            if (ReferenceEquals(_hideCts, cts))
+                _toast.IsOpen = false;
         }
         catch (OperationCanceledException)
         {
