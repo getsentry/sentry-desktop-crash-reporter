@@ -68,6 +68,7 @@ public static class Toast
         try
         {
             await Task.Delay(duration ?? TimeSpan.FromSeconds(3), token);
+            _hideCts.Cancel();
             _toast.IsOpen = false;
         }
         catch (OperationCanceledException)
