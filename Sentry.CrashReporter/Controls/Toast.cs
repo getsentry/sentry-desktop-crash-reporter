@@ -14,7 +14,7 @@ public static class Toast
         while (current is not null)
         {
             if (current is Page { Content: Panel root })
-                return Show(root, null, title, subtitle);
+                return Show(root, title, subtitle, null);
             current = VisualTreeHelper.GetParent(current);
         }
         return Task.CompletedTask;
@@ -24,7 +24,7 @@ public static class Toast
         FrameworkElement context,
         string title,
         string subtitle,
-        FrameworkElement? target = null,
+        FrameworkElement? target,
         TeachingTipPlacementMode placement = TeachingTipPlacementMode.Bottom,
         TimeSpan? duration = null)
     {
@@ -48,7 +48,6 @@ public static class Toast
         _toast.Title = title;
         _toast.Subtitle = subtitle;
         _toast.PreferredPlacement = placement;
-        _toast.IsOpen = true;
 
         if (target is not null)
             _toast.Target = target;
@@ -57,13 +56,22 @@ public static class Toast
 
         // ReSharper disable once MethodHasAsyncOverload
         _hideCts?.Cancel();
-        _hideCts = new CancellationTokenSource();
-        var token = _hideCts.Token;
+        var cts = new CancellationTokenSource();
+        _hideCts = cts;
+        var token = cts.Token;
+
+        _toast.DispatcherQueue.TryEnqueue(() =>
+        {
+            if (!token.IsCancellationRequested)
+                _toast.IsOpen = true;
+        });
 
         try
         {
             await Task.Delay(duration ?? TimeSpan.FromSeconds(3), token);
-            _toast.IsOpen = false;
+            cts.Cancel();
+            if (ReferenceEquals(_hideCts, cts))
+                _toast.IsOpen = false;
         }
         catch (OperationCanceledException)
         {

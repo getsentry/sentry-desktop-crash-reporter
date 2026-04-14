@@ -22,6 +22,7 @@ public class ToastTests : RuntimeTestBase
         Assert.AreSame(button, toast.Target);
         Assert.AreEqual(title, toast.Title);
         Assert.AreEqual(subtitle, toast.Subtitle);
+        await UnitTestsUIContentHelper.WaitForIdle();
         Assert.IsTrue(toast.IsOpen);
 
         await showTask;
@@ -41,6 +42,7 @@ public class ToastTests : RuntimeTestBase
 
         var toast = FindToast(button);
         Assert.IsNotNull(toast);
+        await UnitTestsUIContentHelper.WaitForIdle();
         Assert.IsTrue(toast.IsOpen);
 
         Toast.Hide();
