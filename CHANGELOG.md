@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0
 
 ### Features
 
@@ -9,3 +9,4 @@
 - User feedback with optional comments
 - Crash details and stack traces from the attached memory dump
 - Attachments preview
+
