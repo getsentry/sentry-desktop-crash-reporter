@@ -48,12 +48,13 @@ public static class Toast
         _toast.Title = title;
         _toast.Subtitle = subtitle;
         _toast.PreferredPlacement = placement;
-        _toast.IsOpen = true;
 
         if (target is not null)
             _toast.Target = target;
         else
             _toast.ClearValue(TeachingTip.TargetProperty);
+
+        _toast.DispatcherQueue.TryEnqueue(() => _toast.IsOpen = true);
 
         // ReSharper disable once MethodHasAsyncOverload
         _hideCts?.Cancel();
