@@ -52,7 +52,7 @@
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
 
-        <UnoXamlResourcesTrimming>true</UnoXamlResourcesTrimming>
+        <UnoXamlResourcesTrimming>false</UnoXamlResourcesTrimming>
         <PublishTrimmed>true</PublishTrimmed>
         <publishSingleFile>true</publishSingleFile>
         <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
