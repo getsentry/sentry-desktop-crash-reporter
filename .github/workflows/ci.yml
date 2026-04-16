@@ -218,6 +218,7 @@ jobs:
             --output Sentry.CrashReporter.RuntimeTests/TestResults/ \
             --format cobertura \
             --single-hit \
+            --include "[Sentry.CrashReporter]*" \
             -v
 
       - name: Process Test Results
