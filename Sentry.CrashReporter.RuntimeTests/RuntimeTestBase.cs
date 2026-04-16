@@ -2,7 +2,11 @@ using Path = System.IO.Path;
 
 namespace Sentry.CrashReporter.RuntimeTests;
 
-public record MockRuntime(Mock<ICrashReporter> Reporter, Mock<IWindowService> Window, Mock<IClipboardService> Clipboard);
+public record MockRuntime(
+    Mock<ICrashReporter> Reporter,
+    Mock<IWindowService> Window,
+    Mock<IClipboardService> Clipboard,
+    Mock<IFilePickerService> FilePicker);
 
 public class RuntimeTestBase
 {
@@ -36,13 +40,15 @@ public class RuntimeTestBase
             .Returns(Task.FromResult(envelope));
         var mockWindow = new Mock<IWindowService>();
         var mockClipboard = new Mock<IClipboardService>();
+        var mockFilePicker = new Mock<IFilePickerService>();
 
         var services = new ServiceCollection();
         services.AddSingleton(mockReporter.Object);
         services.AddSingleton(mockWindow.Object);
         services.AddSingleton(mockClipboard.Object);
+        services.AddSingleton(mockFilePicker.Object);
         App.Services = services.BuildServiceProvider();
 
-        return new MockRuntime(mockReporter, mockWindow, mockClipboard);
+        return new MockRuntime(mockReporter, mockWindow, mockClipboard, mockFilePicker);
     }
 }
