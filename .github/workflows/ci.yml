@@ -273,7 +273,7 @@ jobs:
           path: ./coverage-reports
 
       - name: Report Coverage
-        uses: jpnurmi/codecov-action@fix/coverlet
+        uses: jpnurmi/codecov-action@fix/aggregate-merge-by-file
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           directory: ./coverage-reports
