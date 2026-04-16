@@ -51,6 +51,10 @@ dotnet publish -f net9.0-desktop -r <RID> Sentry.CrashReporter/Sentry.CrashRepor
 
 Replace `<RID>` with your target platform runtime identifier (e.g., `win-x64`, `osx-arm64`, `linux-x64`). See the [.NET RID Catalog](https://learn.microsoft.com/en-us/dotnet/core/rid-catalog) for more options.
 
+The published artifacts are written to `Sentry.CrashReporter/bin/Release/net9.0-desktop/<RID>/publish/`.
+
+See the [.NET deployment docs](https://learn.microsoft.com/en-us/dotnet/core/deploying) and the [Uno Platform desktop publishing guide](https://platform.uno/docs/articles/uno-publishing-desktop.html) for more details.
+
 ## Usage
 
 ```c
