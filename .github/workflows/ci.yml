@@ -132,10 +132,11 @@ jobs:
         shell: pwsh
         run: dotnet test ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.SingleHit=true
 
-      - name: Upload code coverage
-        uses: jpnurmi/codecov-action@fix/coverlet
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          name: coverage-unit
+          path: Sentry.CrashReporter.Tests/TestResults/**/coverage.cobertura.xml
 
       - name: Upload Test Results
         if: ${{ always() && !startsWith(github.ref_name, 'release/') }}
@@ -243,7 +244,35 @@ jobs:
           path: Sentry.CrashReporter.RuntimeTests/TestResults/RuntimeTests.xml
           reporter: dotnet-nunit
 
-      - name: Upload Code Coverage
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: coverage-runtime
+          path: Sentry.CrashReporter.RuntimeTests/TestResults/coverage.cobertura.xml
+
+  coverage:
+    name: Coverage
+    needs: [unit_test, runtime_test]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      statuses: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Download Coverage Reports
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: coverage-*
+          path: ./coverage-reports
+
+      - name: Report Coverage
         uses: jpnurmi/codecov-action@fix/coverlet
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          directory: ./coverage-reports
