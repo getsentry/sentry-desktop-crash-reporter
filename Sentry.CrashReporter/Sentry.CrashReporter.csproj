@@ -59,6 +59,12 @@
         <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" $(RuntimeIdentifier.StartsWith('osx-')) ">
+        <PackageFormat>app</PackageFormat>
+        <!-- The .app bundle's native launcher links against libcoreclr.dylib, which is incompatible with single-file publish. -->
+        <PublishSingleFile>false</PublishSingleFile>
+    </PropertyGroup>
+
     <ItemGroup>
         <!-- Known cultures to include for text localization -->
         <UnoSupportedLanguage Include="en-US" />
