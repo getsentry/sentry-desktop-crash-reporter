@@ -93,7 +93,7 @@ jobs:
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             (cd ./build && 7z a -tzip "../artifacts/${{ steps.vars.outputs.artifact }}.zip" .)
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            tar czf "./artifacts/${{ steps.vars.outputs.artifact }}.tar.gz" -C ./build Sentry.CrashReporter.app
+            tar czf "./artifacts/${{ steps.vars.outputs.artifact }}.tar.gz" -C ./build "Sentry Crash Reporter.app"
           else
             tar czf "./artifacts/${{ steps.vars.outputs.artifact }}.tar.gz" -C ./build .
           fi

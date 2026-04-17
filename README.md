@@ -51,7 +51,7 @@ dotnet publish -f net9.0-desktop -r <RID> Sentry.CrashReporter/Sentry.CrashRepor
 
 Replace `<RID>` with your target platform runtime identifier (e.g., `win-x64`, `osx-arm64`, `linux-x64`). See the [.NET RID Catalog](https://learn.microsoft.com/en-us/dotnet/core/rid-catalog) for more options.
 
-The published artifacts are written to `Sentry.CrashReporter/bin/Release/net9.0-desktop/<RID>/publish/`. On macOS (`osx-*` RIDs), the output is an `.app` bundle (`Sentry.CrashReporter.app`) ready to be launched with `open -a`.
+The published artifacts are written to `Sentry.CrashReporter/bin/Release/net9.0-desktop/<RID>/publish/`. On macOS (`osx-*` RIDs), the output is an `.app` bundle (`Sentry Crash Reporter.app`).
 
 See the [.NET deployment docs](https://learn.microsoft.com/en-us/dotnet/core/deploying), the [Uno Platform desktop publishing guide](https://platform.uno/docs/articles/uno-publishing-desktop.html), and the [macOS app bundle guide](https://platform.uno/docs/articles/uno-publishing-desktop-macos.html) for more details.
 
@@ -64,4 +64,4 @@ sentry_options_set_external_crash_reporter_path(options, "/path/to/Sentry.CrashR
 sentry_init(options);
 ```
 
-On macOS, point the path at the `.app` bundle itself (e.g. `/Applications/Sentry.CrashReporter.app`); `sentry-native` will launch it via `open -a` so window activation works correctly.
+On macOS, point the path at the `.app` bundle itself (e.g. `/Applications/Sentry Crash Reporter.app`); `sentry-native` will launch it via `open -a` so window activation works correctly.
