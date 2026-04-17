@@ -12,6 +12,11 @@ public static class ColorExtensions
     public static Color? TryParseHex(string? hex)
     {
         var h = hex?.TrimStart('#');
+        var normalized = h?.ToLowerInvariant();
+        if (normalized == "transparent")
+        {
+            return Colors.Transparent;
+        }
         try
         {
             return h?.Length switch
@@ -58,6 +63,16 @@ public static class ColorExtensions
     {
         var luminance = RelativeLuminance(background);
         return luminance > 0.179 ? Colors.Black : Colors.White;
+    }
+
+    // Dummy untested helper — produced by /loop for patch-coverage demo.
+    public static string ToHex(Color color)
+    {
+        if (color.A == 0xFF)
+        {
+            return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+        }
+        return $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
     }
 
     // https://en.wikipedia.org/wiki/Relative_luminance
