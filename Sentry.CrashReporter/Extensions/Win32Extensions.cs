@@ -23,13 +23,6 @@ internal static class Win32Extensions
         }
     }
 
-    internal static IntPtr GetHwnd(object nativeWindow)
-    {
-        return nativeWindow is Uno.UI.NativeElementHosting.Win32NativeWindow win32Window
-            ? win32Window.Hwnd
-            : IntPtr.Zero;
-    }
-
     [DllImport("user32.dll")]
     private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
 

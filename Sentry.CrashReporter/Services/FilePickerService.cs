@@ -7,25 +7,12 @@ public interface IFilePickerService
     Task<IReadOnlyList<(string Name, byte[] Data)>> PickFilesAsync();
 }
 
-public class FilePickerService(IWindowService? windowService = null) : IFilePickerService
+public class FilePickerService : IFilePickerService
 {
-    private readonly IWindowService _windowService = windowService ?? App.Services.GetRequiredService<IWindowService>();
-
     public async Task<IReadOnlyList<(string Name, byte[] Data)>> PickFilesAsync()
     {
         var picker = new FileOpenPicker { ViewMode = PickerViewMode.List };
         picker.FileTypeFilter.Add("*");
-
-#if !__WASM__
-        if (OperatingSystem.IsWindows())
-        {
-            var hwnd = _windowService.GetWindowHandle();
-            if (hwnd != IntPtr.Zero)
-            {
-                WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
-            }
-        }
-#endif
 
         IReadOnlyList<StorageFile>? files;
         try
