@@ -26,6 +26,7 @@ changelog:
         - improvement
       commit_patterns:
         - "^perf(?:\\([^\\)]+\\))?:\\s+"
+        - "^build(?:\\([^\\)]+\\))?:\\s+"
     - title: Dependencies
       labels:
         - dependencies
