@@ -5,8 +5,10 @@ namespace Sentry.CrashReporter;
 internal class Program
 {
     [STAThread]
-    public static async Task Main(string[] args)
+    public static async Task Main()
     {
+        var args = CommandLineArgs.Get();
+
         StorageFile? file = null;
         if (args.Length == 1)
         {
