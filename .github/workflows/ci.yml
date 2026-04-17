@@ -279,3 +279,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           directory: ./coverage-reports
           enable-tests: false
+          post-pr-comment: true
