@@ -19,9 +19,9 @@ public class FilePickerService : IFilePickerService
         {
             files = await picker.PickMultipleFilesAsync();
         }
+        // TODO: remove (https://github.com/unoplatform/uno/issues/23071)
         catch (AccessViolationException)
         {
-            // TODO: remove once Uno fixes MacOSFileOpenPickerExtension null-pointer deref on cancel.
             return Array.Empty<(string, byte[])>();
         }
 
