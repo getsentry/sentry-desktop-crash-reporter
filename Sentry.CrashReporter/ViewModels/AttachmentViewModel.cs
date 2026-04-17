@@ -5,14 +5,14 @@ namespace Sentry.CrashReporter.ViewModels;
 
 public partial class AttachmentViewModel : ReactiveObject
 {
-    private readonly IFilePickerService? _filePickerOverride;
+    private readonly IFilePickerService _filePicker;
     [Reactive] private Envelope? _envelope;
     [ObservableAsProperty] private List<Attachment>? _attachments;
     private readonly IObservable<bool> _canAdd;
 
     public AttachmentViewModel(IFilePickerService? filePicker = null)
     {
-        _filePickerOverride = filePicker;
+        _filePicker = filePicker ?? App.Services.GetRequiredService<IFilePickerService>();
 
         _attachmentsHelper = this.WhenAnyValue(x => x.Envelope)
             .Select(env => env is null
@@ -52,12 +52,7 @@ public partial class AttachmentViewModel : ReactiveObject
         {
             return;
         }
-        var picker = _filePickerOverride ?? App.Services.GetService<IFilePickerService>();
-        if (picker is null)
-        {
-            return;
-        }
-        var files = await picker.PickFilesAsync();
+        var files = await _filePicker.PickFilesAsync();
         foreach (var (name, bytes) in files)
         {
             Envelope.AddItem(EnvelopeItem.CreateAttachment(name, bytes));

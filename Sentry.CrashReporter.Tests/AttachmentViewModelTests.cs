@@ -1,7 +1,17 @@
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Sentry.CrashReporter.Tests;
 
 public class AttachmentViewModelTests
 {
+    [SetUp]
+    public void SetUp()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(Mock.Of<IFilePickerService>());
+        App.Services = services.BuildServiceProvider();
+    }
+
     [Test]
     public void Defaults()
     {
