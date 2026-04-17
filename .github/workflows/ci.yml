@@ -130,7 +130,7 @@ jobs:
 
       - name: Run Unit Tests
         shell: pwsh
-        run: dotnet test ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.SingleHit=true
+        run: dotnet test ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.SingleHit=true -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.ExcludeByFile=**/obj/**
 
       - name: Upload Coverage Report
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
@@ -219,6 +219,7 @@ jobs:
             --format cobertura \
             --single-hit \
             --include "[Sentry.CrashReporter]*" \
+            --exclude-by-file "**/obj/**" \
             -v
 
       - name: Process Test Results
