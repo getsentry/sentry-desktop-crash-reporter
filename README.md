@@ -23,7 +23,7 @@ A reference implementation of an external crash reporter for desktop application
 * **User Consent:** Gives the user explicit control over whether their crash data is sent.
 * **User Feedback:** Allows users to add comments to the crash report.
 * **Crash Information:** Displays crash details and stack traces from the attached memory dump.
-* **Attachments**: Allows users to preview crash report attachments, such as screenshots.
+* **Attachments**: Allows users to add, remove, and open crash report attachments, such as screenshots.
 
 ## Customize
 

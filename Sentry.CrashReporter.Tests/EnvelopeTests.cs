@@ -225,6 +225,56 @@ public class EnvelopeTests
     }
 
     [Test]
+    public void CreateAttachment_BuildsExpectedHeader()
+    {
+        var item = EnvelopeItem.CreateAttachment("log.txt", Encoding.UTF8.GetBytes("hello"));
+
+        item.TryGetType().Should().Be("attachment");
+        item.TryGetHeader("filename").Should().Be("log.txt");
+        item.Header["length"]!.GetValue<int>().Should().Be(5);
+        item.Header.ContainsKey("content_type").Should().BeFalse();
+        item.Payload.Should().BeEquivalentTo(Encoding.UTF8.GetBytes("hello"));
+    }
+
+    [Test]
+    public void ItemsChanged_FiresOnAddAndRemove()
+    {
+        var envelope = new Envelope(new JsonObject(), Array.Empty<EnvelopeItem>());
+        var fired = 0;
+        envelope.ItemsChanged += (_, _) => fired++;
+
+        var item = EnvelopeItem.CreateAttachment("a.bin", [0x01]);
+        envelope.AddItem(item);
+        envelope.RemoveItem(item);
+
+        fired.Should().Be(2);
+    }
+
+    [Test]
+    public async Task MutateItems_RoundTripsThroughSerialization()
+    {
+        await using var file = File.OpenRead("data/two_items.envelope");
+        var envelope = await Envelope.FromFileStreamAsync(file);
+        envelope.Items.Should().HaveCount(2);
+
+        var original = envelope.Items[0];
+        envelope.RemoveItem(original);
+        envelope.AddItem(EnvelopeItem.CreateAttachment("added.bin", [0x0A, 0x0B, 0x0C]));
+
+        using var stream = new MemoryStream();
+        await envelope.SerializeAsync(stream);
+        stream.Seek(0, SeekOrigin.Begin);
+        var reparsed = await Envelope.DeserializeAsync(stream);
+
+        reparsed.Items.Should().HaveCount(2);
+        reparsed.Items.Should().NotContain(i => i.TryGetHeader("filename") == original.TryGetHeader("filename"));
+        var added = reparsed.Items.Last();
+        added.TryGetType().Should().Be("attachment");
+        added.TryGetHeader("filename").Should().Be("added.bin");
+        added.Payload.Should().BeEquivalentTo(new byte[] { 0x0A, 0x0B, 0x0C });
+    }
+
+    [Test]
     [TestCase("data/two_items.envelope")]
     [TestCase("data/two_empty_attachments.envelope")]
     [TestCase("data/implicit_length.envelope")]

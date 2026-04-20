@@ -32,6 +32,7 @@ public partial class App : Application
         services.AddSingleton<ICrashReporter, Services.CrashReporter>();
         services.AddSingleton<IWindowService, WindowService>();
         services.AddSingleton<IClipboardService, ClipboardService>();
+        services.AddSingleton<IFilePickerService, FilePickerService>();
         Ioc.Default.ConfigureServices(services.BuildServiceProvider());
         return Services;
     }

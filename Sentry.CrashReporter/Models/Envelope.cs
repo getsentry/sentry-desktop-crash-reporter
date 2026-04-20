@@ -8,12 +8,27 @@ namespace Sentry.CrashReporter.Models;
 public record EnvelopeException(string? Type, string? Value);
 public record FormattedEnvelopeItem(string Header, string Payload);
 public record FormattedEnvelope(string Header, List<FormattedEnvelopeItem> Items);
-public record Attachment(string Filename, byte[] Data);
+public record Attachment(string Filename, byte[] Data)
+{
+    public EnvelopeItem? Source { get; init; }
+    public bool IsMinidump { get; init; }
+}
 
 public sealed class EnvelopeItem(JsonObject header, byte[] payload)
 {
     public JsonObject Header { get; } = header;
     public byte[] Payload { get; } = payload;
+
+    public static EnvelopeItem CreateAttachment(string filename, byte[] data)
+    {
+        var header = new JsonObject
+        {
+            ["type"] = "attachment",
+            ["length"] = data.Length,
+            ["filename"] = filename
+        };
+        return new EnvelopeItem(header, data);
+    }
 
     public string? TryGetType()
     {
@@ -106,17 +121,41 @@ public sealed class EnvelopeItem(JsonObject header, byte[] payload)
     }
 }
 
-public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> items)
+public sealed class Envelope
 {
-    public string? FilePath { get; internal set; }
-    public JsonObject Header { get; } = header;
-    public IReadOnlyList<EnvelopeItem> Items { get; } = items;
+    private readonly List<EnvelopeItem> _items;
+    private readonly Lazy<Minidump?> _minidump;
 
-    private readonly Lazy<Minidump?> _minidump = new(() =>
+    public Envelope(JsonObject header, IEnumerable<EnvelopeItem> items)
     {
-        var item = items.FirstOrDefault(i => i.TryGetHeader("attachment_type") == "event.minidump");
-        return item is not null ? Minidump.FromBytes(item.Payload) : null;
-    });
+        Header = header;
+        _items = items.ToList();
+        _minidump = new Lazy<Minidump?>(() =>
+        {
+            var item = _items.FirstOrDefault(i => i.TryGetHeader("attachment_type") == "event.minidump");
+            return item is not null ? Minidump.FromBytes(item.Payload) : null;
+        });
+    }
+
+    public string? FilePath { get; internal set; }
+    public JsonObject Header { get; }
+    public IReadOnlyList<EnvelopeItem> Items => _items;
+
+    public event EventHandler? ItemsChanged;
+
+    public void AddItem(EnvelopeItem item)
+    {
+        _items.Add(item);
+        ItemsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void RemoveItem(EnvelopeItem item)
+    {
+        if (_items.Remove(item))
+        {
+            ItemsChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
 
     public string? TryGetDsn()
     {
@@ -150,7 +189,11 @@ public sealed class Envelope(JsonObject header, IReadOnlyList<EnvelopeItem> item
     {
         return Items
             .Where(s => s.TryGetType() == "attachment")
-            .Select(s => new Attachment(s.Header.TryGetString("filename") ?? string.Empty, s.Payload))
+            .Select(s => new Attachment(s.Header.TryGetString("filename") ?? string.Empty, s.Payload)
+            {
+                Source = s,
+                IsMinidump = s.TryGetHeader("attachment_type") == "event.minidump"
+            })
             .Where(a => !string.IsNullOrEmpty(a.Filename))
             .ToList();
     }
