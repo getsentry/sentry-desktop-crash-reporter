@@ -4,13 +4,17 @@ namespace Sentry.CrashReporter;
 
 internal class Program
 {
+    // Main must return void (not Task) so that [STAThread] is honored by the CLR — otherwise
+    // the C# compiler emits a synthetic sync entry point without [STAThread] and Uno's Win32
+    // message loop ends up on an MTA thread, which hangs IFileOpenDialog on the file picker.
+    // See https://github.com/unoplatform/uno/issues/23070.
     [STAThread]
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
         StorageFile? file = null;
         if (args.Length == 1)
         {
-            file = await StorageFile.GetFileFromPathAsync(args[0]);
+            file = StorageFile.GetFileFromPathAsync(args[0]).AsTask().GetAwaiter().GetResult();
         }
         App.ConfigureServices(file);
 
@@ -22,6 +26,6 @@ internal class Program
             .UseWin32()
             .Build();
 
-        await host.RunAsync();
+        host.RunAsync().GetAwaiter().GetResult();
     }
 }
