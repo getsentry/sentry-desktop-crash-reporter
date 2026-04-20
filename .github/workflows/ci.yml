@@ -60,6 +60,9 @@ jobs:
     name: Build (${{ matrix.rid }})
 
     runs-on: ${{ matrix.os }}
+    env:
+      MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+      APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -82,9 +85,40 @@ jobs:
         with:
           target-platform: "desktop"
 
+      - name: Set up Ruby (macOS signing)
+        if: ${{ runner.os == 'macOS' && env.MATCH_PASSWORD }}
+        uses: ruby/setup-ruby@3ff19f5e2baf30647122352b96108b1fbe250c64 # v1.299.0
+        with:
+          bundler-cache: true
+
+      - name: Prepare Developer ID signing (macOS)
+        if: ${{ runner.os == 'macOS' && env.MATCH_PASSWORD }}
+        env:
+          FASTLANE_KEYCHAIN_PASSWORD: ${{ secrets.FASTLANE_KEYCHAIN_PASSWORD }}
+          MATCH_GIT_PRIVATE_KEY: ${{ secrets.MATCH_GIT_PRIVATE_KEY }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+        run: bundle exec fastlane prepare_signing
+
+      - name: Build Sentry.CrashReporter (Release, signed macOS)
+        if: ${{ runner.os == 'macOS' && env.MATCH_PASSWORD }}
+        shell: bash
+        run: |
+          dotnet publish -f net9.0-desktop -r ${{ matrix.rid }} \
+            -p:CodesignKey="Developer ID Application: Functional Software, Inc. (97JCY7859U)" \
+            ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./build -bl:./build.binlog
+
       - name: Build Sentry.CrashReporter (Release)
+        if: ${{ runner.os != 'macOS' || !env.MATCH_PASSWORD }}
         shell: pwsh
         run: dotnet publish -f net9.0-desktop -r ${{ matrix.rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./build -bl:./build.binlog
+
+      - name: Notarize .app (macOS)
+        if: ${{ runner.os == 'macOS' && env.APP_STORE_CONNECT_KEY }}
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+        run: bundle exec fastlane notarize_app app_path:"build/Sentry Crash Reporter.app"
 
       - name: Archive Artifacts
         shell: bash

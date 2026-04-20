@@ -1,0 +1,45 @@
+default_platform(:mac)
+
+platform :mac do
+  desc "Import Developer ID certificate into the CI keychain via match"
+  lane :prepare_signing do
+    setup_ci if is_ci
+
+    sync_code_signing(
+      type: "developer_id",
+      readonly: true,
+      app_identifier: [CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)],
+    )
+  end
+
+  desc "Notarize and staple the .app bundle"
+  lane :notarize_app do |options|
+    app_path = Dir.chdir('..') { File.expand_path(options[:app_path]) }
+    UI.user_error!("App not found at #{app_path}") unless File.directory?(app_path)
+
+    api_key_path = "/tmp/AuthKey.p8"
+    temp_zip = "/tmp/notarize-#{Time.now.to_i}.zip"
+
+    begin
+      app_dir = File.dirname(app_path)
+      app_name = File.basename(app_path)
+      sh("cd '#{app_dir}' && zip -r --symlinks '#{temp_zip}' '#{app_name}'")
+
+      File.write(api_key_path, ENV.fetch("APP_STORE_CONNECT_KEY"))
+      File.chmod(0600, api_key_path)
+
+      sh(
+        "xcrun notarytool submit #{temp_zip} " \
+        "--key #{api_key_path} " \
+        "--key-id #{ENV.fetch('APP_STORE_CONNECT_KEY_ID')} " \
+        "--issuer #{ENV.fetch('APP_STORE_CONNECT_ISSUER_ID')} " \
+        "--wait"
+      )
+
+      sh("xcrun stapler staple '#{app_path}'")
+    ensure
+      File.delete(api_key_path) if File.exist?(api_key_path)
+      File.delete(temp_zip) if File.exist?(temp_zip)
+    end
+  end
+end
