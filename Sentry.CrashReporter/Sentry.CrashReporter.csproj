@@ -1,6 +1,6 @@
 <Project Sdk="Uno.Sdk">
     <PropertyGroup>
-        <TargetFrameworks>net9.0-browserwasm;net9.0-desktop;net9.0</TargetFrameworks>
+        <TargetFrameworks>net10.0-browserwasm;net10.0-desktop;net10.0</TargetFrameworks>
 
         <OutputType>Exe</OutputType>
         <!--PublishAot>true</PublishAot-->

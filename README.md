@@ -34,24 +34,24 @@ reporter with your own logo, colors, and window title.
 
 ### Prerequisites
 
-- [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) or later
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) or later
 - Run [`uno-check`](https://platform.uno/docs/articles/uno-check.html) to verify and install additional requirements
 
 ### Develop
 
 ```bash
-dotnet run --project Sentry.CrashReporter/Sentry.CrashReporter.csproj -f net9.0-desktop -- Sentry.CrashReporter.Tests/data/inproc.envelope
+dotnet run --project Sentry.CrashReporter/Sentry.CrashReporter.csproj -f net10.0-desktop -- Sentry.CrashReporter.Tests/data/inproc.envelope
 ```
 
 ### Deploy
 
 ```bash
-dotnet publish -f net9.0-desktop -r <RID> Sentry.CrashReporter/Sentry.CrashReporter.csproj
+dotnet publish -f net10.0-desktop -r <RID> Sentry.CrashReporter/Sentry.CrashReporter.csproj
 ```
 
 Replace `<RID>` with your target platform runtime identifier (e.g., `win-x64`, `osx-arm64`, `linux-x64`). See the [.NET RID Catalog](https://learn.microsoft.com/en-us/dotnet/core/rid-catalog) for more options.
 
-The published artifacts are written to `Sentry.CrashReporter/bin/Release/net9.0-desktop/<RID>/publish/`. On macOS (`osx-*` RIDs), the output is an `.app` bundle (`Sentry Crash Reporter.app`).
+The published artifacts are written to `Sentry.CrashReporter/bin/Release/net10.0-desktop/<RID>/publish/`. On macOS (`osx-*` RIDs), the output is an `.app` bundle (`Sentry Crash Reporter.app`).
 
 See the [.NET deployment docs](https://learn.microsoft.com/en-us/dotnet/core/deploying), the [Uno Platform desktop publishing guide](https://platform.uno/docs/articles/uno-publishing-desktop.html), and the [macOS app bundle guide](https://platform.uno/docs/articles/uno-publishing-desktop-macos.html) for more details.
 
