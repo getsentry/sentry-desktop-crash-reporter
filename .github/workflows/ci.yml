@@ -171,12 +171,12 @@ jobs:
         id: run-ui-tests
         continue-on-error: true
         shell: pwsh
-        run: .github/scripts/run-ui-tests.ps1
+        run: scripts/run-ui-tests.ps1
 
       - name: Retry UI Tests
         if: steps.run-ui-tests.outcome == 'failure'
         shell: pwsh
-        run: .github/scripts/run-ui-tests.ps1
+        run: scripts/run-ui-tests.ps1
 
       - name: Upload Test Results
         if: ${{ always() && !startsWith(github.ref_name, 'release/') }}
