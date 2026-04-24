@@ -82,9 +82,55 @@ jobs:
         with:
           target-platform: "desktop"
 
+      - name: Import Developer ID certificate (macOS)
+        if: ${{ runner.os == 'macOS' && env.DEVELOPER_ID_P12_BASE64 }}
+        env:
+          DEVELOPER_ID_P12_BASE64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
+          DEVELOPER_ID_PASSWORD: ${{ secrets.DEVELOPER_ID_PASSWORD }}
+        run: |
+          KEYCHAIN_NAME="signing.keychain-db"
+          KEYCHAIN_PASSWORD=$(openssl rand -hex 32)
+
+          security delete-keychain "$KEYCHAIN_NAME" 2>/dev/null || true
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+
+          CERTIFICATE_PATH="$RUNNER_TEMP/certificate.p12"
+          echo "$DEVELOPER_ID_P12_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+          security import "$CERTIFICATE_PATH" -k "$KEYCHAIN_NAME" -P "$DEVELOPER_ID_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          rm -f "$CERTIFICATE_PATH"
+
+          security list-keychains -d user -s "$KEYCHAIN_NAME" $(security list-keychains -d user | sed 's/"//g')
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+          security default-keychain -s "$KEYCHAIN_NAME"
+
+          echo "KEYCHAIN_NAME=$KEYCHAIN_NAME" >> "$GITHUB_ENV"
+
       - name: Build Sentry.CrashReporter (Release)
         shell: pwsh
         run: dotnet publish -f net9.0-desktop -r ${{ matrix.rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./build -bl:./build.binlog
+
+      - name: Sign and notarize .app (macOS)
+        if: ${{ runner.os == 'macOS' && env.KEYCHAIN_NAME && env.APPLE_API_KEY_P8_BASE64 }}
+        shell: bash
+        env:
+          APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
+        run: |
+          KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
+          echo "$APPLE_API_KEY_P8_BASE64" | base64 --decode -o "$KEY_PATH"
+          trap 'rm -f "$KEY_PATH"' EXIT
+
+          ./.github/scripts/sign-macos.sh \
+            --app "build/Sentry Crash Reporter.app" \
+            --signing-identity "${{ vars.APPLE_NOTARIZATION_SIGNING_IDENTITY }}" \
+            --api-key-path "$KEY_PATH" \
+            --api-key-id "${{ vars.APPLE_API_KEY_ID }}" \
+            --api-issuer-id "${{ vars.APPLE_API_ISSUER_ID }}"
+
+      - name: Clean up signing keychain (macOS)
+        if: ${{ always() && runner.os == 'macOS' && env.KEYCHAIN_NAME }}
+        run: security delete-keychain "$KEYCHAIN_NAME" || true
 
       - name: Archive Artifacts
         shell: bash
