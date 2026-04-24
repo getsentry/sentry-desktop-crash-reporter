@@ -60,8 +60,6 @@ jobs:
     name: Build (${{ matrix.rid }})
 
     runs-on: ${{ matrix.os }}
-    env:
-      DEVELOPER_ID_P12_BASE64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -85,7 +83,7 @@ jobs:
           target-platform: "desktop"
 
       - name: Import Developer ID certificate (macOS)
-        if: ${{ runner.os == 'macOS' && env.DEVELOPER_ID_P12_BASE64 }}
+        if: ${{ runner.os == 'macOS' && secrets.DEVELOPER_ID_P12_BASE64 }}
         env:
           DEVELOPER_ID_P12_BASE64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
           DEVELOPER_ID_PASSWORD: ${{ secrets.DEVELOPER_ID_PASSWORD }}
@@ -114,7 +112,7 @@ jobs:
         run: dotnet publish -f net9.0-desktop -r ${{ matrix.rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./build -bl:./build.binlog
 
       - name: Sign and notarize .app (macOS)
-        if: ${{ runner.os == 'macOS' && env.DEVELOPER_ID_P12_BASE64 }}
+        if: ${{ runner.os == 'macOS' && secrets.DEVELOPER_ID_P12_BASE64 }}
         shell: bash
         env:
           APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
