@@ -31,7 +31,7 @@ jobs:
         timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
         uses: "./.github/steps/install_dependencies"
         with:
-          target-platform: "desktop"
+          target-platform: "desktop wasm"
 
       - name: Build Sentry.CrashReporter (Debug)
         shell: pwsh
@@ -155,7 +155,7 @@ jobs:
         timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
         uses: "./.github/steps/install_dependencies"
         with:
-          target-platform: "webassembly"
+          target-platform: "wasm"
 
       - name: Build Sentry.CrashReporter (WebAssembly, Release)
         run: dotnet build -c Release -f net10.0-browserwasm -p:IsUiAutomationMappingEnabled=True Sentry.CrashReporter/Sentry.CrashReporter.csproj
