@@ -112,10 +112,9 @@ jobs:
         run: dotnet publish -f net9.0-desktop -r ${{ matrix.rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./build -bl:./build.binlog
 
       - name: Sign and notarize .app (macOS)
-        if: ${{ runner.os == 'macOS' && env.DEVELOPER_ID_P12_BASE64 }}
+        if: ${{ runner.os == 'macOS' && env.APPLE_API_KEY_P8_BASE64 }}
         shell: bash
         env:
-          DEVELOPER_ID_P12_BASE64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
           APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
         run: |
           KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
