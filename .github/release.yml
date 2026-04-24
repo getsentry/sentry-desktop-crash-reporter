@@ -19,14 +19,14 @@ changelog:
         - fix
       commit_patterns:
         - "^fix(?:\\([^\\)]+\\))?:\\s+"
+    - title: Dependencies
+      labels:
+        - dependencies
+      commit_patterns:
+        - "^(?:chore|build)\\(deps(?:-dev)?\\):\\s+"
     - title: Improvements
       labels:
         - improvement
       commit_patterns:
         - "^perf(?:\\([^\\)]+\\))?:\\s+"
         - "^build(?:\\([^\\)]+\\))?:\\s+"
-    - title: Dependencies
-      labels:
-        - dependencies
-      commit_patterns:
-        - "^chore\\(deps(?:-dev)?\\):\\s+"
