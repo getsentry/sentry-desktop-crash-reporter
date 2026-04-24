@@ -7,9 +7,9 @@
         <UnoSingleProject>true</UnoSingleProject>
 
         <!-- Display name -->
-        <ApplicationTitle>Sentry.CrashReporter</ApplicationTitle>
+        <ApplicationTitle>Sentry Crash Reporter</ApplicationTitle>
         <!-- App Identifier -->
-        <ApplicationId>com.companyname.Sentry.CrashReporter</ApplicationId>
+        <ApplicationId>io.sentry.CrashReporter</ApplicationId>
         <!-- Versions -->
         <ApplicationDisplayVersion>0.1.1</ApplicationDisplayVersion>
         <ApplicationVersion>1</ApplicationVersion>
@@ -57,6 +57,13 @@
         <publishSingleFile>true</publishSingleFile>
         <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
         <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" $(RuntimeIdentifier.StartsWith('osx-')) ">
+        <PackageFormat>app</PackageFormat>
+        <!-- The .app bundle's native launcher links against libcoreclr.dylib, which is incompatible with single-file publish. -->
+        <PublishSingleFile>false</PublishSingleFile>
+        <UnoMacOSCustomInfoPlist>Platforms/Desktop/Info.plist</UnoMacOSCustomInfoPlist>
     </PropertyGroup>
 
     <ItemGroup>

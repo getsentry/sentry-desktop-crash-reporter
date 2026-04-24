@@ -5,9 +5,9 @@
     <UnoSingleProject>true</UnoSingleProject>
 
     <!-- Display name -->
-    <ApplicationTitle>Sentry.CrashReporter Runtime Tests Host</ApplicationTitle>
+    <ApplicationTitle>Sentry Crash Reporter Runtime Tests Host</ApplicationTitle>
     <!-- App Identifier -->
-    <ApplicationId>com.companyname.Sentry.CrashReporter.runtimetests.host</ApplicationId>
+    <ApplicationId>io.sentry.CrashReporter.RuntimeTests.Host</ApplicationId>
     <!-- Versions -->
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>

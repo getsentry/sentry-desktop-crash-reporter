@@ -9,8 +9,10 @@ internal class Program
     // message loop ends up on an MTA thread, which hangs IFileOpenDialog on the file picker.
     // See https://github.com/unoplatform/uno/issues/23070.
     [STAThread]
-    public static void Main(string[] args)
+    public static void Main()
     {
+        var args = CommandLineArgs.Get();
+
         StorageFile? file = null;
         if (args.Length == 1)
         {
