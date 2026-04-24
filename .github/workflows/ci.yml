@@ -31,15 +31,11 @@ jobs:
         timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
         uses: "./.github/steps/install_dependencies"
         with:
-          target-platform: "desktop"
-
-      # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3.0.0
+          target-platform: "desktop wasm"
 
       - name: Build Sentry.CrashReporter (Debug)
         shell: pwsh
-        run: msbuild ./Sentry.CrashReporter/Sentry.CrashReporter.csproj /r
+        run: dotnet build -c Debug ./Sentry.CrashReporter/Sentry.CrashReporter.csproj
 
   build:
     strategy:
@@ -109,7 +105,7 @@ jobs:
 
       - name: Build Sentry.CrashReporter (Release)
         shell: pwsh
-        run: dotnet publish -f net9.0-desktop -r ${{ matrix.rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./build -bl:./build.binlog
+        run: dotnet publish -f net10.0-desktop -r ${{ matrix.rid }} ./Sentry.CrashReporter/Sentry.CrashReporter.csproj -o ./build -bl:./build.binlog
 
       - name: Sign and notarize .app (macOS)
         if: ${{ runner.os == 'macOS' && env.KEYCHAIN_NAME && env.APPLE_API_KEY_P8_BASE64 }}
@@ -173,7 +169,7 @@ jobs:
 
       - name: Build Sentry.CrashReporter.Tests (Release)
         shell: pwsh
-        run: dotnet build ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj /p:Configuration=Release /p:OverrideTargetFramework=net9.0
+        run: dotnet build ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj /p:Configuration=Release /p:OverrideTargetFramework=net10.0
 
       - name: Run Unit Tests
         shell: pwsh
@@ -205,13 +201,13 @@ jobs:
         timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
         uses: "./.github/steps/install_dependencies"
         with:
-          target-platform: "webassembly"
+          target-platform: "wasm"
 
       - name: Build Sentry.CrashReporter (WebAssembly, Release)
-        run: dotnet build -c Release -f net9.0-browserwasm -p:IsUiAutomationMappingEnabled=True Sentry.CrashReporter/Sentry.CrashReporter.csproj
+        run: dotnet build -c Release -f net10.0-browserwasm -p:IsUiAutomationMappingEnabled=True Sentry.CrashReporter/Sentry.CrashReporter.csproj
 
       - name: Build Sentry.CrashReporter.UITests (Release)
-        run: dotnet build -c Release -f net9.0 Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
+        run: dotnet build -c Release -f net10.0 Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
 
       - name: Run UI Tests
         id: run-ui-tests
@@ -250,7 +246,7 @@ jobs:
         run: dotnet tool restore
 
       - name: Build Sentry.CrashReporter.RuntimeTests.Host (Release)
-        run: dotnet build -c Release -f net9.0-desktop Sentry.CrashReporter.RuntimeTests.Host/Sentry.CrashReporter.RuntimeTests.Host.csproj
+        run: dotnet build -c Release -f net10.0-desktop Sentry.CrashReporter.RuntimeTests.Host/Sentry.CrashReporter.RuntimeTests.Host.csproj
 
       - name: Run Runtime Tests
         env:
@@ -258,9 +254,9 @@ jobs:
           UNO_RUNTIME_TESTS_OUTPUT_PATH: Sentry.CrashReporter.RuntimeTests/TestResults/RuntimeTests.xml
         run: |
           xvfb-run -a dotnet tool run coverlet -- \
-            Sentry.CrashReporter.RuntimeTests.Host/bin/Release/net9.0-desktop/Sentry.CrashReporter.RuntimeTests.Host.dll \
+            Sentry.CrashReporter.RuntimeTests.Host/bin/Release/net10.0-desktop/Sentry.CrashReporter.RuntimeTests.Host.dll \
             --target dotnet \
-            --targetargs Sentry.CrashReporter.RuntimeTests.Host/bin/Release/net9.0-desktop/Sentry.CrashReporter.RuntimeTests.Host.dll \
+            --targetargs Sentry.CrashReporter.RuntimeTests.Host/bin/Release/net10.0-desktop/Sentry.CrashReporter.RuntimeTests.Host.dll \
             --output Sentry.CrashReporter.RuntimeTests/TestResults/ \
             --format cobertura \
             --single-hit \
