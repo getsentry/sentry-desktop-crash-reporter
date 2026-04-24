@@ -33,13 +33,9 @@ jobs:
         with:
           target-platform: "desktop"
 
-      # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3.0.0
-
       - name: Build Sentry.CrashReporter (Debug)
         shell: pwsh
-        run: msbuild ./Sentry.CrashReporter/Sentry.CrashReporter.csproj /r
+        run: dotnet build -c Debug ./Sentry.CrashReporter/Sentry.CrashReporter.csproj
 
   build:
     strategy:
