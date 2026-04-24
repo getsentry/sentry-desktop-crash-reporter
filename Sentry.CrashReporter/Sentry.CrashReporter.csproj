@@ -64,7 +64,6 @@
         <!-- The .app bundle's native launcher links against libcoreclr.dylib, which is incompatible with single-file publish. -->
         <PublishSingleFile>false</PublishSingleFile>
         <UnoMacOSCustomInfoPlist>Platforms/Desktop/Info.plist</UnoMacOSCustomInfoPlist>
-        <UnoMacOSEntitlements>Platforms/Desktop/entitlements.plist</UnoMacOSEntitlements>
     </PropertyGroup>
 
     <ItemGroup>

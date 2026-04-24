@@ -3,6 +3,9 @@ set -euo pipefail
 
 # Sign and notarize a macOS .app bundle.
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENTITLEMENTS="$SCRIPT_DIR/../../Sentry.CrashReporter/Platforms/Desktop/entitlements.plist"
+
 APP=""
 SIGNING_IDENTITY=""
 API_KEY_PATH=""
@@ -67,7 +70,7 @@ if [ -d "$APP/Contents/Resources" ]; then
     done < <(find "$APP/Contents/Resources" -type f -print0)
 fi
 
-codesign --force --deep --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$APP"
+codesign --force --deep --options runtime --timestamp --entitlements "$ENTITLEMENTS" --sign "$SIGNING_IDENTITY" "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
 
 ZIP="$(dirname "$APP")/.notarize.zip"
