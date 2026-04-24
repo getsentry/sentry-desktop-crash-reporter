@@ -51,6 +51,7 @@
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+        <UseSystemResourceKeys>false</UseSystemResourceKeys>
 
         <UnoXamlResourcesTrimming>false</UnoXamlResourcesTrimming>
         <PublishTrimmed>true</PublishTrimmed>
