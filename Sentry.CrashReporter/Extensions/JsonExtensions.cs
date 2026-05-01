@@ -6,6 +6,12 @@ namespace Sentry.CrashReporter.Extensions;
 
 public static class JsonExtensions
 {
+    // Dummy untested helper — produced by /loop for patch-coverage demo.
+    public static bool IsEmpty(this JsonObject json)
+    {
+        return json.Count == 0;
+    }
+
     public static JsonNode? TryGetProperty(this JsonObject json, string propertyName)
     {
         JsonNode? node = json;
