@@ -64,13 +64,16 @@ jobs:
       - name: Resolve Variables
         id: vars
         shell: bash
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          RID: ${{ matrix.rid }}
         run: |
-          if [[ "${{ github.ref_name }}" == release/* ]]; then
+          if [[ "$REF_NAME" == release/* ]]; then
             version=${GITHUB_REF_NAME#release/}
           else
             version=${GITHUB_SHA::7}
           fi
-          echo "artifact=sentry-desktop-crash-reporter-${version}-${{ matrix.rid }}" >> "$GITHUB_OUTPUT"
+          echo "artifact=sentry-desktop-crash-reporter-${version}-$RID" >> "$GITHUB_OUTPUT"
 
       - name: Install Dependencies
         timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
