@@ -16,6 +16,7 @@ public class WindowService : IWindowService
     private Window? _window;
     private bool _isClosable = true;
     private bool _forceClose;
+    private bool _isClosing;
 
     public event Func<Task>? Closing;
 
@@ -33,13 +34,24 @@ public class WindowService : IWindowService
 
     public async Task RequestCloseAsync()
     {
-        if (!_isClosable)
+        if (!_isClosable || _forceClose || _isClosing)
         {
             return;
         }
+        _isClosing = true;
 
-        await NotifyClosingAsync();
-        Close();
+        try
+        {
+            await NotifyClosingAsync();
+            Close();
+        }
+        finally
+        {
+            if (!_forceClose)
+            {
+                _isClosing = false;
+            }
+        }
     }
 
     public void Close()
