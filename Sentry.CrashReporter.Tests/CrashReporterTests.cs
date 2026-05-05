@@ -84,6 +84,38 @@ public class CrashReporterTests
     }
 
     [Test]
+    public async Task CacheAsync_WhenEnvelopeWriteFails_DoesNotCreateFinalEnvelopeAndAllowsRetry()
+    {
+        // Arrange
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, new Mock<ISentryClient>().Object);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var envelope = CreateCrashEnvelopeWithoutMinidump(cacheDir);
+        var envelopePath = Path.Combine(cacheDir, "c993afb6-b4ac-48a6-b61b-2558e601d65d.envelope");
+
+        try
+        {
+            // Act
+            using var cancellation = new CancellationTokenSource();
+            cancellation.Cancel();
+            await reporter.CacheAsync(envelope, cancellation.Token);
+
+            // Assert
+            File.Exists(envelopePath).Should().BeFalse();
+            Directory.GetFiles(cacheDir, "*.tmp").Should().BeEmpty();
+
+            await reporter.CacheAsync(envelope);
+            File.Exists(envelopePath).Should().BeTrue();
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
     public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeSubmitFails_CachesCrashEnvelopeAndMinidump()
     {
         // Arrange
@@ -320,6 +352,22 @@ public class CrashReporterTests
                         ["filename"] = "minidump.dmp"
                     },
                     minidump)
+            ]);
+    }
+
+    private static Envelope CreateCrashEnvelopeWithoutMinidump(string cacheDir)
+    {
+        return new Envelope(
+            new JsonObject
+            {
+                ["dsn"] = "https://e12d836b15bb49d7bbf99e64295d995b:@sentry.io/42",
+                ["event_id"] = "c993afb6b4ac48a6b61b2558e601d65d",
+                ["cache_dir"] = cacheDir
+            },
+            [
+                new EnvelopeItem(
+                    new JsonObject { ["type"] = "event" },
+                    Encoding.UTF8.GetBytes(new JsonObject { ["message"] = "crashed" }.ToJsonString()))
             ]);
     }
 

@@ -94,6 +94,7 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
             return;
         }
 
+        string? envelopeTempPath = null;
         try
         {
             Directory.CreateDirectory(cacheDir);
@@ -117,11 +118,27 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
             }
 
             var cachedEnvelope = new Envelope(envelope.Header, envelope.Items.Except(minidumps));
-            await using var stream = File.Create(envelopePath);
-            await cachedEnvelope.SerializeAsync(stream, cancellationToken);
+            envelopeTempPath = System.IO.Path.Combine(cacheDir, $"{eventId}.{Guid.NewGuid():N}.tmp");
+            await using (var stream = File.Create(envelopeTempPath))
+            {
+                await cachedEnvelope.SerializeAsync(stream, cancellationToken);
+            }
+            File.Move(envelopeTempPath, envelopePath);
+            envelopeTempPath = null;
         }
         catch (Exception e)
         {
+            try
+            {
+                if (envelopeTempPath is not null && File.Exists(envelopeTempPath))
+                {
+                    File.Delete(envelopeTempPath);
+                }
+            }
+            catch (Exception cleanupException)
+            {
+                this.Log().LogWarning(cleanupException, "Failed to delete temporary crash envelope cache file.");
+            }
             this.Log().LogWarning(e, "Failed to cache crash envelope.");
         }
     }
