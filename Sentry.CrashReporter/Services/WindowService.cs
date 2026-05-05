@@ -68,7 +68,14 @@ public class WindowService : IWindowService
 
         foreach (Func<Task> handler in Closing.GetInvocationList())
         {
-            await handler();
+            try
+            {
+                await handler();
+            }
+            catch (Exception e)
+            {
+                this.Log().LogWarning(e, "Window closing handler failed.");
+            }
         }
     }
 }
