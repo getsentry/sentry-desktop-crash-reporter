@@ -73,12 +73,7 @@ public class WindowService : IWindowService
 
     private async Task NotifyClosingAsync()
     {
-        if (Closing is null)
-        {
-            return;
-        }
-
-        foreach (Func<Task> handler in Closing.GetInvocationList())
+        foreach (Func<Task> handler in Closing?.GetInvocationList() ?? [])
         {
             try
             {
