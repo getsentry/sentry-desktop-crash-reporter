@@ -328,7 +328,7 @@ public class CrashReporterTests
         var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
         var rootDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
         var sourcePath = Path.Combine(rootDir, "external", "c993afb6-b4ac-48a6-b61b-2558e601d65d.envelope");
-        var cacheSiblingPath = Path.Combine(rootDir, "external", "c993afb6-b4ac-48a6-b61b-2558e601d65d-0.dmp");
+        var cacheSiblingPath = Path.Combine(rootDir, "external", "c993afb6-b4ac-48a6-b61b-2558e601d65d-1.dmp");
         var extraSiblingPath = Path.Combine(rootDir, "external", "c993afb6-b4ac-48a6-b61b-2558e601d65d-extra.txt");
         var nonSiblingPath = Path.Combine(rootDir, "external", "c993afb6-b4ac-48a6-b61b-2558e601d65d.dmp");
         var envelope = CreateCrashEnvelopeWithoutMinidump();
@@ -556,7 +556,7 @@ public class CrashReporterTests
     private static async Task AssertCachedCrashEnvelope(string cacheDir, byte[] minidump)
     {
         var envelopePath = Path.Combine(cacheDir, "c993afb6-b4ac-48a6-b61b-2558e601d65d.envelope");
-        var minidumpPath = Path.Combine(cacheDir, "c993afb6-b4ac-48a6-b61b-2558e601d65d-0.dmp");
+        var minidumpPath = Path.Combine(cacheDir, "c993afb6-b4ac-48a6-b61b-2558e601d65d.dmp");
         File.Exists(envelopePath).Should().BeTrue();
         File.Exists(minidumpPath).Should().BeTrue();
         (await File.ReadAllBytesAsync(minidumpPath)).Should().Equal(minidump);

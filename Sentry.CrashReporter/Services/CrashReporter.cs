@@ -124,7 +124,8 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
 
             for (var i = 0; i < minidumps.Count; i++)
             {
-                var path = System.IO.Path.Combine(cacheDir, $"{eventId}-{i}.dmp");
+                var suffix = i == 0 ? ".dmp" : $"-{i}.dmp";
+                var path = System.IO.Path.Combine(cacheDir, $"{eventId}{suffix}");
                 await File.WriteAllBytesAsync(path, minidumps[i].Payload, cancellationToken);
             }
 
