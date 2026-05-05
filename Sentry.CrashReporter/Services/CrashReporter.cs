@@ -46,6 +46,7 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
         {
             await _client.SubmitEnvelopeAsync(dsn, envelope, cancellationToken);
             _submittedEnvelopes.Add(envelope);
+            DeleteFiles(envelope);
         }
         catch (Exception) when (!cancellationToken.IsCancellationRequested)
         {
@@ -85,12 +86,14 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
     {
         if (_submittedEnvelopes.Contains(envelope))
         {
+            DeleteFiles(envelope);
             return;
         }
 
         string? cacheDir = envelope.TryGetHeader("cache_dir");
         if (string.IsNullOrWhiteSpace(cacheDir))
         {
+            DeleteFiles(envelope);
             return;
         }
 
@@ -103,6 +106,10 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
             var envelopePath = System.IO.Path.Combine(cacheDir, $"{eventId}.envelope");
             if (File.Exists(envelopePath))
             {
+                if (DeleteFiles(envelope, envelopePath))
+                {
+                    envelope.FilePath = envelopePath;
+                }
                 return;
             }
 
@@ -110,10 +117,14 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
                 .Where(item => item.TryGetHeader("attachment_type") == "event.minidump")
                 .ToList();
 
+            if (minidumps.Count == 0 && TryMoveFiles(envelope, envelopePath))
+            {
+                return;
+            }
+
             for (var i = 0; i < minidumps.Count; i++)
             {
-                var suffix = i == 0 ? ".dmp" : $"-{i}.dmp";
-                var path = System.IO.Path.Combine(cacheDir, $"{eventId}{suffix}");
+                var path = System.IO.Path.Combine(cacheDir, $"{eventId}-{i}.dmp");
                 await File.WriteAllBytesAsync(path, minidumps[i].Payload, cancellationToken);
             }
 
@@ -125,6 +136,10 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
             }
             File.Move(envelopeTempPath, envelopePath);
             envelopeTempPath = null;
+            if (DeleteFiles(envelope, envelopePath))
+            {
+                envelope.FilePath = envelopePath;
+            }
         }
         catch (Exception e)
         {
@@ -153,6 +168,133 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
         var eventIdString = eventId.ToString("D");
         envelope.Header["event_id"] = eventIdString;
         return eventIdString;
+    }
+
+    private static bool TryMoveFiles(Envelope envelope, string envelopePath)
+    {
+        var sourcePath = envelope.FilePath;
+        if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
+        {
+            return false;
+        }
+
+        if (!SamePath(sourcePath, envelopePath))
+        {
+            MoveCacheSiblings(sourcePath, envelopePath, envelope);
+            File.Move(sourcePath, envelopePath);
+        }
+        envelope.FilePath = envelopePath;
+        return true;
+    }
+
+    private static void MoveCacheSiblings(string sourcePath, string envelopePath, Envelope envelope)
+    {
+        if (!Guid.TryParse(envelope.TryGetEventId(), out var eventId))
+        {
+            return;
+        }
+
+        var sourceDir = System.IO.Path.GetDirectoryName(sourcePath);
+        var envelopeDir = System.IO.Path.GetDirectoryName(envelopePath);
+        if (string.IsNullOrWhiteSpace(sourceDir) || string.IsNullOrWhiteSpace(envelopeDir) ||
+            !Directory.Exists(sourceDir))
+        {
+            return;
+        }
+
+        foreach (var siblingPath in Directory.EnumerateFiles(sourceDir, $"{eventId:D}-*"))
+        {
+            var targetPath = System.IO.Path.Combine(envelopeDir, System.IO.Path.GetFileName(siblingPath));
+            if (!SamePath(siblingPath, targetPath))
+            {
+                File.Move(siblingPath, targetPath);
+            }
+        }
+    }
+
+    private bool DeleteFiles(Envelope envelope, string? preservedPath = null)
+    {
+        var envelopePath = envelope.FilePath;
+        if (!DeleteEnvelope(envelope, preservedPath))
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(envelopePath) || !Guid.TryParse(envelope.TryGetEventId(), out var eventId))
+        {
+            return true;
+        }
+
+        if (SamePath(envelopePath, preservedPath))
+        {
+            return true;
+        }
+
+        var directory = System.IO.Path.GetDirectoryName(envelopePath);
+        if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
+        {
+            return true;
+        }
+
+        DeleteCacheSiblings(directory, eventId);
+        return true;
+    }
+
+    private void DeleteCacheSiblings(string directory, Guid eventId)
+    {
+        foreach (var siblingPath in Directory.EnumerateFiles(directory, $"{eventId:D}-*"))
+        {
+            try
+            {
+                File.Delete(siblingPath);
+            }
+            catch (Exception e)
+            {
+                this.Log().LogWarning(e, "Failed to delete crash envelope cache sibling.");
+            }
+        }
+    }
+
+    private bool DeleteEnvelope(Envelope envelope, string? preservedPath = null)
+    {
+        var sourcePath = envelope.FilePath;
+        if (string.IsNullOrWhiteSpace(sourcePath) || SamePath(sourcePath, preservedPath))
+        {
+            return true;
+        }
+
+        if (!File.Exists(sourcePath))
+        {
+            envelope.FilePath = null;
+            return true;
+        }
+
+        try
+        {
+            File.Delete(sourcePath);
+            envelope.FilePath = null;
+            return true;
+        }
+        catch (Exception e)
+        {
+            this.Log().LogWarning(e, "Failed to delete consumed crash envelope.");
+            return false;
+        }
+    }
+
+    private static bool SamePath(string? left, string? right)
+    {
+        if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right))
+        {
+            return false;
+        }
+
+        return string.Equals(
+            System.IO.Path.GetFullPath(left),
+            System.IO.Path.GetFullPath(right),
+            OperatingSystem.IsWindows() || OperatingSystem.IsMacOS()
+                ? StringComparison.OrdinalIgnoreCase
+                : StringComparison.Ordinal);
     }
 
     private static Feedback? ResolveFeedback()
