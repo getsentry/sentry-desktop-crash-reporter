@@ -381,6 +381,7 @@ public class CrashReporterTests
 
         await using var file = File.OpenRead(envelopePath);
         var cachedEnvelope = await Envelope.DeserializeAsync(file);
+        cachedEnvelope.TryGetEventId().Should().Be("c993afb6-b4ac-48a6-b61b-2558e601d65d");
         cachedEnvelope.Items.Should().HaveCount(1);
         cachedEnvelope.Items.Should().NotContain(i => i.TryGetHeader("attachment_type") == "event.minidump");
         cachedEnvelope.Items.Single().TryGetType().Should().Be("event");

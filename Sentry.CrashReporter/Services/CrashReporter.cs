@@ -145,14 +145,14 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
 
     private static string GetCacheEventId(Envelope envelope)
     {
-        if (Guid.TryParse(envelope.TryGetEventId(), out var eventId))
+        if (!Guid.TryParse(envelope.TryGetEventId(), out var eventId))
         {
-            return eventId.ToString("D");
+            eventId = Guid.NewGuid();
         }
 
-        eventId = Guid.NewGuid();
-        envelope.Header["event_id"] = eventId.ToString("N");
-        return eventId.ToString("D");
+        var eventIdString = eventId.ToString("D");
+        envelope.Header["event_id"] = eventIdString;
+        return eventIdString;
     }
 
     private static Feedback? ResolveFeedback()
