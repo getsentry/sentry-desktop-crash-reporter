@@ -183,12 +183,12 @@ public sealed class MainPage : Page
                 Key = VirtualKey.Q,
                 Modifiers = VirtualKeyModifiers.Windows
             };
-            closeAccelerator.Invoked += (_, ev) =>
+            closeAccelerator.Invoked += async (_, ev) =>
             {
                 ev.Handled = true;
                 if (App.CanClose)
                 {
-                    App.Services.GetRequiredService<IWindowService>().Close();
+                    await App.Services.GetRequiredService<IWindowService>().RequestCloseAsync();
                 }
             };
             accelerators.Add(closeAccelerator);

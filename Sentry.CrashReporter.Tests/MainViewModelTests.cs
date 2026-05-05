@@ -11,7 +11,7 @@ public class MainViewModelTests
             .Returns(Task.FromResult<Envelope?>(null));
 
         // Act
-        var viewModel = new MainViewModel(mockReporter.Object);
+        var viewModel = new MainViewModel(mockReporter.Object, new FakeWindowService());
 
         // Assert
         Assert.That(viewModel.IsExecuting, Is.False);
@@ -38,7 +38,7 @@ public class MainViewModelTests
             .Returns(taskCompletionSource.Task);
 
         // Act
-        var viewModel = new MainViewModel(mockReporter.Object);
+        var viewModel = new MainViewModel(mockReporter.Object, new FakeWindowService());
 
         // Assert
         Assert.That(viewModel.IsExecuting, Is.True);
@@ -55,7 +55,7 @@ public class MainViewModelTests
             .Returns(envelope.Task);
 
         // Act
-        var viewModel = new MainViewModel(mockReporter.Object);
+        var viewModel = new MainViewModel(mockReporter.Object, new FakeWindowService());
         var isExecuting = new TaskCompletionSource();
         viewModel.IsExecutingChanged += (_, _) =>
         {
@@ -94,7 +94,7 @@ public class MainViewModelTests
             .Returns(Task.FromResult<Envelope?>(envelope));
 
         // Act
-        var viewModel = new MainViewModel(mockReporter.Object);
+        var viewModel = new MainViewModel(mockReporter.Object, new FakeWindowService());
 
         // Assert
         Assert.That(viewModel.Envelope, Is.EqualTo(envelope));
@@ -129,7 +129,7 @@ public class MainViewModelTests
             .Returns(Task.FromResult<Envelope?>(envelope));
 
          // Act
-        var viewModel = new MainViewModel(mockReporter.Object);
+        var viewModel = new MainViewModel(mockReporter.Object, new FakeWindowService());
 
          // Assert
         Assert.That(viewModel.Attachments, Is.Not.Null);
@@ -151,11 +151,61 @@ public class MainViewModelTests
             .ThrowsAsync(exception);
 
         // Act
-        var viewModel = new MainViewModel(mockReporter.Object);
+        var viewModel = new MainViewModel(mockReporter.Object, new FakeWindowService());
         await Task.Yield();
 
         // Assert
         Assert.That(viewModel.Error, Is.EqualTo(exception));
         mockReporter.Verify(r => r.LoadAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task MainViewModel_Closing_WithEnvelope_CachesEnvelope()
+    {
+        // Arrange
+        var envelope = new Envelope(new JsonObject(), []);
+        var mockReporter = new Mock<ICrashReporter>();
+        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult<Envelope?>(envelope));
+        var windowService = new FakeWindowService();
+        var viewModel = new MainViewModel(mockReporter.Object, windowService);
+        await Task.Yield();
+
+        // Act
+        await windowService.RequestCloseAsync();
+
+        // Assert
+        Assert.That(viewModel.Envelope, Is.EqualTo(envelope));
+        mockReporter.Verify(r => r.CacheAsync(envelope, It.IsAny<CancellationToken>()), Times.Once);
+    }
+}
+
+internal class FakeWindowService : IWindowService
+{
+    public event Func<Task>? Closing;
+
+    public void Register(Window window)
+    {
+    }
+
+    public void SetClosable(bool closable)
+    {
+    }
+
+    public Task RequestCloseAsync()
+    {
+        if (Closing is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var handlers = Closing.GetInvocationList()
+            .Cast<Func<Task>>()
+            .Select(handler => handler());
+        return Task.WhenAll(handlers);
+    }
+
+    public void Close()
+    {
     }
 }

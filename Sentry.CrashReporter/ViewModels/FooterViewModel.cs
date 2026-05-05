@@ -73,5 +73,13 @@ public partial class FooterViewModel : ReactiveObject
     }
 
     [ReactiveCommand]
-    private void Cancel() => _window.Close();
+    private async Task Cancel()
+    {
+        if (_envelope is not null)
+        {
+            await _reporter.CacheAsync(_envelope);
+        }
+
+        _window.Close();
+    }
 }

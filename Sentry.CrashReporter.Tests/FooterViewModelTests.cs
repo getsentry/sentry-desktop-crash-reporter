@@ -182,6 +182,31 @@ public class FooterViewModelTests
 
         // Assert
         mockReporter.Verify(x => x.SubmitAsync(It.IsAny<Envelope>(), It.IsAny<CancellationToken>()), Times.Never);
+        mockReporter.Verify(x => x.CacheAsync(It.IsAny<Envelope>(), It.IsAny<CancellationToken>()), Times.Never);
+        mockWindow.Verify(x => x.Close(), Times.Once);
+    }
+
+    [Test]
+    public async Task Cancel_WithEnvelope_CachesAndClosesWindow()
+    {
+        // Arrange
+        var envelope = new Envelope(
+            new JsonObject { ["dsn"] = "https://foo@bar.com/123" },
+            new List<EnvelopeItem>()
+        );
+        var mockReporter = new Mock<ICrashReporter>();
+        var mockWindow = new Mock<IWindowService>();
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object)
+        {
+            Envelope = envelope
+        };
+
+        // Act
+        await viewModel.CancelCommand.Execute();
+
+        // Assert
+        mockReporter.Verify(x => x.SubmitAsync(It.IsAny<Envelope>(), It.IsAny<CancellationToken>()), Times.Never);
+        mockReporter.Verify(x => x.CacheAsync(envelope, It.IsAny<CancellationToken>()), Times.Once);
         mockWindow.Verify(x => x.Close(), Times.Once);
     }
 }
