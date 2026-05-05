@@ -68,6 +68,7 @@ public class WindowService : IWindowService
         }
 
         args.Cancel = true;
+        await Task.Yield();
         await RequestCloseAsync();
     }
 
