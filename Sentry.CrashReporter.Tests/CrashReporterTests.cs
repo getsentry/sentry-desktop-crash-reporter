@@ -1,5 +1,7 @@
 namespace Sentry.CrashReporter.Tests;
 
+using Path = System.IO.Path;
+
 public class CrashReporterTests
 {
     [Test]
@@ -56,6 +58,187 @@ public class CrashReporterTests
     }
 
     [Test]
+    public async Task CacheAsync_WithCacheDir_CachesEnvelopeAndMinidump()
+    {
+        // Arrange
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, new Mock<ISentryClient>().Object);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var minidump = new byte[] { 0x01, 0x02, 0x03 };
+        var envelope = CreateCrashEnvelope(cacheDir, minidump);
+
+        try
+        {
+            // Act
+            await reporter.CacheAsync(envelope);
+
+            // Assert
+            await AssertCachedCrashEnvelope(cacheDir, minidump);
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeSubmitFails_CachesCrashEnvelopeAndMinidump()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("upload failed"));
+
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var minidump = new byte[] { 0x01, 0x02, 0x03 };
+        var envelope = CreateCrashEnvelope(cacheDir, minidump);
+
+        try
+        {
+            // Act
+            var ex = Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
+
+            // Assert
+            ex?.Message.Should().Be("upload failed");
+            await AssertCachedCrashEnvelope(cacheDir, minidump);
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeSubmitFailsRepeatedly_CachesCrashEnvelopeOnce()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("send failed"));
+
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var envelope = CreateCrashEnvelope(cacheDir, [0x01], eventId: null);
+
+        try
+        {
+            // Act
+            var firstException = Assert.ThrowsAsync<InvalidOperationException>(() => reporter.SubmitAsync(envelope));
+            var secondException = Assert.ThrowsAsync<InvalidOperationException>(() => reporter.SubmitAsync(envelope));
+
+            // Assert
+            firstException?.Message.Should().Be("send failed");
+            secondException?.Message.Should().Be("send failed");
+            Directory.GetFiles(cacheDir, "*.envelope").Should().HaveCount(1);
+            Directory.GetFiles(cacheDir, "*.dmp").Should().HaveCount(1);
+            client.Verify(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), envelope, It.IsAny<CancellationToken>()),
+                Times.Exactly(2));
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeSubmitSucceeds_DoesNotCacheCrashEnvelope()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var envelope = CreateCrashEnvelope(cacheDir, [0x01]);
+
+        try
+        {
+            // Act
+            await reporter.SubmitAsync(envelope);
+
+            // Assert
+            Directory.Exists(cacheDir).Should().BeFalse();
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task CacheAsync_WithSubmittedCrashEnvelope_DoesNotCacheCrashEnvelope()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var envelope = CreateCrashEnvelope(cacheDir, [0x01]);
+
+        try
+        {
+            // Act
+            await reporter.SubmitAsync(envelope);
+            await reporter.CacheAsync(envelope);
+
+            // Assert
+            Directory.Exists(cacheDir).Should().BeFalse();
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task CacheAsync_WithSubmittedCrashEnvelope_WhenFeedbackSubmitFails_DoesNotCacheCrashEnvelope()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        client.SetupSequence(c => c.SubmitEnvelopeAsync(
+                It.IsAny<string>(),
+                It.IsAny<Envelope>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask)
+            .ThrowsAsync(new HttpRequestException("feedback failed"));
+
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        reporter.UpdateFeedback(new Feedback("John Doe", "john.doe@example.com", "It crashed!"));
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var envelope = CreateCrashEnvelope(cacheDir, [0x01]);
+
+        try
+        {
+            // Act
+            var ex = Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
+            await reporter.CacheAsync(envelope);
+
+            // Assert
+            ex?.Message.Should().Be("feedback failed");
+            Directory.Exists(cacheDir).Should().BeFalse();
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
     [TestCase("data/two_items.envelope")]
     public async Task SubmitAsync_WithFeedback_CallsSentryClientTwice(string filePath)
     {
@@ -105,6 +288,54 @@ public class CrashReporterTests
 
         // Assert
         Assert.That(ex?.Message, Does.Match(@"\bDSN\b"));
+    }
+
+    private static Envelope CreateCrashEnvelope(
+        string cacheDir,
+        byte[] minidump,
+        string? eventId = "c993afb6b4ac48a6b61b2558e601d65d")
+    {
+        var header = new JsonObject
+        {
+            ["dsn"] = "https://e12d836b15bb49d7bbf99e64295d995b:@sentry.io/42",
+            ["cache_dir"] = cacheDir
+        };
+        if (eventId is not null)
+        {
+            header["event_id"] = eventId;
+        }
+
+        return new Envelope(
+            header,
+            [
+                new EnvelopeItem(
+                    new JsonObject { ["type"] = "event" },
+                    Encoding.UTF8.GetBytes(new JsonObject { ["message"] = "crashed" }.ToJsonString())),
+                new EnvelopeItem(
+                    new JsonObject
+                    {
+                        ["type"] = "attachment",
+                        ["length"] = minidump.Length,
+                        ["attachment_type"] = "event.minidump",
+                        ["filename"] = "minidump.dmp"
+                    },
+                    minidump)
+            ]);
+    }
+
+    private static async Task AssertCachedCrashEnvelope(string cacheDir, byte[] minidump)
+    {
+        var envelopePath = Path.Combine(cacheDir, "c993afb6-b4ac-48a6-b61b-2558e601d65d.envelope");
+        var minidumpPath = Path.Combine(cacheDir, "c993afb6-b4ac-48a6-b61b-2558e601d65d.dmp");
+        File.Exists(envelopePath).Should().BeTrue();
+        File.Exists(minidumpPath).Should().BeTrue();
+        (await File.ReadAllBytesAsync(minidumpPath)).Should().Equal(minidump);
+
+        await using var file = File.OpenRead(envelopePath);
+        var cachedEnvelope = await Envelope.DeserializeAsync(file);
+        cachedEnvelope.Items.Should().HaveCount(1);
+        cachedEnvelope.Items.Should().NotContain(i => i.TryGetHeader("attachment_type") == "event.minidump");
+        cachedEnvelope.Items.Single().TryGetType().Should().Be("event");
     }
 }
 

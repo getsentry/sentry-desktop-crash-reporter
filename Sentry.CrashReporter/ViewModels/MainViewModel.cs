@@ -22,9 +22,17 @@ public partial class MainViewModel : ReactiveObject, ILoadable
 
     public event EventHandler? IsExecutingChanged;
 
-    public MainViewModel(ICrashReporter? reporter = null)
+    public MainViewModel(ICrashReporter? reporter = null, IWindowService? windowService = null)
     {
         reporter ??= App.Services.GetRequiredService<ICrashReporter>();
+        windowService ??= App.Services.GetRequiredService<IWindowService>();
+        windowService.Closing += async () =>
+        {
+            if (Envelope is not null)
+            {
+                await reporter.CacheAsync(Envelope);
+            }
+        };
 
         this.WhenAnyValue(x => x.IsExecuting)
             .Subscribe(x => IsExecutingChanged?.Invoke(this, EventArgs.Empty));

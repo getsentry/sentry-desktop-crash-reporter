@@ -9,6 +9,7 @@ public interface ICrashReporter
 {
     Feedback? Feedback { get; }
     public Task<Envelope?> LoadAsync(CancellationToken cancellationToken = default);
+    public Task CacheAsync(Envelope envelope, CancellationToken cancellationToken = default);
     public Task SubmitAsync(Envelope envelope, CancellationToken cancellationToken = default);
     public void UpdateFeedback(Feedback? feedback);
 }
@@ -17,6 +18,7 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
 {
     private readonly IStorageFile? _file = file ?? App.Services.GetService<IStorageFile>();
     private readonly ISentryClient _client = client ?? App.Services.GetRequiredService<ISentryClient>();
+    private readonly HashSet<Envelope> _submittedEnvelopes = [];
     private Feedback? _feedback = ResolveFeedback();
 
     public Feedback? Feedback => _feedback;
@@ -40,7 +42,16 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
         var dsn = envelope.TryGetDsn()
                   ?? throw new InvalidOperationException("Envelope does not contain a valid DSN.");
 
-        await _client.SubmitEnvelopeAsync(dsn, envelope, cancellationToken);
+        try
+        {
+            await _client.SubmitEnvelopeAsync(dsn, envelope, cancellationToken);
+            _submittedEnvelopes.Add(envelope);
+        }
+        catch (Exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            await CacheAsync(envelope);
+            throw;
+        }
 
         if (!string.IsNullOrEmpty(_feedback?.Message))
         {
@@ -68,6 +79,63 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
     public void UpdateFeedback(Feedback? feedback)
     {
         _feedback = feedback;
+    }
+
+    public async Task CacheAsync(Envelope envelope, CancellationToken cancellationToken = default)
+    {
+        if (_submittedEnvelopes.Contains(envelope))
+        {
+            return;
+        }
+
+        string? cacheDir = envelope.TryGetHeader("cache_dir");
+        if (string.IsNullOrWhiteSpace(cacheDir))
+        {
+            return;
+        }
+
+        try
+        {
+            Directory.CreateDirectory(cacheDir);
+
+            var eventId = GetCacheEventId(envelope);
+            var envelopePath = System.IO.Path.Combine(cacheDir, $"{eventId}.envelope");
+            if (File.Exists(envelopePath))
+            {
+                return;
+            }
+
+            var minidumps = envelope.Items
+                .Where(item => item.TryGetHeader("attachment_type") == "event.minidump")
+                .ToList();
+
+            for (var i = 0; i < minidumps.Count; i++)
+            {
+                var suffix = i == 0 ? ".dmp" : $"-{i}.dmp";
+                var path = System.IO.Path.Combine(cacheDir, $"{eventId}{suffix}");
+                await File.WriteAllBytesAsync(path, minidumps[i].Payload, cancellationToken);
+            }
+
+            var cachedEnvelope = new Envelope(envelope.Header, envelope.Items.Except(minidumps));
+            await using var stream = File.Create(envelopePath);
+            await cachedEnvelope.SerializeAsync(stream, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            this.Log().LogWarning(e, "Failed to cache crash envelope.");
+        }
+    }
+
+    private static string GetCacheEventId(Envelope envelope)
+    {
+        if (Guid.TryParse(envelope.TryGetEventId(), out var eventId))
+        {
+            return eventId.ToString("D");
+        }
+
+        eventId = Guid.NewGuid();
+        envelope.Header["event_id"] = eventId.ToString("N");
+        return eventId.ToString("D");
     }
 
     private static Feedback? ResolveFeedback()

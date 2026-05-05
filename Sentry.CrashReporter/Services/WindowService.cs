@@ -4,8 +4,10 @@ namespace Sentry.CrashReporter.Services;
 
 public interface IWindowService
 {
+    event Func<Task>? Closing;
     void Register(Window window);
     void SetClosable(bool closable);
+    Task RequestCloseAsync();
     void Close();
 }
 
@@ -14,6 +16,8 @@ public class WindowService : IWindowService
     private Window? _window;
     private bool _isClosable = true;
     private bool _forceClose;
+
+    public event Func<Task>? Closing;
 
     public void Register(Window window)
     {
@@ -27,17 +31,44 @@ public class WindowService : IWindowService
         _window?.SetClosable(closable);
     }
 
+    public async Task RequestCloseAsync()
+    {
+        if (!_isClosable)
+        {
+            return;
+        }
+
+        await NotifyClosingAsync();
+        Close();
+    }
+
     public void Close()
     {
         _forceClose = true;
         _window?.Close();
     }
 
-    private void OnClosing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
+    private async void OnClosing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
     {
-        if (!_isClosable && !_forceClose)
+        if (_forceClose)
         {
-            args.Cancel = true;
+            return;
+        }
+
+        args.Cancel = true;
+        await RequestCloseAsync();
+    }
+
+    private async Task NotifyClosingAsync()
+    {
+        if (Closing is null)
+        {
+            return;
+        }
+
+        foreach (Func<Task> handler in Closing.GetInvocationList())
+        {
+            await handler();
         }
     }
 }
