@@ -43,7 +43,10 @@ public class WindowService : IWindowService
         try
         {
             await NotifyClosingAsync();
-            Close();
+            if (!_forceClose)
+            {
+                Close();
+            }
         }
         finally
         {
