@@ -172,11 +172,11 @@ jobs:
 
       - name: Build Sentry.CrashReporter.Tests (Release)
         shell: pwsh
-        run: dotnet build ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj /p:Configuration=Release /p:OverrideTargetFramework=net10.0
+        run: dotnet build ./tests/Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj /p:Configuration=Release /p:OverrideTargetFramework=net10.0
 
       - name: Run Unit Tests
         shell: pwsh
-        run: dotnet test ./Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.SingleHit=true
+        run: dotnet test ./tests/Sentry.CrashReporter.Tests/Sentry.CrashReporter.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.SingleHit=true
 
       - name: Upload code coverage
         uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
@@ -189,7 +189,7 @@ jobs:
         with:
           name: unit-test-results
           path: |
-            Sentry.CrashReporter.Tests/TestResults/
+            tests/Sentry.CrashReporter.Tests/TestResults/
 
   ui_test:
     name: UI Tests
@@ -210,7 +210,7 @@ jobs:
         run: dotnet build -c Release -f net10.0-browserwasm -p:IsUiAutomationMappingEnabled=True Sentry.CrashReporter/Sentry.CrashReporter.csproj
 
       - name: Build Sentry.CrashReporter.UITests (Release)
-        run: dotnet build -c Release -f net10.0 Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
+        run: dotnet build -c Release -f net10.0 tests/Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
 
       - name: Run UI Tests
         id: run-ui-tests
@@ -229,7 +229,7 @@ jobs:
         with:
           name: ui-test-results
           path: |
-            Sentry.CrashReporter.UITests/TestResults/
+            tests/Sentry.CrashReporter.UITests/TestResults/
 
   runtime_test:
     name: Runtime Tests
@@ -249,18 +249,18 @@ jobs:
         run: dotnet tool restore
 
       - name: Build Sentry.CrashReporter.RuntimeTests.Host (Release)
-        run: dotnet build -c Release -f net10.0-desktop Sentry.CrashReporter.RuntimeTests.Host/Sentry.CrashReporter.RuntimeTests.Host.csproj
+        run: dotnet build -c Release -f net10.0-desktop tests/Sentry.CrashReporter.RuntimeTests.Host/Sentry.CrashReporter.RuntimeTests.Host.csproj
 
       - name: Run Runtime Tests
         env:
           UNO_RUNTIME_TESTS_RUN_TESTS: '{}'
-          UNO_RUNTIME_TESTS_OUTPUT_PATH: Sentry.CrashReporter.RuntimeTests/TestResults/RuntimeTests.xml
+          UNO_RUNTIME_TESTS_OUTPUT_PATH: tests/Sentry.CrashReporter.RuntimeTests/TestResults/RuntimeTests.xml
         run: |
           xvfb-run -a dotnet tool run coverlet -- \
-            Sentry.CrashReporter.RuntimeTests.Host/bin/Release/net10.0-desktop/Sentry.CrashReporter.RuntimeTests.Host.dll \
+            tests/Sentry.CrashReporter.RuntimeTests.Host/bin/Release/net10.0-desktop/Sentry.CrashReporter.RuntimeTests.Host.dll \
             --target dotnet \
-            --targetargs Sentry.CrashReporter.RuntimeTests.Host/bin/Release/net10.0-desktop/Sentry.CrashReporter.RuntimeTests.Host.dll \
-            --output Sentry.CrashReporter.RuntimeTests/TestResults/ \
+            --targetargs tests/Sentry.CrashReporter.RuntimeTests.Host/bin/Release/net10.0-desktop/Sentry.CrashReporter.RuntimeTests.Host.dll \
+            --output tests/Sentry.CrashReporter.RuntimeTests/TestResults/ \
             --format cobertura \
             --single-hit \
             -v
@@ -269,7 +269,7 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          $filePath = 'Sentry.CrashReporter.RuntimeTests/TestResults/RuntimeTests.xml'
+          $filePath = 'tests/Sentry.CrashReporter.RuntimeTests/TestResults/RuntimeTests.xml'
           $content = Get-Content -Path $filePath -Raw
           $content -replace 'encoding="utf-16"', 'encoding="utf-8"' | Set-Content -Path $filePath -Encoding utf8 -NoNewline
 
@@ -279,14 +279,14 @@ jobs:
         with:
           name: runtime-test-results
           path: |
-            Sentry.CrashReporter.RuntimeTests/TestResults
+            tests/Sentry.CrashReporter.RuntimeTests/TestResults
 
       - name: Report Test Results
         uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
         if: ${{ !cancelled() && !startsWith(github.ref_name, 'release/') }}
         with:
           name: Runtime Tests
-          path: Sentry.CrashReporter.RuntimeTests/TestResults/RuntimeTests.xml
+          path: tests/Sentry.CrashReporter.RuntimeTests/TestResults/RuntimeTests.xml
           reporter: dotnet-nunit
 
       - name: Upload Code Coverage

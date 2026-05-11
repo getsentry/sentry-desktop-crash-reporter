@@ -7,9 +7,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{229D580D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sentry.CrashReporter", "Sentry.CrashReporter\Sentry.CrashReporter.csproj", "{89700A6E-5587-4C3B-8E26-B4A04353A821}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sentry.CrashReporter.Tests", "Sentry.CrashReporter.Tests\Sentry.CrashReporter.Tests.csproj", "{A776DD42-CE82-49EC-A214-5A805055D425}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sentry.CrashReporter.Tests", "tests\Sentry.CrashReporter.Tests\Sentry.CrashReporter.Tests.csproj", "{A776DD42-CE82-49EC-A214-5A805055D425}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sentry.CrashReporter.UITests", "Sentry.CrashReporter.UITests\Sentry.CrashReporter.UITests.csproj", "{1D8E0C61-4511-4E9D-A1B2-C8C085E5B0F1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sentry.CrashReporter.UITests", "tests\Sentry.CrashReporter.UITests\Sentry.CrashReporter.UITests.csproj", "{1D8E0C61-4511-4E9D-A1B2-C8C085E5B0F1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BADA71DC-7FFD-4EDC-9F28-FB74AEADC713}"
 	ProjectSection(SolutionItems) = preProject
@@ -20,11 +20,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Build.targets = Directory.Build.targets
 		Directory.Packages.props = Directory.Packages.props
 		global.json = global.json
+		tests\Directory.Packages.props = tests\Directory.Packages.props
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sentry.CrashReporter.RuntimeTests", "Sentry.CrashReporter.RuntimeTests\Sentry.CrashReporter.RuntimeTests.csproj", "{7FA87AAC-9872-4B5E-B67A-925F77E2B4A9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sentry.CrashReporter.RuntimeTests", "tests\Sentry.CrashReporter.RuntimeTests\Sentry.CrashReporter.RuntimeTests.csproj", "{7FA87AAC-9872-4B5E-B67A-925F77E2B4A9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sentry.CrashReporter.RuntimeTests.Host", "Sentry.CrashReporter.RuntimeTests.Host\Sentry.CrashReporter.RuntimeTests.Host.csproj", "{04E2F7C2-9E15-4575-9E40-BF8769F3CBE3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sentry.CrashReporter.RuntimeTests.Host", "tests\Sentry.CrashReporter.RuntimeTests.Host\Sentry.CrashReporter.RuntimeTests.Host.csproj", "{04E2F7C2-9E15-4575-9E40-BF8769F3CBE3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

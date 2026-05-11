@@ -9,7 +9,7 @@ $env:UNO_UITEST_DRIVER_PATH = $env:CHROMEWEBDRIVER
 $server = Start-Process -FilePath dotnet -ArgumentList "run --no-build -c Release -f net10.0-browserwasm --project Sentry.CrashReporter/Sentry.CrashReporter.csproj --launch-profile ""Sentry.CrashReporter (WebAssembly)""" -PassThru
 try
 {
-    dotnet test --no-build -c Release -f net10.0 -l GitHubActions -l trx Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
+    dotnet test --no-build -c Release -f net10.0 -l GitHubActions -l trx tests/Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
 }
 finally
 {

@@ -13,10 +13,7 @@ updates:
   commit-message:
     prefix: "chore(deps)"
 - package-ecosystem: nuget
-  directories:
-    - "/Sentry.CrashReporter.Tests"
-    - "/Sentry.CrashReporter.UITests"
-    - "/Sentry.CrashReporter.RuntimeTests"
+  directory: "/tests"
   schedule:
     interval: weekly
   groups:

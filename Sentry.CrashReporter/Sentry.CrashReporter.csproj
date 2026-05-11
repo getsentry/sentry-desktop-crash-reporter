@@ -46,11 +46,11 @@
     </PropertyGroup>
 
     <ItemGroup Condition="$(TargetFramework.Contains('browserwasm'))">
-        <Content Include="../Sentry.CrashReporter.Tests/data/inproc.envelope" />
+        <Content Include="../tests/data/inproc.envelope" />
     </ItemGroup>
 
     <ItemGroup Condition="$(TargetFramework.Contains('desktop'))">
-        <Content Include="../Sentry.CrashReporter.Tests/data/*.envelope">
+        <Content Include="../tests/data/*.envelope">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <CopyToPublishDirectory>Never</CopyToPublishDirectory>
             <Link>%(Filename)%(Extension)</Link>
