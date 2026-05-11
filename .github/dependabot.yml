@@ -24,6 +24,10 @@ updates:
       patterns:
         - "*"
       group-by: dependency-name
+  ignore:
+    # https://fluentassertions.com/releases/#800
+    - dependency-name: "FluentAssertions"
+      versions: ["8.*"]
   commit-message:
     prefix: "test(deps)"
 - package-ecosystem: github-actions
