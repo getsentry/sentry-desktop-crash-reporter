@@ -44,8 +44,8 @@ bld/
 Generated\ Files/
 
 # MSTest test Results
-[Tt]est[Rr]esult*/**
-![Tt]est[Rr]esult*/.gitkeep
+**/[Tt]est[Rr]esult*/**
+!**/[Tt]est[Rr]esult*/.gitkeep
 [Bb]uild[Ll]og.*
 
 # NUnit
