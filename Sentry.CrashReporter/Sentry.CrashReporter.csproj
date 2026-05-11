@@ -49,6 +49,15 @@
         <Content Include="../Sentry.CrashReporter.Tests/data/inproc.envelope" />
     </ItemGroup>
 
+    <ItemGroup Condition="$(TargetFramework.Contains('desktop'))">
+        <Content Include="../Sentry.CrashReporter.Tests/data/*.envelope">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+            <Link>%(Filename)%(Extension)</Link>
+            <TargetPath>%(Filename)%(Extension)</TargetPath>
+        </Content>
+    </ItemGroup>
+
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
         <UseSystemResourceKeys>false</UseSystemResourceKeys>

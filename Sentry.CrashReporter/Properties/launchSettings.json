@@ -15,27 +15,32 @@
     "Sentry.CrashReporter (Desktop, inproc.envelope)": {
       "commandName": "Project",
       "compatibleTargetFramework": "desktop",
-      "commandLineArgs": "$(SolutionDir)/Sentry.CrashReporter.Tests/data/inproc.envelope"
+      "commandLineArgs": "inproc.envelope",
+      "workingDirectory": "$(TargetDir)"
     },
     "Sentry.CrashReporter (Desktop, breakpad.envelope)": {
       "commandName": "Project",
       "compatibleTargetFramework": "desktop",
-      "commandLineArgs": "$(SolutionDir)/Sentry.CrashReporter.Tests/data/breakpad.envelope"
+      "commandLineArgs": "breakpad.envelope",
+      "workingDirectory": "$(TargetDir)"
     },
     "Sentry.CrashReporter (Desktop, crashpad.envelope)": {
       "commandName": "Project",
       "compatibleTargetFramework": "desktop",
-      "commandLineArgs": "$(SolutionDir)/Sentry.CrashReporter.Tests/data/crashpad.envelope"
+      "commandLineArgs": "crashpad.envelope",
+      "workingDirectory": "$(TargetDir)"
     },
     "Sentry.CrashReporter (Desktop, native.envelope)": {
       "commandName": "Project",
       "compatibleTargetFramework": "desktop",
-      "commandLineArgs": "$(SolutionDir)/Sentry.CrashReporter.Tests/data/native.envelope"
+      "commandLineArgs": "native.envelope",
+      "workingDirectory": "$(TargetDir)"
     },
     "Sentry.CrashReporter (Desktop, invalid.envelope)": {
       "commandName": "Project",
       "compatibleTargetFramework": "desktop",
-      "commandLineArgs": "$(SolutionDir)/Sentry.CrashReporter.Tests/data/invalid.envelope"
+      "commandLineArgs": "invalid.envelope",
+      "workingDirectory": "$(TargetDir)"
     },
     "Sentry.CrashReporter (WebAssembly)": {
       "commandName": "Project",
