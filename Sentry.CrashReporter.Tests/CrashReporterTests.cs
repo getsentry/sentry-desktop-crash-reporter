@@ -310,6 +310,44 @@ public class CrashReporterTests
     }
 
     [Test]
+    public async Task SubmitAsync_WithCacheDir_WhenCachedCrashEnvelopeSubmitSucceeds_DeletesMinidump()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        client.SetupSequence(c => c.SubmitEnvelopeAsync(
+                It.IsAny<string>(),
+                It.IsAny<Envelope>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("upload failed"))
+            .Returns(Task.CompletedTask);
+
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var envelopePath = Path.Combine(cacheDir, "c993afb6-b4ac-48a6-b61b-2558e601d65d.envelope");
+        var minidumpPath = Path.Combine(cacheDir, "c993afb6-b4ac-48a6-b61b-2558e601d65d.dmp");
+        var envelope = CreateCrashEnvelope(cacheDir, [0x01]);
+
+        try
+        {
+            // Act
+            var ex = Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
+            await reporter.SubmitAsync(envelope);
+
+            // Assert
+            ex?.Message.Should().Be("upload failed");
+            File.Exists(envelopePath).Should().BeFalse();
+            File.Exists(minidumpPath).Should().BeFalse();
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
     public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeSubmitSucceeds_DoesNotCacheCrashEnvelope()
     {
         // Arrange

@@ -237,18 +237,48 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
             return true;
         }
 
+        if (IsCacheDirectory(directory, envelope))
+        {
+            DeleteEnvelopeSibling(System.IO.Path.Combine(directory, $"{eventId:D}.dmp"));
+        }
+
         foreach (var siblingPath in Directory.EnumerateFiles(directory, $"{eventId:D}-*"))
         {
-            try
-            {
-                File.Delete(siblingPath);
-            }
-            catch (Exception e)
-            {
-                this.Log().LogWarning(e, "Failed to delete crash envelope cache sibling.");
-            }
+            DeleteEnvelopeSibling(siblingPath);
         }
         return true;
+    }
+
+    private void DeleteEnvelopeSibling(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (Exception e)
+        {
+            this.Log().LogWarning(e, "Failed to delete crash envelope cache sibling.");
+        }
+    }
+
+    private static bool IsCacheDirectory(string directory, Envelope envelope)
+    {
+        try
+        {
+            return SamePath(directory, envelope.TryGetHeader("cache_dir"));
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (NotSupportedException)
+        {
+            return false;
+        }
+        catch (PathTooLongException)
+        {
+            return false;
+        }
     }
 
     private static bool SamePath(string? left, string? right)
