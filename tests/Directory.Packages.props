@@ -12,7 +12,7 @@
     <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
     <PackageVersion Include="Uno.UI.RuntimeTests.Engine" Version="1.33.0-dev.11" />
     <PackageVersion Include="Uno.UITest.Helpers" Version="1.1.0-dev.70" />
-    <PackageVersion Include="WireMock.Net" Version="1.14.0" />
+    <PackageVersion Include="WireMock.Net" Version="2.6.0" />
     <PackageVersion Include="Xamarin.UITest" Version="4.3.4" />
   </ItemGroup>
 </Project>
