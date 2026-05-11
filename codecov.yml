@@ -11,4 +11,4 @@ coverage:
         informational: true
 comment: false
 ignore:
-  - "Sentry.CrashReporter.*Tests*"
+  - "tests/Sentry.CrashReporter.*Tests*/**"
