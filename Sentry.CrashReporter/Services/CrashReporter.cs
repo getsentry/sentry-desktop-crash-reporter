@@ -84,22 +84,22 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
 
     public async Task CacheAsync(Envelope envelope, CancellationToken cancellationToken = default)
     {
-        if (_submittedEnvelopes.Contains(envelope))
-        {
-            DeleteEnvelope(envelope);
-            return;
-        }
-
-        string? cacheDir = envelope.TryGetHeader("cache_dir");
-        if (string.IsNullOrWhiteSpace(cacheDir))
-        {
-            DeleteEnvelope(envelope);
-            return;
-        }
-
         string? envelopeTempPath = null;
         try
         {
+            if (_submittedEnvelopes.Contains(envelope))
+            {
+                DeleteEnvelope(envelope);
+                return;
+            }
+
+            string? cacheDir = envelope.TryGetHeader("cache_dir");
+            if (string.IsNullOrWhiteSpace(cacheDir))
+            {
+                DeleteEnvelope(envelope);
+                return;
+            }
+
             Directory.CreateDirectory(cacheDir);
 
             var eventId = GetCacheEventId(envelope);

@@ -197,6 +197,21 @@ public class CrashReporterTests
     }
 
     [Test]
+    public async Task CacheAsync_WithoutCacheDir_WhenSourcePathIsInvalid_DoesNotThrow()
+    {
+        // Arrange
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, new Mock<ISentryClient>().Object);
+        var envelope = CreateCrashEnvelopeWithoutMinidump();
+        envelope.FilePath = "invalid\0path";
+
+        // Act
+        var action = () => reporter.CacheAsync(envelope);
+
+        // Assert
+        await action.Should().NotThrowAsync();
+    }
+
+    [Test]
     public async Task CacheAsync_WhenEnvelopeWriteFails_DoesNotCreateFinalEnvelopeAndAllowsRetry()
     {
         // Arrange
