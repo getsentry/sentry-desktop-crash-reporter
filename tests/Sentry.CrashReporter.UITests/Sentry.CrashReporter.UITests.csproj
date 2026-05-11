@@ -21,6 +21,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Sentry.CrashReporter\Sentry.CrashReporter.csproj" />
+      <ProjectReference Include="..\..\Sentry.CrashReporter\Sentry.CrashReporter.csproj" />
     </ItemGroup>
 </Project>

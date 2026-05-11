@@ -39,7 +39,7 @@ reporter with your own logo, colors, and window title.
 ### Develop
 
 ```bash
-dotnet run --project Sentry.CrashReporter/Sentry.CrashReporter.csproj -f net10.0-desktop -- Sentry.CrashReporter.Tests/data/inproc.envelope
+dotnet run --project Sentry.CrashReporter/Sentry.CrashReporter.csproj -f net10.0-desktop -- tests/data/inproc.envelope
 ```
 
 ### Deploy

@@ -1,0 +1,18 @@
+<Project>
+  <ItemGroup>
+    <PackageVersion Include="coverlet.collector" Version="10.0.0" />
+    <PackageVersion Include="FluentAssertions" Version="7.2.2" />
+    <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.3" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.0" />
+    <PackageVersion Include="Moq" Version="4.20.72" />
+    <PackageVersion Include="MSTest.TestAdapter" Version="3.11.0" />
+    <PackageVersion Include="MSTest.TestFramework" Version="3.11.0" />
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageVersion Include="NUnit" Version="4.5.1" />
+    <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
+    <PackageVersion Include="Uno.UI.RuntimeTests.Engine" Version="1.33.0-dev.11" />
+    <PackageVersion Include="Uno.UITest.Helpers" Version="1.1.0-dev.70" />
+    <PackageVersion Include="WireMock.Net" Version="1.14.0" />
+    <PackageVersion Include="Xamarin.UITest" Version="4.3.4" />
+  </ItemGroup>
+</Project>

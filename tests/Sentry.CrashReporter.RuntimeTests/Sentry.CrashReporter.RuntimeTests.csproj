@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="../Sentry.CrashReporter.Tests/data/*" Link="data\%(Filename)%(Extension)">
+    <None Include="../data/*" Link="data\%(Filename)%(Extension)">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
@@ -19,6 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Sentry.CrashReporter/Sentry.CrashReporter.csproj" />
+    <ProjectReference Include="../../Sentry.CrashReporter/Sentry.CrashReporter.csproj" />
   </ItemGroup>
 </Project>
