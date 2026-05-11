@@ -48,6 +48,10 @@ public class FooterViewTests : RuntimeTestBase
         Assert.IsNotNull(eventIdLabel);
         Assert.AreEqual(Visibility.Visible, eventIdLabel.Visibility);
 
+        var cacheIcon = statusLabel.FindFirstDescendant<FontAwesomeIcon>(icon =>
+            icon.Solid is FA.FileCircleXmark or FA.FileCircleExclamation or FA.FileCircleCheck);
+        Assert.IsNull(cacheIcon);
+
         var cancelButton = view.FindFirstDescendant<Button>("cancelButton");
         Assert.IsNotNull(cancelButton);
         Assert.IsTrue(cancelButton.IsEnabled);
@@ -55,6 +59,39 @@ public class FooterViewTests : RuntimeTestBase
         var submitButton = view.FindFirstDescendant<Button>("submitButton");
         Assert.IsNotNull(submitButton);
         Assert.IsTrue(submitButton.IsEnabled);
+    }
+
+    [TestMethod]
+    public async Task FooterView_WithCacheDir_ShowsCacheStatus()
+    {
+        // Arrange
+        var envelope = new Envelope(
+            new JsonObject
+            {
+                { "dsn", "https://foo@bar.com/123" },
+                { "event_id", "12345678901234567890123456789012" },
+                { "cache_dir", "/tmp/cache" }
+            },
+            []);
+        _ = MockRuntime(envelope);
+
+        // Act
+        var view = new FooterView().Envelope(envelope);
+        await LoadTestContent(view);
+
+        // Assert
+        var statusLabel = view.FindFirstDescendant<FrameworkElement>("statusLabel");
+        Assert.IsNotNull(statusLabel);
+
+        var eventIdLabel = statusLabel.FindFirstDescendant<TextBlock>(tb => tb.Text == "12345678");
+        Assert.IsNotNull(eventIdLabel);
+        Assert.AreEqual(Visibility.Visible, eventIdLabel.Visibility);
+
+        var cacheStatus = statusLabel.FindFirstDescendant<TextBlock>(tb => tb.Text.Contains("Offline"));
+        Assert.IsNull(cacheStatus);
+
+        var cacheIcon = statusLabel.FindFirstDescendant<FontAwesomeIcon>(icon => icon.Solid == FA.FileCircleExclamation);
+        Assert.IsNotNull(cacheIcon);
     }
 
     [TestMethod]

@@ -14,10 +14,15 @@ public interface ICrashReporter
     public void UpdateFeedback(Feedback? feedback);
 }
 
-public class CrashReporter(IStorageFile? file = null, ISentryClient? client = null) : ICrashReporter
+public class CrashReporter(
+    IStorageFile? file = null,
+    ISentryClient? client = null,
+    ICacheService? cache = null) : ICrashReporter
 {
     private readonly IStorageFile? _file = file ?? App.Services.GetService<IStorageFile>();
     private readonly ISentryClient _client = client ?? App.Services.GetRequiredService<ISentryClient>();
+    private readonly ICacheService _cache = cache ?? App.Services.GetRequiredService<ICacheService>();
+    private Envelope? _submittingEnvelope;
     private readonly HashSet<Envelope> _submittedEnvelopes = [];
     private Feedback? _feedback = ResolveFeedback();
 
@@ -42,16 +47,26 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
         var dsn = envelope.TryGetDsn()
                   ?? throw new InvalidOperationException("Envelope does not contain a valid DSN.");
 
+        _submittingEnvelope = envelope;
         try
         {
             await _client.SubmitEnvelopeAsync(dsn, envelope, cancellationToken);
+            await RetainAsync(envelope, _cache.CacheKeep, cancellationToken);
             _submittedEnvelopes.Add(envelope);
             DeleteEnvelope(envelope);
         }
         catch (Exception) when (!cancellationToken.IsCancellationRequested)
         {
+            _submittingEnvelope = null;
             await CacheAsync(envelope);
             throw;
+        }
+        finally
+        {
+            if (ReferenceEquals(_submittingEnvelope, envelope))
+            {
+                _submittingEnvelope = null;
+            }
         }
 
         if (!string.IsNullOrEmpty(_feedback?.Message))
@@ -88,6 +103,15 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
         try
         {
             if (_submittedEnvelopes.Contains(envelope))
+            {
+                DeleteEnvelope(envelope);
+                return;
+            }
+            if (ReferenceEquals(_submittingEnvelope, envelope))
+            {
+                return;
+            }
+            if (_cache.CacheKeep == CacheKeep.None)
             {
                 DeleteEnvelope(envelope);
                 return;
@@ -156,6 +180,68 @@ public class CrashReporter(IStorageFile? file = null, ISentryClient? client = nu
                 this.Log().LogWarning(cleanupException, "Failed to delete temporary crash envelope cache file.");
             }
             this.Log().LogWarning(e, "Failed to cache crash envelope.");
+        }
+    }
+
+    private async Task RetainAsync(Envelope envelope, CacheKeep cacheKeep, CancellationToken cancellationToken)
+    {
+        if (cacheKeep != CacheKeep.Always)
+        {
+            return;
+        }
+
+        string? cacheDir = envelope.TryGetHeader("cache_dir");
+        if (string.IsNullOrWhiteSpace(cacheDir))
+        {
+            return;
+        }
+
+        string? envelopeTempPath = null;
+        try
+        {
+            Directory.CreateDirectory(cacheDir);
+
+            var eventId = GetCacheEventId(envelope);
+            var minidumps = envelope.Items
+                .Where(item => item.TryGetHeader("attachment_type") == "event.minidump")
+                .ToList();
+
+            for (var i = 0; i < minidumps.Count; i++)
+            {
+                var suffix = i == 0 ? ".dmp" : $"-{i}.dmp";
+                var path = System.IO.Path.Combine(cacheDir, $"{eventId}{suffix}");
+                await File.WriteAllBytesAsync(path, minidumps[i].Payload, cancellationToken);
+            }
+
+            var envelopePath = System.IO.Path.Combine(cacheDir, $"{eventId}.envelope");
+            if (File.Exists(envelopePath))
+            {
+                return;
+            }
+
+            var cachedEnvelope = new Envelope(envelope.Header, envelope.Items.Except(minidumps));
+            envelopeTempPath = System.IO.Path.Combine(cacheDir, $"{eventId}.{Guid.NewGuid():N}.tmp");
+            await using (var stream = File.Create(envelopeTempPath))
+            {
+                await cachedEnvelope.SerializeAsync(stream, cancellationToken);
+            }
+            File.Move(envelopeTempPath, envelopePath);
+            envelopeTempPath = null;
+        }
+        catch (Exception e)
+        {
+            try
+            {
+                if (envelopeTempPath is not null && File.Exists(envelopeTempPath))
+                {
+                    File.Delete(envelopeTempPath);
+                }
+            }
+            catch (Exception cleanupException)
+            {
+                this.Log().LogWarning(cleanupException, "Failed to delete temporary retained crash envelope cache file.");
+            }
+            this.Log().LogWarning(e, "Failed to retain crash envelope cache files.");
         }
     }
 

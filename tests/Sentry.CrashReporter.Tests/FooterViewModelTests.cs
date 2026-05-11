@@ -1,9 +1,21 @@
+using Microsoft.Extensions.DependencyInjection;
 using System.Reactive.Threading.Tasks;
+using Sentry.CrashReporter.Controls;
 
 namespace Sentry.CrashReporter.Tests;
 
 public class FooterViewModelTests
 {
+    [SetUp]
+    public void SetUp()
+    {
+        var clipboard = new Mock<IClipboardService>();
+        var services = new ServiceCollection();
+        services.AddSingleton<ICacheService>(new MemoryCacheService());
+        services.AddSingleton<IClipboardService>(clipboard.Object);
+        App.Services = services.BuildServiceProvider();
+    }
+
     [Test]
     public void Defaults()
     {
@@ -18,7 +30,10 @@ public class FooterViewModelTests
         Assert.That(viewModel.Dsn, Is.Null.Or.Empty);
         Assert.That(viewModel.EventId, Is.Null.Or.Empty);
         Assert.That(viewModel.ShortEventId, Is.Null.Or.Empty);
+        Assert.That(viewModel.StatusText, Is.Null.Or.Empty);
+        Assert.That(viewModel.StatusIcons, Is.Empty);
         Assert.That(viewModel.Status, Is.EqualTo(FooterStatus.Empty));
+        Assert.That(viewModel.CacheKeep, Is.EqualTo(CacheKeep.Offline));
     }
 
     [Test]
@@ -46,7 +61,170 @@ public class FooterViewModelTests
         Assert.That(viewModel.Dsn, Is.EqualTo("https://foo@bar.com/123"));
         Assert.That(viewModel.EventId, Is.EqualTo("12345678-90ab-cdef-1234-567890abcdef"));
         Assert.That(viewModel.ShortEventId, Is.EqualTo("12345678"));
+        Assert.That(viewModel.StatusText, Is.EqualTo("12345678"));
         Assert.That(viewModel.Status, Is.EqualTo(FooterStatus.Normal));
+        Assert.That(viewModel.CanCache, Is.False);
+        Assert.That(viewModel.CacheKeep, Is.EqualTo(CacheKeep.Offline));
+        Assert.That(viewModel.StatusIcons, Is.Empty);
+    }
+
+    [Test]
+    public void Init_WithCacheDirAndMinidump_CanCache()
+    {
+        // Arrange
+        var envelope = new Envelope(
+            new JsonObject
+            {
+                ["dsn"] = "https://foo@bar.com/123",
+                ["event_id"] = "12345678-90ab-cdef-1234-567890abcdef",
+                ["cache_dir"] = "/tmp/cache"
+            },
+            [
+                new EnvelopeItem(
+                    new JsonObject
+                    {
+                        ["type"] = "attachment",
+                        ["attachment_type"] = "event.minidump",
+                        ["filename"] = "minidump.dmp"
+                    },
+                    [0x01])
+            ]
+        );
+        var mockReporter = new Mock<ICrashReporter>();
+        var mockWindow = new Mock<IWindowService>();
+
+        // Act
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object)
+        {
+            Envelope = envelope
+        };
+
+        // Assert
+        Assert.That(viewModel.CanCache, Is.True);
+        Assert.That(viewModel.CacheKeep, Is.EqualTo(CacheKeep.Offline));
+        Assert.That(viewModel.StatusText, Is.EqualTo("12345678"));
+        Assert.That(viewModel.StatusIcons, Is.EqualTo(new[] { FA.FileCircleExclamation }));
+    }
+
+    [Test]
+    public void CacheKeep_LoadsAndPersistsSelection()
+    {
+        // Arrange
+        var cacheKeep = new MemoryCacheService(CacheKeep.Always);
+        var mockReporter = new Mock<ICrashReporter>();
+        var mockWindow = new Mock<IWindowService>();
+
+        // Act
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object, cacheKeep);
+
+        // Assert
+        Assert.That(viewModel.CacheKeep, Is.EqualTo(CacheKeep.Always));
+        Assert.That(viewModel.CacheKeepIndex, Is.EqualTo(2));
+        Assert.That(cacheKeep.CacheKeep, Is.EqualTo(CacheKeep.Always));
+
+        // Act
+        viewModel.CacheKeep = CacheKeep.None;
+
+        // Assert
+        Assert.That(viewModel.CacheKeepIndex, Is.EqualTo(0));
+        Assert.That(cacheKeep.CacheKeep, Is.EqualTo(CacheKeep.None));
+    }
+
+    [Test]
+    public async Task SetCacheKeepCommand_UpdatesCacheStatusIcon()
+    {
+        // Arrange
+        var envelope = new Envelope(
+            new JsonObject
+            {
+                ["dsn"] = "https://foo@bar.com/123",
+                ["event_id"] = "12345678-90ab-cdef-1234-567890abcdef",
+                ["cache_dir"] = "/tmp/cache"
+            },
+            new List<EnvelopeItem>()
+        );
+        var cacheKeep = new MemoryCacheService(CacheKeep.Offline);
+        var mockReporter = new Mock<ICrashReporter>();
+        var mockWindow = new Mock<IWindowService>();
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object, cacheKeep)
+        {
+            Envelope = envelope
+        };
+
+        // Act
+        await viewModel.SetCacheKeepCommand.Execute(CacheKeep.Always);
+
+        // Assert
+        Assert.That(viewModel.CacheKeep, Is.EqualTo(CacheKeep.Always));
+        Assert.That(viewModel.CacheKeepIndex, Is.EqualTo(2));
+        Assert.That(viewModel.StatusIcons, Is.EqualTo(new[] { FA.FileCircleCheck }));
+        Assert.That(cacheKeep.CacheKeep, Is.EqualTo(CacheKeep.Always));
+    }
+
+    [Test]
+    public void CacheKeepIndex_UpdatesCacheKeep()
+    {
+        // Arrange
+        var envelope = new Envelope(
+            new JsonObject
+            {
+                ["dsn"] = "https://foo@bar.com/123",
+                ["event_id"] = "12345678-90ab-cdef-1234-567890abcdef",
+                ["cache_dir"] = "/tmp/cache"
+            },
+            new List<EnvelopeItem>()
+        );
+        var cacheKeep = new MemoryCacheService(CacheKeep.Offline);
+        var mockReporter = new Mock<ICrashReporter>();
+        var mockWindow = new Mock<IWindowService>();
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object, cacheKeep)
+        {
+            Envelope = envelope
+        };
+
+        // Act
+        viewModel.CacheKeepIndex = 0;
+
+        // Assert
+        Assert.That(viewModel.CacheKeep, Is.EqualTo(CacheKeep.None));
+        Assert.That(viewModel.StatusIcons, Is.EqualTo(new[] { FA.FileCircleXmark }));
+        Assert.That(cacheKeep.CacheKeep, Is.EqualTo(CacheKeep.None));
+
+        // Act
+        viewModel.CacheKeepIndex = 2;
+
+        // Assert
+        Assert.That(viewModel.CacheKeep, Is.EqualTo(CacheKeep.Always));
+        Assert.That(viewModel.StatusIcons, Is.EqualTo(new[] { FA.FileCircleCheck }));
+        Assert.That(cacheKeep.CacheKeep, Is.EqualTo(CacheKeep.Always));
+    }
+
+    [Test]
+    public async Task CopyEventIdCommand_CopiesEventId()
+    {
+        // Arrange
+        var envelope = new Envelope(
+            new JsonObject
+            {
+                ["dsn"] = "https://foo@bar.com/123",
+                ["event_id"] = "12345678-90ab-cdef-1234-567890abcdef"
+            },
+            new List<EnvelopeItem>()
+        );
+        var mockReporter = new Mock<ICrashReporter>();
+        var mockWindow = new Mock<IWindowService>();
+        var mockClipboard = new Mock<IClipboardService>();
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object, clipboardService: mockClipboard.Object)
+        {
+            Envelope = envelope
+        };
+
+        // Act
+        var copied = await viewModel.CopyEventIdCommand.Execute();
+
+        // Assert
+        Assert.That(copied, Is.EqualTo("12345678-90ab-cdef-1234-567890abcdef"));
+        mockClipboard.Verify(x => x.SetText("12345678-90ab-cdef-1234-567890abcdef"), Times.Once);
     }
 
     [Test]
