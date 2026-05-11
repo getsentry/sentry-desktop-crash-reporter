@@ -61,6 +61,7 @@ public partial class FooterViewModel : ReactiveObject
     private async Task Submit()
     {
         ErrorMessage = null;
+        _window.SetClosable(false);
         try
         {
             await _reporter.SubmitAsync(_envelope!);
@@ -69,12 +70,18 @@ public partial class FooterViewModel : ReactiveObject
         catch (Exception e)
         {
             ErrorMessage = e.Message;
+            _window.SetClosable(App.CanClose);
         }
     }
 
     [ReactiveCommand]
     private async Task Cancel()
     {
+        if (IsSubmitting)
+        {
+            return;
+        }
+
         if (_envelope is not null)
         {
             await _reporter.CacheAsync(_envelope);
