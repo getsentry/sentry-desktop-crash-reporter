@@ -19,13 +19,26 @@ updates:
     - "/tests/Sentry.CrashReporter.RuntimeTests"
   schedule:
     interval: weekly
+  allow:
+    # Dependabot's NuGet updater follows test ProjectReferences into the app.
+    # Keep test grouping limited to packages owned by tests/Directory.Packages.props.
+    - dependency-name: "coverlet.collector"
+    - dependency-name: "AwesomeAssertions"
+    - dependency-name: "GitHubActionsTestLogger"
+    - dependency-name: "Microsoft.NET.Test.Sdk"
+    - dependency-name: "Moq"
+    - dependency-name: "MSTest.TestAdapter"
+    - dependency-name: "MSTest.TestFramework"
+    - dependency-name: "NUnit"
+    - dependency-name: "NUnit3TestAdapter"
+    - dependency-name: "Uno.UI.RuntimeTests.Engine"
+    - dependency-name: "Uno.UITest.Helpers"
+    - dependency-name: "WireMock.Net"
+    - dependency-name: "Xamarin.UITest"
   groups:
     tests:
       patterns:
         - "*"
-  ignore:
-    # The NuGet updater can follow ProjectReferences out of /tests.
-    - dependency-name: "Uno.Sdk"
   commit-message:
     prefix: "test(deps)"
 - package-ecosystem: github-actions
