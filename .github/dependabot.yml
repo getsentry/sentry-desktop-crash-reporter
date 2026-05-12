@@ -14,7 +14,9 @@ updates:
     prefix: "chore(deps)"
 - package-ecosystem: nuget
   directories:
-    - "/tests/Sentry.CrashReporter.*Tests"
+    - "/tests/Sentry.CrashReporter.Tests"
+    - "/tests/Sentry.CrashReporter.UITests"
+    - "/tests/Sentry.CrashReporter.RuntimeTests"
   schedule:
     interval: weekly
   groups:
