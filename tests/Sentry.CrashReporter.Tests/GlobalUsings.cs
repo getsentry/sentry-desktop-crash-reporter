@@ -1,4 +1,4 @@
-global using FluentAssertions;
+global using AwesomeAssertions;
 global using Moq;
 global using Moq.Protected;
 global using NUnit.Framework;
