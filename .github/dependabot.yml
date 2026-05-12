@@ -13,13 +13,14 @@ updates:
   commit-message:
     prefix: "chore(deps)"
 - package-ecosystem: nuget
-  directory: "/tests"
-  exclude-paths:
-    - "Sentry.CrashReporter.RuntimeTests.Host/**"
+  directories:
+    - "/tests/Sentry.CrashReporter.Tests"
+    - "/tests/Sentry.CrashReporter.UITests"
+    - "/tests/Sentry.CrashReporter.RuntimeTests"
   schedule:
     interval: weekly
   groups:
-    test-dependencies:
+    tests:
       patterns:
         - "*"
   ignore:
