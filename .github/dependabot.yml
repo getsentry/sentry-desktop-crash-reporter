@@ -7,9 +7,7 @@ updates:
   commit-message:
     prefix: "chore(deps)"
 - package-ecosystem: nuget
-  directory: "/"
-  exclude-paths:
-    - "tests/**"
+  directory: "/Sentry.CrashReporter"
   schedule:
     interval: weekly
   commit-message:
@@ -24,11 +22,12 @@ updates:
     test-dependencies:
       patterns:
         - "*"
-      group-by: dependency-name
   ignore:
     # https://fluentassertions.com/releases/#800
     - dependency-name: "FluentAssertions"
       versions: ["8.*"]
+    # The NuGet updater can follow ProjectReferences out of /tests.
+    - dependency-name: "Uno.Sdk"
   commit-message:
     prefix: "test(deps)"
 - package-ecosystem: github-actions
