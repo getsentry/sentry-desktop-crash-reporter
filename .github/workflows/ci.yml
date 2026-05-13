@@ -221,7 +221,7 @@ jobs:
       - name: Retry UI Tests
         if: steps.run-ui-tests.outcome == 'failure'
         shell: pwsh
-        run: .github/scripts/run-ui-tests.ps1
+        run: .github/scripts/run-ui-tests.ps1 -Clean
 
       - name: Upload Test Results
         if: ${{ always() && !startsWith(github.ref_name, 'release/') }}
