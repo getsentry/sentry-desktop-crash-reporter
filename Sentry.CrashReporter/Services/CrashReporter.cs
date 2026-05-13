@@ -99,7 +99,6 @@ public class CrashReporter(
 
     public async Task CacheAsync(Envelope envelope, CancellationToken cancellationToken = default)
     {
-        string? envelopeTempPath = null;
         try
         {
             if (_submittedEnvelopes.Contains(envelope))
@@ -137,30 +136,14 @@ public class CrashReporter(
                 return;
             }
 
-            var minidumps = envelope.Items
-                .Where(item => item.TryGetHeader("attachment_type") == "event.minidump")
-                .ToList();
-
+            var minidumps = GetMinidumps(envelope);
             if (minidumps.Count == 0 && TryMoveEnvelope(envelope, envelopePath))
             {
                 return;
             }
 
-            for (var i = 0; i < minidumps.Count; i++)
-            {
-                var suffix = i == 0 ? ".dmp" : $"-{i}.dmp";
-                var path = System.IO.Path.Combine(cacheDir, $"{eventId}{suffix}");
-                await File.WriteAllBytesAsync(path, minidumps[i].Payload, cancellationToken);
-            }
-
-            var cachedEnvelope = new Envelope(envelope.Header, envelope.Items.Except(minidumps));
-            envelopeTempPath = System.IO.Path.Combine(cacheDir, $"{eventId}.{Guid.NewGuid():N}.tmp");
-            await using (var stream = File.Create(envelopeTempPath))
-            {
-                await cachedEnvelope.SerializeAsync(stream, cancellationToken);
-            }
-            File.Move(envelopeTempPath, envelopePath);
-            envelopeTempPath = null;
+            await WriteMinidumpsAsync(cacheDir, eventId, minidumps, cancellationToken);
+            await WriteCachedEnvelopeAsync(envelope, envelopePath, minidumps, cancellationToken);
             if (DeleteEnvelope(envelope, envelopePath))
             {
                 envelope.FilePath = envelopePath;
@@ -168,17 +151,6 @@ public class CrashReporter(
         }
         catch (Exception e)
         {
-            try
-            {
-                if (envelopeTempPath is not null && File.Exists(envelopeTempPath))
-                {
-                    File.Delete(envelopeTempPath);
-                }
-            }
-            catch (Exception cleanupException)
-            {
-                this.Log().LogWarning(cleanupException, "Failed to delete temporary crash envelope cache file.");
-            }
             this.Log().LogWarning(e, "Failed to cache crash envelope.");
         }
     }
@@ -196,54 +168,89 @@ public class CrashReporter(
             return null;
         }
 
-        string? envelopeTempPath = null;
         try
         {
             Directory.CreateDirectory(cacheDir);
 
             var eventId = GetCacheEventId(envelope);
-            var minidumps = envelope.Items
-                .Where(item => item.TryGetHeader("attachment_type") == "event.minidump")
-                .ToList();
-
-            for (var i = 0; i < minidumps.Count; i++)
-            {
-                var suffix = i == 0 ? ".dmp" : $"-{i}.dmp";
-                var path = System.IO.Path.Combine(cacheDir, $"{eventId}{suffix}");
-                await File.WriteAllBytesAsync(path, minidumps[i].Payload, cancellationToken);
-            }
-
             var envelopePath = System.IO.Path.Combine(cacheDir, $"{eventId}.envelope");
+            var minidumps = GetMinidumps(envelope);
+            await WriteMinidumpsAsync(cacheDir, eventId, minidumps, cancellationToken);
             if (File.Exists(envelopePath))
             {
                 return envelopePath;
             }
 
+            await WriteCachedEnvelopeAsync(envelope, envelopePath, minidumps, cancellationToken);
+            return envelopePath;
+        }
+        catch (Exception e)
+        {
+            this.Log().LogWarning(e, "Failed to cache crash envelope.");
+            return null;
+        }
+    }
+
+    private static List<EnvelopeItem> GetMinidumps(Envelope envelope) =>
+        envelope.Items
+            .Where(item => item.TryGetHeader("attachment_type") == "event.minidump")
+            .ToList();
+
+    private static async Task WriteMinidumpsAsync(
+        string cacheDir,
+        string eventId,
+        IReadOnlyList<EnvelopeItem> minidumps,
+        CancellationToken cancellationToken)
+    {
+        for (var i = 0; i < minidumps.Count; i++)
+        {
+            var suffix = i == 0 ? ".dmp" : $"-{i}.dmp";
+            var path = System.IO.Path.Combine(cacheDir, $"{eventId}{suffix}");
+            await File.WriteAllBytesAsync(path, minidumps[i].Payload, cancellationToken);
+        }
+    }
+
+    private async Task WriteCachedEnvelopeAsync(
+        Envelope envelope,
+        string envelopePath,
+        IReadOnlyCollection<EnvelopeItem> minidumps,
+        CancellationToken cancellationToken)
+    {
+        string? envelopeTempPath = null;
+        try
+        {
+            var directory = System.IO.Path.GetDirectoryName(envelopePath)!;
+            var eventId = System.IO.Path.GetFileNameWithoutExtension(envelopePath);
             var cachedEnvelope = new Envelope(envelope.Header, envelope.Items.Except(minidumps));
-            envelopeTempPath = System.IO.Path.Combine(cacheDir, $"{eventId}.{Guid.NewGuid():N}.tmp");
+            envelopeTempPath = System.IO.Path.Combine(directory, $"{eventId}.{Guid.NewGuid():N}.tmp");
             await using (var stream = File.Create(envelopeTempPath))
             {
                 await cachedEnvelope.SerializeAsync(stream, cancellationToken);
             }
             File.Move(envelopeTempPath, envelopePath);
             envelopeTempPath = null;
-            return envelopePath;
         }
-        catch (Exception e)
+        catch
         {
-            try
-            {
-                if (envelopeTempPath is not null && File.Exists(envelopeTempPath))
-                {
-                    File.Delete(envelopeTempPath);
-                }
-            }
-            catch (Exception cleanupException)
-            {
-                this.Log().LogWarning(cleanupException, "Failed to delete temporary crash envelope cache file.");
-            }
-            this.Log().LogWarning(e, "Failed to cache crash envelope.");
-            return null;
+            DeleteTemporaryCacheEnvelope(envelopeTempPath);
+            throw;
+        }
+    }
+
+    private void DeleteTemporaryCacheEnvelope(string? envelopeTempPath)
+    {
+        if (envelopeTempPath is null || !File.Exists(envelopeTempPath))
+        {
+            return;
+        }
+
+        try
+        {
+            File.Delete(envelopeTempPath);
+        }
+        catch (Exception cleanupException)
+        {
+            this.Log().LogWarning(cleanupException, "Failed to delete temporary crash envelope cache file.");
         }
     }
 
