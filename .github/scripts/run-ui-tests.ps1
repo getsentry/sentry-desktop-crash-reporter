@@ -1,3 +1,7 @@
+param(
+    [switch] $Clean
+)
+
 Set-StrictMode -Version latest
 $ErrorActionPreference = 'Stop'
 
@@ -6,6 +10,34 @@ $env:UNO_UITEST_TARGETURI = "http://localhost:5000"
 $env:UNO_UITEST_CHROME_CONTAINER_MODE = $true
 $env:UNO_UITEST_DRIVER_PATH = $env:CHROMEWEBDRIVER
 
+function Stop-UiTestProcesses {
+    param(
+        [System.Diagnostics.Process] $Server = $null
+    )
+
+    if ($null -ne $Server) {
+        try {
+            if (!$Server.HasExited) {
+                Stop-Process -Id $Server.Id -Force -ErrorAction SilentlyContinue
+                $Server.WaitForExit(5000) | Out-Null
+            }
+        }
+        catch {
+            Write-Verbose "Failed to stop UI test server process $($Server.Id): $_"
+        }
+    }
+
+    if ($Clean) {
+        Get-Process chrome, chromedriver -ErrorAction SilentlyContinue |
+            Stop-Process -Force -ErrorAction SilentlyContinue
+    }
+}
+
+if ($Clean) {
+    Stop-UiTestProcesses
+}
+
+$server = $null
 $server = Start-Process -FilePath dotnet -ArgumentList "run --no-build -c Release -f net10.0-browserwasm --project Sentry.CrashReporter/Sentry.CrashReporter.csproj --launch-profile ""Sentry.CrashReporter (WebAssembly)""" -PassThru
 try
 {
@@ -13,5 +45,5 @@ try
 }
 finally
 {
-    Stop-Process -Id $server.Id -Force
+    Stop-UiTestProcesses -Server $server
 }
