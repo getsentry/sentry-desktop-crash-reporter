@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Microsoft.Extensions.Http.Resilience;
 using Sentry.CrashReporter.Extensions;
@@ -56,6 +57,8 @@ public partial class App : Application
     protected IHost? Host { get; private set; }
     public static IServiceProvider Services { get; internal set; } = Ioc.Default;
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026",
+        Justification = "Uno startup uses reflection-based configuration and navigation APIs; the app registers concrete routes and roots this assembly for trimmed builds.")]
     protected async override void OnLaunched(LaunchActivatedEventArgs args)
     {
         // Load WinUI Resources
