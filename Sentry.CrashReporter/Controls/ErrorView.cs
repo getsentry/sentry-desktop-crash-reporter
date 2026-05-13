@@ -10,7 +10,7 @@ public sealed class ErrorView : UserControl
 
     public static readonly DependencyProperty ErrorProperty = DependencyProperty.Register(
         nameof(Error),
-        typeof(Exception),
+        typeof(object),
         typeof(ErrorView),
         new PropertyMetadata(null, OnErrorChanged));
 

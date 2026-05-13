@@ -40,6 +40,13 @@
 
     </PropertyGroup>
 
+    <PropertyGroup>
+        <!-- GitInfo -->
+        <GitRepositoryUrl>https://github.com/getsentry/sentry-desktop-crash-reporter</GitRepositoryUrl>
+        <!-- Use generated C# file instead of virtual ThisAssembly.Constants AdditionalFiles. -->
+        <UseTemplatedCode>true</UseTemplatedCode>
+    </PropertyGroup>
+
     <PropertyGroup Condition="'$(Configuration)'=='Debug' or '$(IsUiAutomationMappingEnabled)'=='True'">
         <IsUiAutomationMappingEnabled>True</IsUiAutomationMappingEnabled>
         <DefineConstants>$(DefineConstants);USE_UITESTS</DefineConstants>
