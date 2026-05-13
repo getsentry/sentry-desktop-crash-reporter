@@ -30,4 +30,17 @@ public class ErrorViewTests : RuntimeTestBase
         Assert.IsNotEmpty(exception.StackTrace);
         Assert.IsNotNull(view.FindFirstDescendant<TextBlock>(tb => tb.Text == exception.StackTrace));
     }
+
+    [TestMethod]
+    public void ErrorView_WithNonExceptionDependencyPropertyValue_ReturnsNullError()
+    {
+        // Arrange
+        var view = new ErrorView();
+
+        // Act
+        view.SetValue(ErrorView.ErrorProperty, "Something went wrong");
+
+        // Assert
+        Assert.IsNull(view.Error);
+    }
 }

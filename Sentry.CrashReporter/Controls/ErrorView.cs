@@ -16,7 +16,7 @@ public sealed class ErrorView : UserControl
 
     public Exception? Error
     {
-        get => (Exception?)GetValue(ErrorProperty);
+        get => GetValue(ErrorProperty) as Exception;
         set => SetValue(ErrorProperty, value);
     }
 
