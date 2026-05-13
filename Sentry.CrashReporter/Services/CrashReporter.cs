@@ -51,9 +51,9 @@ public class CrashReporter(
         try
         {
             await _client.SubmitEnvelopeAsync(dsn, envelope, cancellationToken);
-            await RetainAsync(envelope, _cache.CacheKeep, cancellationToken);
+            var cachedEnvelopePath = await CacheAsync(envelope, _cache.CacheKeep, cancellationToken);
             _submittedEnvelopes.Add(envelope);
-            DeleteEnvelope(envelope);
+            DeleteEnvelope(envelope, cachedEnvelopePath);
         }
         catch (Exception) when (!cancellationToken.IsCancellationRequested)
         {
@@ -183,17 +183,17 @@ public class CrashReporter(
         }
     }
 
-    private async Task RetainAsync(Envelope envelope, CacheKeep cacheKeep, CancellationToken cancellationToken)
+    private async Task<string?> CacheAsync(Envelope envelope, CacheKeep cacheKeep, CancellationToken cancellationToken)
     {
         if (cacheKeep != CacheKeep.Always)
         {
-            return;
+            return null;
         }
 
         string? cacheDir = envelope.TryGetHeader("cache_dir");
         if (string.IsNullOrWhiteSpace(cacheDir))
         {
-            return;
+            return null;
         }
 
         string? envelopeTempPath = null;
@@ -216,7 +216,7 @@ public class CrashReporter(
             var envelopePath = System.IO.Path.Combine(cacheDir, $"{eventId}.envelope");
             if (File.Exists(envelopePath))
             {
-                return;
+                return envelopePath;
             }
 
             var cachedEnvelope = new Envelope(envelope.Header, envelope.Items.Except(minidumps));
@@ -227,6 +227,7 @@ public class CrashReporter(
             }
             File.Move(envelopeTempPath, envelopePath);
             envelopeTempPath = null;
+            return envelopePath;
         }
         catch (Exception e)
         {
@@ -239,9 +240,10 @@ public class CrashReporter(
             }
             catch (Exception cleanupException)
             {
-                this.Log().LogWarning(cleanupException, "Failed to delete temporary retained crash envelope cache file.");
+                this.Log().LogWarning(cleanupException, "Failed to delete temporary crash envelope cache file.");
             }
-            this.Log().LogWarning(e, "Failed to retain crash envelope cache files.");
+            this.Log().LogWarning(e, "Failed to cache crash envelope.");
+            return null;
         }
     }
 
