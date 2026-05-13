@@ -55,7 +55,7 @@ public class CrashReporter(
             _submittedEnvelopes.Add(envelope);
             DeleteEnvelope(envelope, cachedEnvelopePath);
         }
-        catch (Exception) when (!cancellationToken.IsCancellationRequested)
+        catch (Exception)
         {
             _submittingEnvelope = null;
             await CacheAsync(envelope);

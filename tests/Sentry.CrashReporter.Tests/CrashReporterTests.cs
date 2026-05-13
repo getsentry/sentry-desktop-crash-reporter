@@ -309,6 +309,40 @@ public class CrashReporterTests
     }
 
     [Test]
+    public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeSubmitIsCanceled_CachesCrashEnvelopeAndMinidump()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new OperationCanceledException("upload canceled"));
+
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var minidump = new byte[] { 0x01, 0x02, 0x03 };
+        var envelope = CreateCrashEnvelope(cacheDir, minidump);
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync();
+
+        try
+        {
+            // Act
+            var ex = Assert.ThrowsAsync<OperationCanceledException>(() =>
+                reporter.SubmitAsync(envelope, cancellation.Token));
+
+            // Assert
+            ex?.Message.Should().Be("upload canceled");
+            await AssertCachedCrashEnvelope(cacheDir, minidump);
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
     public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeSubmitFailsRepeatedly_CachesCrashEnvelopeOnce()
     {
         // Arrange
