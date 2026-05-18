@@ -5,6 +5,7 @@ namespace Sentry.CrashReporter.RuntimeTests;
 public record MockRuntime(
     Mock<ICrashReporter> Reporter,
     Mock<IWindowService> Window,
+    ICacheService CacheKeep,
     Mock<IClipboardService> Clipboard,
     Mock<IFilePickerService> FilePicker);
 
@@ -39,16 +40,18 @@ public class RuntimeTestBase
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.FromResult(envelope));
         var mockWindow = new Mock<IWindowService>();
+        var cacheKeep = new MemoryCacheService();
         var mockClipboard = new Mock<IClipboardService>();
         var mockFilePicker = new Mock<IFilePickerService>();
 
         var services = new ServiceCollection();
         services.AddSingleton(mockReporter.Object);
         services.AddSingleton(mockWindow.Object);
+        services.AddSingleton<ICacheService>(cacheKeep);
         services.AddSingleton(mockClipboard.Object);
         services.AddSingleton(mockFilePicker.Object);
         App.Services = services.BuildServiceProvider();
 
-        return new MockRuntime(mockReporter, mockWindow, mockClipboard, mockFilePicker);
+        return new MockRuntime(mockReporter, mockWindow, cacheKeep, mockClipboard, mockFilePicker);
     }
 }

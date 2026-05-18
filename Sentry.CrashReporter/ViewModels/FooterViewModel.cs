@@ -1,4 +1,7 @@
 using Sentry.CrashReporter.Services;
+using Sentry.CrashReporter.Controls;
+using System.Reactive;
+using Path = System.IO.Path;
 
 namespace Sentry.CrashReporter.ViewModels;
 
@@ -14,19 +17,40 @@ public partial class FooterViewModel : ReactiveObject
 {
     private readonly ICrashReporter _reporter;
     private readonly IWindowService _window;
+    private readonly ICacheService _cache;
+    private readonly IClipboardService _clipboard;
     [Reactive] private Envelope? _envelope;
     [ObservableAsProperty] private string? _dsn = string.Empty;
     [ObservableAsProperty] private string? _eventId = string.Empty;
     [ObservableAsProperty] private string? _shortEventId = string.Empty;
+    [ObservableAsProperty] private string? _statusText = string.Empty;
+    [ObservableAsProperty] private string[] _statusIcons = [];
+    [ObservableAsProperty] private string? _cacheDirectory = string.Empty;
+    [ObservableAsProperty] private bool _canCache;
+    [Reactive] private CacheKeep _cacheKeep;
+    [Reactive] private int _cacheKeepIndex;
     [ObservableAsProperty] private bool _isSubmitting;
     private readonly IObservable<bool> _canSubmit;
     [Reactive] private string? _errorMessage;
     [ObservableAsProperty] private FooterStatus _status;
 
-    public FooterViewModel(ICrashReporter? reporter = null, IWindowService? windowService = null)
+    public ReactiveCommand<Unit, string?> CopyEventIdCommand { get; }
+    public ReactiveCommand<CacheKeep, Unit> SetCacheKeepCommand { get; }
+    public ReactiveCommand<Unit, Unit> OpenCacheDirectoryCommand { get; }
+
+    public FooterViewModel(
+        ICrashReporter? reporter = null,
+        IWindowService? windowService = null,
+        ICacheService? cache = null,
+        IClipboardService? clipboardService = null)
     {
         _reporter = reporter ?? App.Services.GetRequiredService<ICrashReporter>();
         _window = windowService ?? App.Services.GetRequiredService<IWindowService>();
+        _cache = cache ?? App.Services.GetRequiredService<ICacheService>();
+        _clipboard = clipboardService ?? App.Services.GetRequiredService<IClipboardService>();
+
+        CacheKeep = _cache.CacheKeep;
+        CacheKeepIndex = CacheKeepToIndex(CacheKeep);
 
         _dsnHelper = this.WhenAnyValue(x => x.Envelope,  e => e?.TryGetDsn())
             .ToProperty(this, x => x.Dsn);
@@ -38,7 +62,56 @@ public partial class FooterViewModel : ReactiveObject
             .Select(eventId => eventId?.Replace("-", string.Empty)[..8])
             .ToProperty(this, x => x.ShortEventId);
 
-        _canSubmit = this.WhenAnyValue(x => x.Dsn, dsn => !string.IsNullOrWhiteSpace(dsn));
+        _cacheDirectoryHelper = this.WhenAnyValue(x => x.Envelope)
+            .Select(e => e?.TryGetHeader("cache_dir"))
+            .ToProperty(this, x => x.CacheDirectory);
+
+        _canCacheHelper = this.WhenAnyValue(x => x.CacheDirectory)
+            .Select(cacheDirectory => !string.IsNullOrWhiteSpace(cacheDirectory))
+            .ToProperty(this, x => x.CanCache);
+
+        _statusTextHelper = this.WhenAnyValue(x => x.ShortEventId)
+            .Select(eventId => eventId ?? string.Empty)
+            .ToProperty(this, x => x.StatusText);
+
+        _statusIconsHelper = this.WhenAnyValue(
+                x => x.CanCache,
+                x => x.CacheKeep,
+                (canCache, cacheKeep) => canCache ? new[] { GetCacheIcon(cacheKeep) } : Array.Empty<string>())
+            .ToProperty(this, x => x.StatusIcons);
+
+        this.WhenAnyValue(x => x.CacheKeep)
+            .Subscribe(cacheKeep =>
+            {
+                _cache.CacheKeep = cacheKeep;
+                var cacheKeepIndex = CacheKeepToIndex(cacheKeep);
+                if (CacheKeepIndex != cacheKeepIndex)
+                {
+                    CacheKeepIndex = cacheKeepIndex;
+                }
+            });
+
+        this.WhenAnyValue(x => x.CacheKeepIndex)
+            .Where(index => index >= 0)
+            .Select(IndexToCacheKeep)
+            .Subscribe(cacheKeep =>
+            {
+                if (CacheKeep != cacheKeep)
+                {
+                    CacheKeep = cacheKeep;
+                }
+            });
+
+        _canSubmit = this.WhenAnyValue(x => x.Dsn)
+            .Select(dsn => !string.IsNullOrWhiteSpace(dsn));
+        var canCopyEventId = this.WhenAnyValue(x => x.EventId)
+            .Select(eventId => !string.IsNullOrWhiteSpace(eventId));
+        var canOpenCacheDirectory = this.WhenAnyValue(x => x.CacheDirectory)
+            .Select(cacheDirectory => !string.IsNullOrWhiteSpace(cacheDirectory));
+
+        CopyEventIdCommand = ReactiveCommand.Create(CopyEventId, canCopyEventId);
+        SetCacheKeepCommand = ReactiveCommand.Create<CacheKeep>(cacheKeep => CacheKeep = cacheKeep);
+        OpenCacheDirectoryCommand = ReactiveCommand.CreateFromTask(OpenCacheDirectory, canOpenCacheDirectory);
 
         _isSubmittingHelper = this.WhenAnyObservable(x => x.SubmitCommand.IsExecuting)
             .ToProperty(this, x => x.IsSubmitting);
@@ -55,6 +128,55 @@ public partial class FooterViewModel : ReactiveObject
                     return FooterStatus.Empty;
                 })
             .ToProperty(this, x => x.Status);
+    }
+
+    private static string GetCacheIcon(CacheKeep cacheKeep) =>
+        cacheKeep switch
+        {
+            CacheKeep.None => FA.FileCircleXmark,
+            CacheKeep.Always => FA.FileCircleCheck,
+            _ => FA.FileCircleExclamation
+        };
+
+    private static int CacheKeepToIndex(CacheKeep cacheKeep) =>
+        cacheKeep switch
+        {
+            CacheKeep.None => 0,
+            CacheKeep.Always => 2,
+            _ => 1
+        };
+
+    private static CacheKeep IndexToCacheKeep(int index) =>
+        index switch
+        {
+            0 => CacheKeep.None,
+            2 => CacheKeep.Always,
+            _ => CacheKeep.Offline
+        };
+
+    private string? CopyEventId()
+    {
+        var eventId = EventId;
+        if (string.IsNullOrWhiteSpace(eventId))
+        {
+            return null;
+        }
+
+        _clipboard.SetText(eventId);
+        return eventId;
+    }
+
+    private async Task OpenCacheDirectory()
+    {
+        var cacheDirectory = CacheDirectory;
+        if (string.IsNullOrWhiteSpace(cacheDirectory))
+        {
+            return;
+        }
+
+        var fullPath = Path.GetFullPath(cacheDirectory);
+        System.IO.Directory.CreateDirectory(fullPath);
+        await Launcher.LaunchUriAsync(new Uri(fullPath, UriKind.Absolute));
     }
 
     [ReactiveCommand(CanExecute = nameof(_canSubmit))]

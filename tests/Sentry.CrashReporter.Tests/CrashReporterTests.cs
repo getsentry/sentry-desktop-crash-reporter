@@ -1,9 +1,18 @@
 namespace Sentry.CrashReporter.Tests;
 
+using Microsoft.Extensions.DependencyInjection;
 using Path = System.IO.Path;
 
 public class CrashReporterTests
 {
+    [SetUp]
+    public void SetUp()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<ICacheService>(new MemoryCacheService());
+        App.Services = services.BuildServiceProvider();
+    }
+
     [Test]
     [TestCase("data/two_items.envelope")]
     public async Task LoadAsync(string filePath)
@@ -25,7 +34,6 @@ public class CrashReporterTests
     public async Task LoadAsync_Null()
     {
         // Arrange
-        App.Services = new NullServiceProvider();
         var client = new Mock<ISentryClient>();
         var reporter = new Services.CrashReporter(null, client.Object);
 
@@ -167,6 +175,32 @@ public class CrashReporterTests
     }
 
     [Test]
+    public async Task CacheAsync_WithNoCaching_DoesNotCacheCrashEnvelope()
+    {
+        // Arrange
+        var cacheKeep = new MemoryCacheService(CacheKeep.None);
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, new Mock<ISentryClient>().Object, cacheKeep);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var envelope = CreateCrashEnvelope(cacheDir, [0x01]);
+
+        try
+        {
+            // Act
+            await reporter.CacheAsync(envelope);
+
+            // Assert
+            Directory.Exists(cacheDir).Should().BeFalse();
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
     public async Task CacheAsync_WithoutCacheDir_DeletesSourceEnvelope()
     {
         // Arrange
@@ -275,6 +309,40 @@ public class CrashReporterTests
     }
 
     [Test]
+    public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeSubmitIsCanceled_CachesCrashEnvelopeAndMinidump()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new OperationCanceledException("upload canceled"));
+
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var minidump = new byte[] { 0x01, 0x02, 0x03 };
+        var envelope = CreateCrashEnvelope(cacheDir, minidump);
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync();
+
+        try
+        {
+            // Act
+            var ex = Assert.ThrowsAsync<OperationCanceledException>(() =>
+                reporter.SubmitAsync(envelope, cancellation.Token));
+
+            // Assert
+            ex?.Message.Should().Be("upload canceled");
+            await AssertCachedCrashEnvelope(cacheDir, minidump);
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
     public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeSubmitFailsRepeatedly_CachesCrashEnvelopeOnce()
     {
         // Arrange
@@ -348,6 +416,42 @@ public class CrashReporterTests
     }
 
     [Test]
+    public async Task SubmitAsync_WithCacheKeepAlways_WhenCachedCrashEnvelopeSubmitSucceeds_PreservesCache()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        client.SetupSequence(c => c.SubmitEnvelopeAsync(
+                It.IsAny<string>(),
+                It.IsAny<Envelope>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("upload failed"))
+            .Returns(Task.CompletedTask);
+
+        var cacheKeep = new MemoryCacheService(CacheKeep.Always);
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object, cacheKeep);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var envelope = CreateCrashEnvelope(cacheDir, [0x01]);
+
+        try
+        {
+            // Act
+            var ex = Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
+            await reporter.SubmitAsync(envelope);
+
+            // Assert
+            ex?.Message.Should().Be("upload failed");
+            await AssertCachedCrashEnvelope(cacheDir, [0x01]);
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
     public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeSubmitSucceeds_DoesNotCacheCrashEnvelope()
     {
         // Arrange
@@ -366,6 +470,126 @@ public class CrashReporterTests
         }
         finally
         {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task SubmitAsync_WithOfflineCache_WhenCrashEnvelopeSubmitSucceeds_DoesNotCacheCrashEnvelope()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        var cacheKeep = new MemoryCacheService(CacheKeep.Offline);
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object, cacheKeep);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var envelope = CreateCrashEnvelope(cacheDir, [0x01]);
+
+        try
+        {
+            // Act
+            await reporter.SubmitAsync(envelope);
+
+            // Assert
+            Directory.Exists(cacheDir).Should().BeFalse();
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task SubmitAsync_WithNoCaching_WhenCrashEnvelopeSubmitSucceeds_DoesNotCacheCrashEnvelope()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        var cacheKeep = new MemoryCacheService(CacheKeep.None);
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object, cacheKeep);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var envelope = CreateCrashEnvelope(cacheDir, [0x01]);
+
+        try
+        {
+            // Act
+            await reporter.SubmitAsync(envelope);
+
+            // Assert
+            Directory.Exists(cacheDir).Should().BeFalse();
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task SubmitAsync_WithCacheKeepAlways_WhenCrashEnvelopeSubmitSucceeds_CachesSplitEnvelope()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        var cacheKeep = new MemoryCacheService(CacheKeep.Always);
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object, cacheKeep);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var envelope = CreateCrashEnvelope(cacheDir, [0x01]);
+
+        try
+        {
+            // Act
+            await reporter.SubmitAsync(envelope);
+
+            // Assert
+            await AssertCachedCrashEnvelope(cacheDir, [0x01]);
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task CacheAsync_WithSubmittingCrashEnvelope_DoesNotCacheCrashEnvelope()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        var submitCompletion = new TaskCompletionSource();
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<CancellationToken>()))
+            .Returns(submitCompletion.Task);
+
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var envelope = CreateCrashEnvelope(cacheDir, [0x01]);
+        var submitTask = reporter.SubmitAsync(envelope);
+
+        try
+        {
+            // Act
+            await reporter.CacheAsync(envelope);
+            submitCompletion.SetResult();
+            await submitTask;
+
+            // Assert
+            Directory.Exists(cacheDir).Should().BeFalse();
+        }
+        finally
+        {
+            if (!submitCompletion.Task.IsCompleted)
+            {
+                submitCompletion.SetResult();
+                await submitTask;
+            }
+
             if (Directory.Exists(cacheDir))
             {
                 Directory.Delete(cacheDir, true);
@@ -621,9 +845,4 @@ public class CrashReporterTests
         cachedEnvelope.Items.Should().NotContain(i => i.TryGetHeader("attachment_type") == "event.minidump");
         cachedEnvelope.Items.Single().TryGetType().Should().Be("event");
     }
-}
-
-internal class NullServiceProvider : IServiceProvider
-{
-    public object? GetService(Type serviceType) => null;
 }

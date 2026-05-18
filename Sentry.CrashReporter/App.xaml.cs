@@ -20,7 +20,7 @@ public partial class App : Application
         InitializeComponent();
     }
 
-    public static IServiceProvider ConfigureServices(StorageFile? file)
+    public static IServiceProvider ConfigureServices(StorageFile? file, ICacheService? cache = null)
     {
         var services = new ServiceCollection();
         services.AddHttpClient()
@@ -31,6 +31,14 @@ public partial class App : Application
         }
         services.AddSingleton<ISentryClient, SentryClient>();
         services.AddSingleton<ICrashReporter, Services.CrashReporter>();
+        if (cache is not null)
+        {
+            services.AddSingleton<ICacheService>(cache);
+        }
+        else
+        {
+            services.AddSingleton<ICacheService, CacheService>();
+        }
         services.AddSingleton<IWindowService, WindowService>();
         services.AddSingleton<IClipboardService, ClipboardService>();
         services.AddSingleton<IFilePickerService, FilePickerService>();
