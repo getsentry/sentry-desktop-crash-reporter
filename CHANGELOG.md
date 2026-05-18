@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.0
+
+### Features
+
+- feat: Add footer popup with cache modes by @jpnurmi in [#193](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/193)
+- feat: Cache crash reports before closing by @jpnurmi in [#170](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/170)
+
+### Dependencies
+
+#### Deps
+
+- chore(deps): Bump ReactiveUI.SourceGenerators from 2.6.1 to 2.6.30 by @dependabot in [#177](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/177)
+- chore(deps): Bump Uno.Sdk from 6.5.31 to 6.5.33 by @dependabot in [#184](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/184)
+
 ## 0.2.0
 
 ### Features
