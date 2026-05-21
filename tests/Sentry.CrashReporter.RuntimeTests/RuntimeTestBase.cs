@@ -36,16 +36,19 @@ public class RuntimeTestBase
 
     protected static MockRuntime MockRuntime(Envelope? envelope = null)
     {
+        var appConfig = new AppConfig();
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.FromResult(envelope));
         var mockWindow = new Mock<IWindowService>();
         var cacheKeep = new MemoryCacheService();
+        mockReporter.Setup(x => x.EffectiveCacheKeep)
+            .Returns(() => (cacheKeep.CacheKeep ?? appConfig.CacheKeep ?? CacheKeep.Offline).Normalize());
         var mockClipboard = new Mock<IClipboardService>();
         var mockFilePicker = new Mock<IFilePickerService>();
 
         var services = new ServiceCollection();
-        services.AddSingleton(new AppConfig());
+        services.AddSingleton(appConfig);
         services.AddSingleton(mockReporter.Object);
         services.AddSingleton(mockWindow.Object);
         services.AddSingleton<ICacheService>(cacheKeep);
