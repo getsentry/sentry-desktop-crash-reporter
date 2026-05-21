@@ -19,7 +19,6 @@ public partial class FooterViewModel : ReactiveObject
     private readonly IWindowService _window;
     private readonly ICacheService _cache;
     private readonly IClipboardService _clipboard;
-    private readonly AppConfig _config;
     [Reactive] private Envelope? _envelope;
     [ObservableAsProperty] private string? _dsn = string.Empty;
     [ObservableAsProperty] private string? _eventId = string.Empty;
@@ -45,16 +44,14 @@ public partial class FooterViewModel : ReactiveObject
         ICrashReporter? reporter = null,
         IWindowService? windowService = null,
         ICacheService? cache = null,
-        IClipboardService? clipboardService = null,
-        AppConfig? config = null)
+        IClipboardService? clipboardService = null)
     {
         _reporter = reporter ?? App.Services.GetRequiredService<ICrashReporter>();
         _window = windowService ?? App.Services.GetRequiredService<IWindowService>();
         _cache = cache ?? App.Services.GetRequiredService<ICacheService>();
         _clipboard = clipboardService ?? App.Services.GetRequiredService<IClipboardService>();
-        _config = config ?? App.Services.GetRequiredService<AppConfig>();
 
-        CacheKeep = EffectiveCacheKeep;
+        CacheKeep = _reporter.EffectiveCacheKeep;
         CanResetCacheKeep = _cache.CacheKeep is not null;
         CacheKeepIndex = CacheKeepToIndex(CacheKeep);
 
@@ -156,12 +153,9 @@ public partial class FooterViewModel : ReactiveObject
             _ => CacheKeep.Offline
         };
 
-    private CacheKeep EffectiveCacheKeep =>
-        (_cache.CacheKeep ?? _config.CacheKeep ?? Sentry.CrashReporter.Services.CacheKeep.Offline).Normalize();
-
     private void SetCacheKeep(CacheKeep cacheKeep)
     {
-        var hasOverride = _cache.CacheKeep is not null || cacheKeep != EffectiveCacheKeep;
+        var hasOverride = _cache.CacheKeep is not null || cacheKeep != _reporter.EffectiveCacheKeep;
         _cache.CacheKeep = hasOverride ? cacheKeep : null;
         CanResetCacheKeep = hasOverride;
         CacheKeep = cacheKeep;
@@ -171,7 +165,7 @@ public partial class FooterViewModel : ReactiveObject
     {
         _cache.CacheKeep = null;
         CanResetCacheKeep = _cache.CacheKeep is not null;
-        CacheKeep = EffectiveCacheKeep;
+        CacheKeep = _reporter.EffectiveCacheKeep;
     }
 
     private string? CopyEventId()

@@ -8,6 +8,7 @@ public record Feedback(string? Name, string? Email, string Message);
 public interface ICrashReporter
 {
     Feedback? Feedback { get; }
+    CacheKeep EffectiveCacheKeep { get; }
     public Task<Envelope?> LoadAsync(CancellationToken cancellationToken = default);
     public Task CacheAsync(Envelope envelope, CancellationToken cancellationToken = default);
     public Task SubmitAsync(Envelope envelope, CancellationToken cancellationToken = default);
@@ -157,7 +158,7 @@ public class CrashReporter(
         }
     }
 
-    private CacheKeep EffectiveCacheKeep => (_cache.CacheKeep ?? _config.CacheKeep ?? CacheKeep.Offline).Normalize();
+    public CacheKeep EffectiveCacheKeep => (_cache.CacheKeep ?? _config.CacheKeep ?? CacheKeep.Offline).Normalize();
 
     private async Task<string?> CacheAsync(Envelope envelope, CacheKeep cacheKeep, CancellationToken cancellationToken)
     {
