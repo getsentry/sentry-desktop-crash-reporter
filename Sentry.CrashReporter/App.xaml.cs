@@ -39,6 +39,10 @@ public partial class App : Application
         {
             services.AddSingleton<ICacheService, CacheService>();
         }
+        var envelopeDir = Path.GetDirectoryName(file?.Path);
+        var databaseDir = Path.GetDirectoryName(envelopeDir);
+        var config = AppConfig.Load(envelopeDir, databaseDir, AppContext.BaseDirectory);
+        services.AddSingleton<AppConfig>(config ?? new AppConfig());
         services.AddSingleton<IWindowService, WindowService>();
         services.AddSingleton<IClipboardService, ClipboardService>();
         services.AddSingleton<IFilePickerService, FilePickerService>();
@@ -121,9 +125,7 @@ public partial class App : Application
             );
         MainWindow = builder.Window;
 
-        var envelopeDir = Path.GetDirectoryName(Services.GetService<IStorageFile>()?.Path);
-        var databaseDir = Path.GetDirectoryName(envelopeDir);
-        AppConfig.Load(envelopeDir, databaseDir, AppContext.BaseDirectory)?.Apply(Resources);
+        Services.GetRequiredService<AppConfig>().Apply(Resources);
 
         MainWindow.Title = (Resources["WindowTitle"] as string)!;
         MainWindow.Resize(900, 600);

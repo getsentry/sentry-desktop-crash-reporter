@@ -11,6 +11,7 @@ public class FooterViewModelTests
     {
         var clipboard = new Mock<IClipboardService>();
         var services = new ServiceCollection();
+        services.AddSingleton(new AppConfig());
         services.AddSingleton<ICacheService>(new MemoryCacheService());
         services.AddSingleton<IClipboardService>(clipboard.Object);
         App.Services = services.BuildServiceProvider();
@@ -107,7 +108,7 @@ public class FooterViewModelTests
     }
 
     [Test]
-    public void CacheKeep_LoadsAndPersistsSelection()
+    public async Task CacheKeep_LoadsAndPersistsSelection()
     {
         // Arrange
         var cacheKeep = new MemoryCacheService(CacheKeep.Always);
@@ -123,11 +124,62 @@ public class FooterViewModelTests
         Assert.That(cacheKeep.CacheKeep, Is.EqualTo(CacheKeep.Always));
 
         // Act
-        viewModel.CacheKeep = CacheKeep.None;
+        await viewModel.SetCacheKeepCommand.Execute(CacheKeep.None);
 
         // Assert
         Assert.That(viewModel.CacheKeepIndex, Is.EqualTo(0));
         Assert.That(cacheKeep.CacheKeep, Is.EqualTo(CacheKeep.None));
+    }
+
+    [Test]
+    public void CacheKeepOverride_DifferentThanDefault_CanReset()
+    {
+        // Arrange
+        var cacheKeep = new MemoryCacheService(CacheKeep.Always);
+        var mockReporter = new Mock<ICrashReporter>();
+        var mockWindow = new Mock<IWindowService>();
+
+        // Act
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object, cacheKeep);
+
+        // Assert
+        Assert.That(viewModel.CacheKeep, Is.EqualTo(CacheKeep.Always));
+        Assert.That(viewModel.CanResetCacheKeep, Is.True);
+    }
+
+    [Test]
+    public void CacheKeepOverride_SameAsDefault_CanReset()
+    {
+        // Arrange
+        var cacheKeep = new MemoryCacheService(CacheKeep.Offline);
+        var mockReporter = new Mock<ICrashReporter>();
+        var mockWindow = new Mock<IWindowService>();
+
+        // Act
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object, cacheKeep);
+
+        // Assert
+        Assert.That(viewModel.CacheKeep, Is.EqualTo(CacheKeep.Offline));
+        Assert.That(viewModel.CanResetCacheKeep, Is.True);
+    }
+
+    [Test]
+    public async Task ResetCacheKeepCommand_RestoresDefault()
+    {
+        // Arrange
+        var cacheKeep = new MemoryCacheService(CacheKeep.Always);
+        var mockReporter = new Mock<ICrashReporter>();
+        var mockWindow = new Mock<IWindowService>();
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object, cacheKeep);
+
+        // Act
+        await viewModel.ResetCacheKeepCommand.Execute();
+
+        // Assert
+        Assert.That(viewModel.CacheKeep, Is.EqualTo(CacheKeep.Offline));
+        Assert.That(viewModel.CacheKeepIndex, Is.EqualTo(1));
+        Assert.That(viewModel.CanResetCacheKeep, Is.False);
+        Assert.That(cacheKeep.CacheKeep, Is.Null);
     }
 
     [Test]

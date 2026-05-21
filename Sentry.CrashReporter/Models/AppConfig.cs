@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Sentry.CrashReporter.Extensions;
+using Sentry.CrashReporter.Services;
 using Path = System.IO.Path;
 
 namespace Sentry.CrashReporter.Models;
@@ -29,6 +30,8 @@ public record AppConfig
     public bool? WindowClosable { get; init; }
     public string? LogoLight { get; init; }
     public string? LogoDark { get; init; }
+    [JsonConverter(typeof(JsonStringEnumConverter<CacheKeep>))]
+    public CacheKeep? CacheKeep { get; init; }
 
     private const string FileName = "appsettings.json";
 

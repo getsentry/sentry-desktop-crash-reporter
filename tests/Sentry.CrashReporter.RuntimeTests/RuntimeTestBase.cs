@@ -45,6 +45,7 @@ public class RuntimeTestBase
         var mockFilePicker = new Mock<IFilePickerService>();
 
         var services = new ServiceCollection();
+        services.AddSingleton(new AppConfig());
         services.AddSingleton(mockReporter.Object);
         services.AddSingleton(mockWindow.Object);
         services.AddSingleton<ICacheService>(cacheKeep);

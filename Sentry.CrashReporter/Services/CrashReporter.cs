@@ -17,11 +17,13 @@ public interface ICrashReporter
 public class CrashReporter(
     IStorageFile? file = null,
     ISentryClient? client = null,
-    ICacheService? cache = null) : ICrashReporter
+    ICacheService? cache = null,
+    AppConfig? config = null) : ICrashReporter
 {
     private readonly IStorageFile? _file = file ?? App.Services.GetService<IStorageFile>();
     private readonly ISentryClient _client = client ?? App.Services.GetRequiredService<ISentryClient>();
     private readonly ICacheService _cache = cache ?? App.Services.GetRequiredService<ICacheService>();
+    private readonly AppConfig _config = config ?? App.Services.GetRequiredService<AppConfig>();
     private Envelope? _submittingEnvelope;
     private readonly HashSet<Envelope> _submittedEnvelopes = [];
     private Feedback? _feedback = ResolveFeedback();
@@ -51,7 +53,7 @@ public class CrashReporter(
         try
         {
             await _client.SubmitEnvelopeAsync(dsn, envelope, cancellationToken);
-            var cachedEnvelopePath = await CacheAsync(envelope, _cache.CacheKeep, cancellationToken);
+            var cachedEnvelopePath = await CacheAsync(envelope, EffectiveCacheKeep, cancellationToken);
             _submittedEnvelopes.Add(envelope);
             DeleteEnvelope(envelope, cachedEnvelopePath);
         }
@@ -110,7 +112,7 @@ public class CrashReporter(
             {
                 return;
             }
-            if (_cache.CacheKeep == CacheKeep.None)
+            if (EffectiveCacheKeep == CacheKeep.None)
             {
                 DeleteEnvelope(envelope);
                 return;
@@ -154,6 +156,8 @@ public class CrashReporter(
             this.Log().LogWarning(e, "Failed to cache crash envelope.");
         }
     }
+
+    private CacheKeep EffectiveCacheKeep => (_cache.CacheKeep ?? _config.CacheKeep ?? CacheKeep.Offline).Normalize();
 
     private async Task<string?> CacheAsync(Envelope envelope, CacheKeep cacheKeep, CancellationToken cancellationToken)
     {

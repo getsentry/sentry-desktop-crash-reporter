@@ -116,6 +116,7 @@ settings into the sentry-native database directory.
     "WindowTitle": "My Crash Reporter",
     "WindowClosable": false,
     "HeaderText": "Something Went Wrong",
+    "CacheKeep": "Always",
     "LogoLight": "branding/logo-light.png",
     "LogoDark": "branding/logo-dark.png",
     "SystemAccentColor": "#4CAF50"
@@ -133,6 +134,7 @@ settings into the sentry-native database directory.
 | `HeaderDescription` | Description text below the header. Hidden when empty. |
 | `CancelButton` | Cancel button label. Set to empty string to hide the button. |
 | `SubmitButton` | Submit button label. |
+| `CacheKeep` | Initial cache mode when the user has not selected one. Supported values: `None`, `Offline`, `Always`. Defaults to `Offline`. |
 | `LogoLight` | Path to a custom logo image for light theme (relative to the binary or absolute). |
 | `LogoDark` | Path to a custom logo image for dark theme (relative to the binary or absolute). |
 | `SystemAccentColor` | Primary brand color (`#RRGGBB` or `#AARRGGBB`). |

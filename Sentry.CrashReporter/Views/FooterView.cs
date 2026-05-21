@@ -72,7 +72,7 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
             .Spacing(8)
             .Visibility(x => x.Binding(() => vm.CanCache)
                 .Convert(canCache => canCache ? Visibility.Visible : Visibility.Collapsed));
-        cacheSection.Children.Add(BuildSectionHeader("Cache", BuildOpenCacheDirectoryButton(vm, close)));
+        cacheSection.Children.Add(BuildCacheSectionHeader(vm, close));
         cacheSection.Children.Add(BuildCacheSegmented(vm, close));
 
         return new StackPanel()
@@ -96,6 +96,24 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
                     .VerticalAlignment(VerticalAlignment.Center)
                     .Grid(0),
                 action.Grid(1));
+    }
+
+    private static FrameworkElement BuildCacheSectionHeader(FooterViewModel vm, Action close)
+    {
+        return new Grid()
+            .ColumnSpacing(6)
+            .ColumnDefinitions("Auto,Auto,*,Auto")
+            .Children(
+                new TextBlock()
+                    .Text("Cache")
+                    .FontWeight(Microsoft.UI.Text.FontWeights.SemiBold)
+                    .VerticalAlignment(VerticalAlignment.Center)
+                    .Grid(0),
+                BuildResetCacheKeepButton(vm)
+                    .Grid(1)
+                    .Visibility(x => x.Binding(() => vm.CanResetCacheKeep).Convert(ToVisibility)),
+                BuildOpenCacheDirectoryButton(vm, close)
+                    .Grid(3));
     }
 
     private static FrameworkElement BuildEventIdText(FooterViewModel vm)
@@ -212,6 +230,26 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
         segmented.AddHandler(UIElement.TappedEvent, new TappedEventHandler((_, _) => close()), true);
         return segmented;
     }
+
+    private static Button BuildResetCacheKeepButton(FooterViewModel vm)
+    {
+        var button = new Button()
+            .Content(new FontAwesomeIcon(FA.ArrowRotateLeft).FontSize(12))
+            .Width(28)
+            .Height(28)
+            .MinWidth(0)
+            .MinHeight(0)
+            .IsTabStop(false)
+            .Padding(0)
+            .Background(Colors.Transparent)
+            .BorderBrush(Colors.Transparent)
+            .Command(x => x.Binding(() => vm.ResetCacheKeepCommand))
+            .ToolTip("Reset");
+        return button;
+    }
+
+    private static Visibility ToVisibility(bool visible) =>
+        visible ? Visibility.Visible : Visibility.Collapsed;
 
     private static FrameworkElement BuildStatusLabelSafe(FooterViewModel vm, FooterStatus status)
     {
