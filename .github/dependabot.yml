@@ -35,10 +35,6 @@ updates:
     - dependency-name: "Uno.UITest.Helpers"
     - dependency-name: "WireMock.Net"
     - dependency-name: "Xamarin.UITest"
-  groups:
-    tests:
-      patterns:
-        - "*"
   commit-message:
     prefix: "test(deps)"
 - package-ecosystem: github-actions
