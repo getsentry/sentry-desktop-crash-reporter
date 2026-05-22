@@ -159,6 +159,23 @@ public class AppConfigTests
     }
 
     [Test]
+    public void Load_CacheKeep_ReturnsValue()
+    {
+        var dir = WriteConfig("""
+        {
+          "AppConfig": {
+            "CacheKeep": "Always"
+          }
+        }
+        """);
+
+        var result = AppConfig.Load(dir);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.CacheKeep, Is.EqualTo(CacheKeep.Always));
+    }
+
+    [Test]
     public void Load_EmptyCancelButtonText_ReturnsEmptyString()
     {
         var dir = WriteConfig("""

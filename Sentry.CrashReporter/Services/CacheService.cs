@@ -7,66 +7,77 @@ public enum CacheKeep
     Always = 2
 }
 
-public interface ICacheService
+internal static class CacheKeepExtensions
 {
-    CacheKeep CacheKeep { get; set; }
-}
-
-public class CacheService : ICacheService
-{
-    private const string Key = "cache_keep";
-    private CacheKeep _cacheKeep;
-
-    public CacheService()
-    {
-        _cacheKeep = Load();
-    }
-
-    public CacheKeep CacheKeep
-    {
-        get => _cacheKeep;
-        set
-        {
-            value = Normalize(value);
-            if (_cacheKeep == value)
-            {
-                return;
-            }
-
-            _cacheKeep = value;
-            Save(value);
-        }
-    }
-
-    private static CacheKeep Load()
-    {
-        var values = ApplicationData.Current.LocalSettings.Values;
-        if (values.TryGetValue(Key, out var value) && value is int raw)
-        {
-            return Normalize((CacheKeep)raw);
-        }
-
-        return CacheKeep.Offline;
-    }
-
-    private static void Save(CacheKeep value)
-    {
-        ApplicationData.Current.LocalSettings.Values[Key] = (int)value;
-    }
-
-    internal static CacheKeep Normalize(CacheKeep value) =>
+    public static CacheKeep Normalize(this CacheKeep value) =>
         value is CacheKeep.None or CacheKeep.Offline or CacheKeep.Always
             ? value
             : CacheKeep.Offline;
 }
 
-internal class MemoryCacheService(CacheKeep cacheKeep = CacheKeep.Offline) : ICacheService
+public interface ICacheService
 {
-    private CacheKeep _cacheKeep = CacheService.Normalize(cacheKeep);
+    CacheKeep? CacheKeep { get; set; }
+}
 
-    public CacheKeep CacheKeep
+public class CacheService : ICacheService
+{
+    private const string Key = "cache_keep";
+
+    private readonly IDictionary<string, object?>? _settings;
+    private CacheKeep? _cacheKeep;
+
+    public CacheService(IDictionary<string, object?>? settings = null)
+    {
+        _settings = settings ?? ApplicationData.Current?.LocalSettings?.Values;
+        _cacheKeep = Load(_settings);
+    }
+
+    public CacheKeep? CacheKeep
     {
         get => _cacheKeep;
-        set => _cacheKeep = CacheService.Normalize(value);
+        set
+        {
+            _cacheKeep = value.HasValue ? value.Value.Normalize() : null;
+            if (_settings is null)
+            {
+                return;
+            }
+
+            if (_cacheKeep.HasValue)
+            {
+                _settings[Key] = (int)_cacheKeep.Value;
+            }
+            else
+            {
+                _settings.Remove(Key);
+            }
+        }
+    }
+
+    private static CacheKeep? Load(IDictionary<string, object?>? settings)
+    {
+        if (settings is not null && settings.TryGetValue(Key, out var value) && value is int raw)
+        {
+            return ((CacheKeep)raw).Normalize();
+        }
+
+        return null;
+    }
+}
+
+internal class MemoryCacheService(CacheKeep? cacheKeep = null) : ICacheService
+{
+    private CacheKeep? _cacheKeep = cacheKeep is { } value
+        ? value.Normalize()
+        : null;
+
+    public CacheKeep? CacheKeep
+    {
+        get => _cacheKeep;
+        set
+        {
+            _cacheKeep = value.HasValue ? value.Value.Normalize() : null;
+        }
     }
 }

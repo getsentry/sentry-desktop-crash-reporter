@@ -11,6 +11,7 @@ public class FooterViewModelTests
     {
         var clipboard = new Mock<IClipboardService>();
         var services = new ServiceCollection();
+        services.AddSingleton(new AppConfig());
         services.AddSingleton<ICacheService>(new MemoryCacheService());
         services.AddSingleton<IClipboardService>(clipboard.Object);
         App.Services = services.BuildServiceProvider();
@@ -20,7 +21,7 @@ public class FooterViewModelTests
     public void Defaults()
     {
         // Arrange
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter();
         var mockWindow = new Mock<IWindowService>();
 
         // Act
@@ -48,7 +49,7 @@ public class FooterViewModelTests
             },
             new List<EnvelopeItem>()
         );
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter();
         var mockWindow = new Mock<IWindowService>();
 
         // Act
@@ -90,7 +91,7 @@ public class FooterViewModelTests
                     [0x01])
             ]
         );
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter();
         var mockWindow = new Mock<IWindowService>();
 
         // Act
@@ -107,11 +108,11 @@ public class FooterViewModelTests
     }
 
     [Test]
-    public void CacheKeep_LoadsAndPersistsSelection()
+    public async Task CacheKeep_LoadsAndPersistsSelection()
     {
         // Arrange
         var cacheKeep = new MemoryCacheService(CacheKeep.Always);
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter(cacheKeep);
         var mockWindow = new Mock<IWindowService>();
 
         // Act
@@ -123,11 +124,62 @@ public class FooterViewModelTests
         Assert.That(cacheKeep.CacheKeep, Is.EqualTo(CacheKeep.Always));
 
         // Act
-        viewModel.CacheKeep = CacheKeep.None;
+        await viewModel.SetCacheKeepCommand.Execute(CacheKeep.None);
 
         // Assert
         Assert.That(viewModel.CacheKeepIndex, Is.EqualTo(0));
         Assert.That(cacheKeep.CacheKeep, Is.EqualTo(CacheKeep.None));
+    }
+
+    [Test]
+    public void CacheKeepOverride_DifferentThanDefault_CanReset()
+    {
+        // Arrange
+        var cacheKeep = new MemoryCacheService(CacheKeep.Always);
+        var mockReporter = MockReporter(cacheKeep);
+        var mockWindow = new Mock<IWindowService>();
+
+        // Act
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object, cacheKeep);
+
+        // Assert
+        Assert.That(viewModel.CacheKeep, Is.EqualTo(CacheKeep.Always));
+        Assert.That(viewModel.CanResetCacheKeep, Is.True);
+    }
+
+    [Test]
+    public void CacheKeepOverride_SameAsDefault_CanReset()
+    {
+        // Arrange
+        var cacheKeep = new MemoryCacheService(CacheKeep.Offline);
+        var mockReporter = MockReporter(cacheKeep);
+        var mockWindow = new Mock<IWindowService>();
+
+        // Act
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object, cacheKeep);
+
+        // Assert
+        Assert.That(viewModel.CacheKeep, Is.EqualTo(CacheKeep.Offline));
+        Assert.That(viewModel.CanResetCacheKeep, Is.True);
+    }
+
+    [Test]
+    public async Task ResetCacheKeepCommand_RestoresDefault()
+    {
+        // Arrange
+        var cacheKeep = new MemoryCacheService(CacheKeep.Always);
+        var mockReporter = MockReporter(cacheKeep);
+        var mockWindow = new Mock<IWindowService>();
+        var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object, cacheKeep);
+
+        // Act
+        await viewModel.ResetCacheKeepCommand.Execute();
+
+        // Assert
+        Assert.That(viewModel.CacheKeep, Is.EqualTo(CacheKeep.Offline));
+        Assert.That(viewModel.CacheKeepIndex, Is.EqualTo(1));
+        Assert.That(viewModel.CanResetCacheKeep, Is.False);
+        Assert.That(cacheKeep.CacheKeep, Is.Null);
     }
 
     [Test]
@@ -144,7 +196,7 @@ public class FooterViewModelTests
             new List<EnvelopeItem>()
         );
         var cacheKeep = new MemoryCacheService(CacheKeep.Offline);
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter(cacheKeep);
         var mockWindow = new Mock<IWindowService>();
         var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object, cacheKeep)
         {
@@ -175,7 +227,7 @@ public class FooterViewModelTests
             new List<EnvelopeItem>()
         );
         var cacheKeep = new MemoryCacheService(CacheKeep.Offline);
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter(cacheKeep);
         var mockWindow = new Mock<IWindowService>();
         var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object, cacheKeep)
         {
@@ -211,7 +263,7 @@ public class FooterViewModelTests
             },
             new List<EnvelopeItem>()
         );
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter();
         var mockWindow = new Mock<IWindowService>();
         var mockClipboard = new Mock<IClipboardService>();
         var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object, clipboardService: mockClipboard.Object)
@@ -235,7 +287,7 @@ public class FooterViewModelTests
             new JsonObject { ["dsn"] = "https://foo@bar.com/123" },
             new List<EnvelopeItem>()
         );
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter();
         var tcs = new TaskCompletionSource<object?>();
         mockReporter.Setup(x => x.SubmitAsync(envelope, It.IsAny<CancellationToken>()))
             .Returns(tcs.Task);
@@ -266,7 +318,7 @@ public class FooterViewModelTests
             new JsonObject { ["dsn"] = "https://foo@bar.com/123" },
             new List<EnvelopeItem>()
         );
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter();
         mockReporter.Setup(x => x.SubmitAsync(It.IsAny<Envelope>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Failure"));
         var mockWindow = new Mock<IWindowService>();
@@ -289,7 +341,7 @@ public class FooterViewModelTests
     public async Task CannotSubmit()
     {
         // Arrange
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter();
         var mockWindow = new Mock<IWindowService>();
 
         // Act
@@ -308,7 +360,7 @@ public class FooterViewModelTests
             new JsonObject { ["dsn"] = "https://foo@bar.com/123" },
             new List<EnvelopeItem>()
         );
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter();
         var mockWindow = new Mock<IWindowService>();
 
         // Act
@@ -330,7 +382,7 @@ public class FooterViewModelTests
             new JsonObject { ["dsn"] = "https://foo@bar.com/123" },
             new List<EnvelopeItem>()
         );
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter();
         var mockWindow = new Mock<IWindowService>();
 
         var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object)
@@ -355,7 +407,7 @@ public class FooterViewModelTests
             new JsonObject { ["dsn"] = "https://foo@bar.com/123" },
             new List<EnvelopeItem>()
         );
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter();
         var tcs = new TaskCompletionSource<object?>();
         mockReporter.Setup(x => x.SubmitAsync(envelope, It.IsAny<CancellationToken>()))
             .Returns(tcs.Task);
@@ -387,7 +439,7 @@ public class FooterViewModelTests
             new JsonObject { ["dsn"] = "https://foo@bar.com/123" },
             new List<EnvelopeItem>()
         );
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter();
         mockReporter.Setup(x => x.SubmitAsync(envelope, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Failure"));
         var mockWindow = new Mock<IWindowService>();
@@ -411,7 +463,7 @@ public class FooterViewModelTests
     public async Task Cancel_ClosesWindow()
     {
         // Arrange
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter();
         var mockWindow = new Mock<IWindowService>();
         var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object);
 
@@ -432,7 +484,7 @@ public class FooterViewModelTests
             new JsonObject { ["dsn"] = "https://foo@bar.com/123" },
             new List<EnvelopeItem>()
         );
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter();
         var mockWindow = new Mock<IWindowService>();
         var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object)
         {
@@ -456,7 +508,7 @@ public class FooterViewModelTests
             new JsonObject { ["dsn"] = "https://foo@bar.com/123" },
             new List<EnvelopeItem>()
         );
-        var mockReporter = new Mock<ICrashReporter>();
+        var mockReporter = MockReporter();
         var tcs = new TaskCompletionSource<object?>();
         mockReporter.Setup(x => x.SubmitAsync(envelope, It.IsAny<CancellationToken>()))
             .Returns(tcs.Task);
@@ -480,5 +532,16 @@ public class FooterViewModelTests
         // Cleanup
         tcs.SetResult(null);
         await submitTask;
+    }
+
+    private static Mock<ICrashReporter> MockReporter(ICacheService? cache = null, AppConfig? config = null)
+    {
+        cache ??= new MemoryCacheService();
+        config ??= new AppConfig();
+
+        var mockReporter = new Mock<ICrashReporter>();
+        mockReporter.Setup(x => x.EffectiveCacheKeep)
+            .Returns(() => (cache.CacheKeep ?? config.CacheKeep ?? CacheKeep.Offline).Normalize());
+        return mockReporter;
     }
 }

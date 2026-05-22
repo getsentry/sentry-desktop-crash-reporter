@@ -28,6 +28,7 @@ public partial class FooterViewModel : ReactiveObject
     [ObservableAsProperty] private string? _cacheDirectory = string.Empty;
     [ObservableAsProperty] private bool _canCache;
     [Reactive] private CacheKeep _cacheKeep;
+    [Reactive] private bool _canResetCacheKeep;
     [Reactive] private int _cacheKeepIndex;
     [ObservableAsProperty] private bool _isSubmitting;
     private readonly IObservable<bool> _canSubmit;
@@ -36,6 +37,7 @@ public partial class FooterViewModel : ReactiveObject
 
     public ReactiveCommand<Unit, string?> CopyEventIdCommand { get; }
     public ReactiveCommand<CacheKeep, Unit> SetCacheKeepCommand { get; }
+    public ReactiveCommand<Unit, Unit> ResetCacheKeepCommand { get; }
     public ReactiveCommand<Unit, Unit> OpenCacheDirectoryCommand { get; }
 
     public FooterViewModel(
@@ -49,7 +51,8 @@ public partial class FooterViewModel : ReactiveObject
         _cache = cache ?? App.Services.GetRequiredService<ICacheService>();
         _clipboard = clipboardService ?? App.Services.GetRequiredService<IClipboardService>();
 
-        CacheKeep = _cache.CacheKeep;
+        CacheKeep = _reporter.EffectiveCacheKeep;
+        CanResetCacheKeep = _cache.CacheKeep is not null;
         CacheKeepIndex = CacheKeepToIndex(CacheKeep);
 
         _dsnHelper = this.WhenAnyValue(x => x.Envelope,  e => e?.TryGetDsn())
@@ -83,7 +86,6 @@ public partial class FooterViewModel : ReactiveObject
         this.WhenAnyValue(x => x.CacheKeep)
             .Subscribe(cacheKeep =>
             {
-                _cache.CacheKeep = cacheKeep;
                 var cacheKeepIndex = CacheKeepToIndex(cacheKeep);
                 if (CacheKeepIndex != cacheKeepIndex)
                 {
@@ -92,15 +94,10 @@ public partial class FooterViewModel : ReactiveObject
             });
 
         this.WhenAnyValue(x => x.CacheKeepIndex)
+            .Skip(1)
             .Where(index => index >= 0)
             .Select(IndexToCacheKeep)
-            .Subscribe(cacheKeep =>
-            {
-                if (CacheKeep != cacheKeep)
-                {
-                    CacheKeep = cacheKeep;
-                }
-            });
+            .Subscribe(SetCacheKeep);
 
         _canSubmit = this.WhenAnyValue(x => x.Dsn)
             .Select(dsn => !string.IsNullOrWhiteSpace(dsn));
@@ -108,9 +105,11 @@ public partial class FooterViewModel : ReactiveObject
             .Select(eventId => !string.IsNullOrWhiteSpace(eventId));
         var canOpenCacheDirectory = this.WhenAnyValue(x => x.CacheDirectory)
             .Select(cacheDirectory => !string.IsNullOrWhiteSpace(cacheDirectory));
+        var canResetCacheKeep = this.WhenAnyValue(x => x.CanResetCacheKeep);
 
         CopyEventIdCommand = ReactiveCommand.Create(CopyEventId, canCopyEventId);
-        SetCacheKeepCommand = ReactiveCommand.Create<CacheKeep>(cacheKeep => CacheKeep = cacheKeep);
+        SetCacheKeepCommand = ReactiveCommand.Create<CacheKeep>(SetCacheKeep);
+        ResetCacheKeepCommand = ReactiveCommand.Create(ResetCacheKeep, canResetCacheKeep);
         OpenCacheDirectoryCommand = ReactiveCommand.CreateFromTask(OpenCacheDirectory, canOpenCacheDirectory);
 
         _isSubmittingHelper = this.WhenAnyObservable(x => x.SubmitCommand.IsExecuting)
@@ -153,6 +152,21 @@ public partial class FooterViewModel : ReactiveObject
             2 => CacheKeep.Always,
             _ => CacheKeep.Offline
         };
+
+    private void SetCacheKeep(CacheKeep cacheKeep)
+    {
+        var hasOverride = _cache.CacheKeep is not null || cacheKeep != _reporter.EffectiveCacheKeep;
+        _cache.CacheKeep = hasOverride ? cacheKeep : null;
+        CanResetCacheKeep = hasOverride;
+        CacheKeep = cacheKeep;
+    }
+
+    private void ResetCacheKeep()
+    {
+        _cache.CacheKeep = null;
+        CanResetCacheKeep = _cache.CacheKeep is not null;
+        CacheKeep = _reporter.EffectiveCacheKeep;
+    }
 
     private string? CopyEventId()
     {

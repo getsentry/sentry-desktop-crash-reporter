@@ -52,16 +52,19 @@
         <DefineConstants>$(DefineConstants);USE_UITESTS</DefineConstants>
     </PropertyGroup>
 
-    <ItemGroup Condition="$(TargetFramework.Contains('browserwasm'))">
-        <Content Include="../tests/data/inproc.envelope" />
-    </ItemGroup>
-
-    <ItemGroup Condition="$(TargetFramework.Contains('desktop'))">
+    <ItemGroup>
         <Content Include="../tests/data/*.envelope">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <CopyToPublishDirectory>Never</CopyToPublishDirectory>
             <Link>%(Filename)%(Extension)</Link>
             <TargetPath>%(Filename)%(Extension)</TargetPath>
+        </Content>
+        <Content Update="../tests/data/inproc.envelope" Condition="$(TargetFramework.Contains('browserwasm'))">
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+        <Content Include="appsettings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>Never</CopyToPublishDirectory>
         </Content>
     </ItemGroup>
 
@@ -90,7 +93,6 @@
         <!-- Required for the main assembly when trimming is enabled -->
         <TrimmerRootAssembly Include="Sentry.CrashReporter" />
     </ItemGroup>
-
 
     <ItemGroup>
         <Content Include="Assets\AppLogo.png" />
