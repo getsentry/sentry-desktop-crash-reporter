@@ -42,6 +42,10 @@ public class SymbolDemangler : ISymbolDemangler
             _enabled = false;
             return symbol;
         }
+        catch (Exception)
+        {
+            return symbol;
+        }
 #else
         return symbol;
 #endif
