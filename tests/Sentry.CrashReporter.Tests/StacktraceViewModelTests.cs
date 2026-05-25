@@ -94,6 +94,24 @@ public class StacktraceViewModelTests
     }
 
     [Test]
+    public async Task Init_WithStacktrace_DemanglesSymbols()
+    {
+        // Arrange
+        await using var file = File.OpenRead("data/crashpad.envelope");
+        var envelope = await Envelope.FromFileStreamAsync(file);
+        var demangler = new Mock<ISymbolDemangler>();
+        demangler.Setup(x => x.Demangle(It.IsAny<string>()))
+            .Returns<string>(symbol => symbol);
+        demangler.Setup(x => x.Demangle("memset")).Returns("demangled memset");
+
+        // Act
+        var viewModel = new StacktraceViewModel(demangler.Object) { Envelope = envelope };
+
+        // Assert
+        Assert.That(viewModel.Frames![0].Symbol, Is.EqualTo("demangled memset"));
+    }
+
+    [Test]
     public async Task NextThread_AdvancesIndex()
     {
         // Arrange
@@ -272,6 +290,45 @@ public class StacktraceViewModelTests
         Assert.That(viewModel.Threads![0].Crashed, Is.True);
         Assert.That(viewModel.Threads[0].Frames, Has.Count.EqualTo(1));
         Assert.That(viewModel.Threads[0].Frames[0].Symbol, Is.EqualTo("segfault"));
+    }
+
+    [Test]
+    public void Init_EventStacktrace_DemanglesSymbols()
+    {
+        // Arrange
+        var envelope = new Envelope(new JsonObject(), [
+            new EnvelopeItem(new JsonObject { ["type"] = "event" },
+                Encoding.UTF8.GetBytes(new JsonObject
+                {
+                    ["exception"] = new JsonObject
+                    {
+                        ["values"] = new JsonArray(
+                            new JsonObject
+                            {
+                                ["type"] = "SIGSEGV",
+                                ["stacktrace"] = new JsonObject
+                                {
+                                    ["frames"] = new JsonArray(
+                                        new JsonObject
+                                        {
+                                            ["instruction_addr"] = "0x1234",
+                                            ["function"] = "_ZN3foo3barEv"
+                                        })
+                                }
+                            })
+                    }
+                }.ToJsonString()))
+        ]);
+        var demangler = new Mock<ISymbolDemangler>();
+        demangler.Setup(x => x.Demangle(It.IsAny<string>()))
+            .Returns<string>(symbol => symbol);
+        demangler.Setup(x => x.Demangle("_ZN3foo3barEv")).Returns("foo::bar()");
+
+        // Act
+        var viewModel = new StacktraceViewModel(demangler.Object) { Envelope = envelope };
+
+        // Assert
+        Assert.That(viewModel.Threads![0].Frames[0].Symbol, Is.EqualTo("foo::bar()"));
     }
 
     [Test]
