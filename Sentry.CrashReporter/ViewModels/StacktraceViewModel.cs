@@ -30,7 +30,7 @@ public partial class StacktraceViewModel : ReactiveObject
     {
         _symbolDemangler = symbolDemangler
             ?? TryGetSymbolDemangler()
-            ?? new SymbolDemangler();
+            ?? CreateDefaultSymbolDemangler();
 
         _threadsHelper = this.WhenAnyValue(x => x.Envelope)
             .Select(envelope =>
@@ -85,6 +85,15 @@ public partial class StacktraceViewModel : ReactiveObject
             .Select(((List<StacktraceThreadItem>? threads, int index) t) =>
                 t.threads is not null && t.index < t.threads.Count - 1);
         NextThread = ReactiveCommand.Create(() => { SelectedThreadIndex++; }, canGoNext);
+    }
+
+    private static ISymbolDemangler CreateDefaultSymbolDemangler()
+    {
+#if __DESKTOP__
+        return new SymbolicDemangler();
+#else
+        return new NullDemangler();
+#endif
     }
 
     private static ISymbolDemangler? TryGetSymbolDemangler()
