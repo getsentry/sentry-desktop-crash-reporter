@@ -7,7 +7,7 @@ public interface ISymbolDemangler
 
 public class SymbolDemangler : ISymbolDemangler
 {
-#if DESKTOP
+#if __DESKTOP__
     private bool _enabled = true;
 #endif
 
@@ -15,7 +15,7 @@ public class SymbolDemangler : ISymbolDemangler
     {
         if (string.IsNullOrEmpty(symbol)) return symbol;
 
-#if DESKTOP
+#if __DESKTOP__
         if (!_enabled) return symbol;
 
         try
