@@ -54,6 +54,7 @@ public class RuntimeTestBase
         services.AddSingleton<ICacheService>(cacheKeep);
         services.AddSingleton(mockClipboard.Object);
         services.AddSingleton(mockFilePicker.Object);
+        services.AddSingleton<ISymbolDemangler, NullDemangler>();
         App.Services = services.BuildServiceProvider();
 
         return new MockRuntime(mockReporter, mockWindow, cacheKeep, mockClipboard, mockFilePicker);
