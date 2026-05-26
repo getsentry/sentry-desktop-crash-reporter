@@ -41,7 +41,7 @@ public class UITests : TestBase
         // Assert
         Assert.That(server.LogEntries, Has.Count.EqualTo(1));
 
-        using var eventStream = new MemoryStream(server.LogEntries.Single().RequestMessage.BodyAsBytes ?? []);
+        using var eventStream = new MemoryStream(server.LogEntries.Single().RequestMessage!.BodyAsBytes ?? []);
         var eventEnvelope = await Envelope.DeserializeAsync(eventStream);
         var eventException = eventEnvelope.TryGetException();
         Assert.That(eventException, Is.Not.Null);
@@ -79,13 +79,13 @@ public class UITests : TestBase
         // Assert
         Assert.That(server.LogEntries, Has.Count.EqualTo(2));
 
-        using var eventStream = new MemoryStream(server.LogEntries.First().RequestMessage.BodyAsBytes ?? []);
+        using var eventStream = new MemoryStream(server.LogEntries.First().RequestMessage!.BodyAsBytes ?? []);
         var eventEnvelope = await Envelope.DeserializeAsync(eventStream);
         var eventException = eventEnvelope.TryGetException();
         Assert.That(eventException, Is.Not.Null);
         Assert.That(eventException!.Type, Is.EqualTo("SIGSEGV"));
 
-        using var feedbackStream = new MemoryStream(server.LogEntries.Last().RequestMessage.BodyAsBytes ?? []);
+        using var feedbackStream = new MemoryStream(server.LogEntries.Last().RequestMessage!.BodyAsBytes ?? []);
         var feedbackEnvelope = await Envelope.DeserializeAsync(feedbackStream);
         var feedbackItem = feedbackEnvelope.Items.FirstOrDefault(i => i.TryGetHeader("type") == "feedback");
         Assert.That(feedbackItem, Is.Not.Null);
@@ -162,7 +162,7 @@ public class UITests : TestBase
         Assert.That(server.LogEntries, Has.Count.EqualTo(2));
         foreach (var entry in server.LogEntries)
         {
-            using var eventStream = new MemoryStream(entry.RequestMessage.BodyAsBytes ?? []);
+            using var eventStream = new MemoryStream(entry.RequestMessage!.BodyAsBytes ?? []);
             var eventEnvelope = await Envelope.DeserializeAsync(eventStream);
             var eventException = eventEnvelope.TryGetException();
             Assert.That(eventException, Is.Not.Null);
@@ -208,14 +208,14 @@ public class UITests : TestBase
         Assert.That(server.LogEntries, Has.Count.EqualTo(3));
         foreach (var entry in server.LogEntries.Take(2))
         {
-            using var eventStream = new MemoryStream(entry.RequestMessage.BodyAsBytes ?? []);
+            using var eventStream = new MemoryStream(entry.RequestMessage!.BodyAsBytes ?? []);
             var eventEnvelope = await Envelope.DeserializeAsync(eventStream);
             var eventException = eventEnvelope.TryGetException();
             Assert.That(eventException, Is.Not.Null);
             Assert.That(eventException!.Type, Is.EqualTo("SIGSEGV"));
         }
 
-        using var feedbackStream = new MemoryStream(server.LogEntries.Last().RequestMessage.BodyAsBytes ?? []);
+        using var feedbackStream = new MemoryStream(server.LogEntries.Last().RequestMessage!.BodyAsBytes ?? []);
         var feedbackEnvelope = await Envelope.DeserializeAsync(feedbackStream);
         var feedbackItem = feedbackEnvelope.Items.FirstOrDefault(i => i.TryGetHeader("type") == "feedback");
         Assert.That(feedbackItem, Is.Not.Null);
