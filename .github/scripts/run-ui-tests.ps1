@@ -23,6 +23,7 @@ function Stop-UiTestProcesses {
             if (!$Server.HasExited) {
                 $Server.Kill($true)
                 $Server.WaitForExit(5000) | Out-Null
+                Start-Sleep -Seconds 1
             }
         }
         catch {
