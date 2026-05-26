@@ -1,6 +1,7 @@
 using System.Reactive;
 using System.Text.Json.Nodes;
 using Sentry.CrashReporter.Extensions;
+using Sentry.CrashReporter.Services;
 
 namespace Sentry.CrashReporter.ViewModels;
 
@@ -20,12 +21,15 @@ public partial class StacktraceViewModel : ReactiveObject
     [ObservableAsProperty] private StacktraceThreadItem? _selectedThread;
     [ObservableAsProperty] private List<StacktraceFrameItem>? _frames;
     [ObservableAsProperty] private bool _hasMultipleThreads;
+    private readonly ISymbolDemangler _demangler;
 
     public ReactiveCommand<Unit, Unit> PreviousThread { get; }
     public ReactiveCommand<Unit, Unit> NextThread { get; }
 
-    public StacktraceViewModel()
+    public StacktraceViewModel(ISymbolDemangler? demangler = null)
     {
+        _demangler = demangler ?? App.Services.GetRequiredService<ISymbolDemangler>();
+
         _threadsHelper = this.WhenAnyValue(x => x.Envelope)
             .Select(envelope =>
             {
@@ -40,11 +44,11 @@ public partial class StacktraceViewModel : ReactiveObject
                             t.ThreadId == crashedThreadId,
                             t.Frames.Select(f => new StacktraceFrameItem(
                                 $"0x{f.InstructionAddr:X}",
-                                f.Symbol)).ToList()))
+                                _demangler.Demangle(f.Symbol))).ToList()))
                         .ToList();
                 }
 
-                return TryGetThreadsFromEvent(envelope);
+                return TryGetThreadsFromEvent(envelope, _demangler);
             })
             .ToProperty(this, x => x.Threads);
 
@@ -81,7 +85,9 @@ public partial class StacktraceViewModel : ReactiveObject
         NextThread = ReactiveCommand.Create(() => { SelectedThreadIndex++; }, canGoNext);
     }
 
-    private static List<StacktraceThreadItem>? TryGetThreadsFromEvent(Envelope? envelope)
+    private static List<StacktraceThreadItem>? TryGetThreadsFromEvent(
+        Envelope? envelope,
+        ISymbolDemangler demangler)
     {
         var payload = envelope?.TryGetEvent()?.TryParseAsJson();
         if (payload is null) return null;
@@ -120,7 +126,7 @@ public partial class StacktraceViewModel : ReactiveObject
                     var frames = t.TryGetProperty("stacktrace.frames");
                     if (frames is null && !exceptionFrames.TryGetValue(id, out frames) && crashed)
                         frames = unmatchedExceptionFrames;
-                    return new StacktraceThreadItem(id, name, crashed, ParseFrames(frames));
+                    return new StacktraceThreadItem(id, name, crashed, ParseFrames(frames, demangler));
                 })
                 .Where(t => t.Frames.Count > 0)
                 .ToList();
@@ -130,7 +136,7 @@ public partial class StacktraceViewModel : ReactiveObject
         // No threads interface — create entries from exceptions with stacktraces
         var result = exceptions!.OfType<JsonObject>()
             .Select(ex => new StacktraceThreadItem(
-                "", null, true, ParseFrames(ex.TryGetProperty("stacktrace.frames"))))
+                "", null, true, ParseFrames(ex.TryGetProperty("stacktrace.frames"), demangler)))
             .Where(t => t.Frames.Count > 0)
             .ToList();
         return result.Count > 0 ? result : null;
@@ -151,14 +157,14 @@ public partial class StacktraceViewModel : ReactiveObject
         _ => null
     };
 
-    private static List<StacktraceFrameItem> ParseFrames(JsonNode? framesNode)
+    private static List<StacktraceFrameItem> ParseFrames(JsonNode? framesNode, ISymbolDemangler demangler)
     {
         if (framesNode is not JsonArray frames) return [];
         return frames.OfType<JsonObject>()
             .Reverse()
             .Select(f => new StacktraceFrameItem(
                 f.TryGetString("instruction_addr") ?? "",
-                f.TryGetString("function") ?? ""))
+                demangler.Demangle(f.TryGetString("function") ?? "")))
             .ToList();
     }
 }

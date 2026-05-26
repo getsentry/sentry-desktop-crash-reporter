@@ -46,6 +46,11 @@ public partial class App : Application
         services.AddSingleton<IWindowService, WindowService>();
         services.AddSingleton<IClipboardService, ClipboardService>();
         services.AddSingleton<IFilePickerService, FilePickerService>();
+#if __DESKTOP__
+        services.AddSingleton<ISymbolDemangler, SymbolicDemangler>();
+#else
+        services.AddSingleton<ISymbolDemangler, NullDemangler>();
+#endif
         Ioc.Default.ConfigureServices(services.BuildServiceProvider());
         return Services;
     }

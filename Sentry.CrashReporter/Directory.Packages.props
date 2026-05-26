@@ -10,6 +10,7 @@
     <PackageVersion Include="CommunityToolkit.WinUI.Converters" Version="8.2.250402" />
     <PackageVersion Include="KaitaiStruct.Runtime.CSharp" Version="0.10.0" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.5.0" />
+    <PackageVersion Include="Symbolic.NET" Version="0.1.0" />
     <PackageVersion Include="GitInfo" Version="3.6.0" />
     <PackageVersion Include="ReactiveUI.SourceGenerators" Version="2.6.30" />
     <PackageVersion Include="ReactiveUI.Uno.WinUI" Version="20.0.36" />
