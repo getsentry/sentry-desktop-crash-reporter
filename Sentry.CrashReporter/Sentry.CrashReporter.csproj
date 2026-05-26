@@ -5,6 +5,7 @@
         <OutputType>Exe</OutputType>
         <!--PublishAot>true</PublishAot-->
         <UnoSingleProject>true</UnoSingleProject>
+        <UseSystemResourceKeys>false</UseSystemResourceKeys>
 
         <!-- Display name -->
         <ApplicationTitle>Sentry Crash Reporter</ApplicationTitle>
@@ -70,7 +71,6 @@
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
-        <UseSystemResourceKeys>false</UseSystemResourceKeys>
 
         <UnoXamlResourcesTrimming>false</UnoXamlResourcesTrimming>
         <PublishTrimmed>true</PublishTrimmed>

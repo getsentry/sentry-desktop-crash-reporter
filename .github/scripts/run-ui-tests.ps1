@@ -1,5 +1,6 @@
 param(
-    [switch] $Clean
+    [switch] $Clean,
+    [string] $Configuration = "Release"
 )
 
 Set-StrictMode -Version latest
@@ -8,7 +9,9 @@ $ErrorActionPreference = 'Stop'
 $env:UNO_UITEST_PLATFORM = "Browser"
 $env:UNO_UITEST_TARGETURI = "http://localhost:5000"
 $env:UNO_UITEST_CHROME_CONTAINER_MODE = $true
-$env:UNO_UITEST_DRIVER_PATH = $env:CHROMEWEBDRIVER
+if ([string]::IsNullOrWhiteSpace($env:UNO_UITEST_DRIVER_PATH)) {
+    $env:UNO_UITEST_DRIVER_PATH = $env:CHROMEWEBDRIVER
+}
 
 function Stop-UiTestProcesses {
     param(
@@ -18,8 +21,9 @@ function Stop-UiTestProcesses {
     if ($null -ne $Server) {
         try {
             if (!$Server.HasExited) {
-                Stop-Process -Id $Server.Id -Force -ErrorAction SilentlyContinue
+                $Server.Kill($true)
                 $Server.WaitForExit(5000) | Out-Null
+                Start-Sleep -Seconds 1
             }
         }
         catch {
@@ -38,10 +42,10 @@ if ($Clean) {
 }
 
 $server = $null
-$server = Start-Process -FilePath dotnet -ArgumentList "run --no-build -c Release -f net10.0-browserwasm --project Sentry.CrashReporter/Sentry.CrashReporter.csproj --launch-profile ""Sentry.CrashReporter (WebAssembly)""" -PassThru
+$server = Start-Process -FilePath dotnet -ArgumentList "run --no-build -c $Configuration -f net10.0-browserwasm --project Sentry.CrashReporter/Sentry.CrashReporter.csproj --launch-profile ""Sentry.CrashReporter (WebAssembly)""" -PassThru
 try
 {
-    dotnet test --no-build -c Release -f net10.0 -l GitHubActions -l trx tests/Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
+    dotnet test --no-build -c $Configuration -f net10.0 -l GitHubActions -l trx tests/Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
 }
 finally
 {
