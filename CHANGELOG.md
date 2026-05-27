@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.1
+
+### Features
+
+- feat: symbol demangling by @jpnurmi in [#212](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/212)
+- feat: add configurable cache keep setting by @jpnurmi in [#211](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/211)
+
+### Dependencies
+
+- chore(deps): Bump Uno.Sdk from 6.5.33 to 6.5.36 by @dependabot in [#205](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/205)
+
 ## 0.3.0
 
 ### Features
