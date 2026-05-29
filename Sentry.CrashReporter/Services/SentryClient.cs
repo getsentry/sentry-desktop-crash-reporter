@@ -32,7 +32,7 @@ public class SentryClient(IHttpClientFactory httpClientFactory) : ISentryClient
 
         var request = new HttpRequestMessage(HttpMethod.Post, uriBuilder.Uri)
         {
-            Content = new ProgressStreamContent(stream, progress, cancellationToken)
+            Content = new ProgressStreamContent(stream, progress)
         };
         using var httpClient = httpClientFactory.CreateClient(nameof(SentryClient));
         using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
@@ -43,13 +43,12 @@ public class SentryClient(IHttpClientFactory httpClientFactory) : ISentryClient
         this.Log().LogInformation(content);
     }
 
-    private sealed class ProgressStreamContent(Stream source, IProgress<double>? progress, CancellationToken cancellationToken)
+    private sealed class ProgressStreamContent(Stream source, IProgress<double>? progress)
         : HttpContent
     {
         private const int BufferSize = 81920;
         private readonly Stream _source = source;
         private readonly IProgress<double>? _progress = progress;
-        private readonly CancellationToken _cancellationToken = cancellationToken;
 
         protected override bool TryComputeLength(out long length)
         {
@@ -58,6 +57,19 @@ public class SentryClient(IHttpClientFactory httpClientFactory) : ISentryClient
         }
 
         protected override async Task SerializeToStreamAsync(Stream stream, TransportContext? context)
+        {
+            await SerializeToStreamAsyncCore(stream, CancellationToken.None).ConfigureAwait(false);
+        }
+
+        protected override async Task SerializeToStreamAsync(
+            Stream stream,
+            TransportContext? context,
+            CancellationToken cancellationToken)
+        {
+            await SerializeToStreamAsyncCore(stream, cancellationToken).ConfigureAwait(false);
+        }
+
+        private async Task SerializeToStreamAsyncCore(Stream stream, CancellationToken cancellationToken)
         {
             if (_source.CanSeek)
             {
@@ -69,9 +81,9 @@ public class SentryClient(IHttpClientFactory httpClientFactory) : ISentryClient
             long uploaded = 0;
             int read;
 
-            while ((read = await _source.ReadAsync(buffer, _cancellationToken).ConfigureAwait(false)) > 0)
+            while ((read = await _source.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
             {
-                await stream.WriteAsync(buffer.AsMemory(0, read), _cancellationToken).ConfigureAwait(false);
+                await stream.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
                 uploaded += read;
                 if (totalLength > 0)
                 {
