@@ -24,6 +24,7 @@ public class WindowService : IWindowService
     {
         _window = window;
         window.AppWindow.Closing += OnClosing;
+        window.Closed += (_, _) => Application.Current?.Exit();
     }
 
     public void SetClosable(bool closable)

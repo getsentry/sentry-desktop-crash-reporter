@@ -174,6 +174,7 @@ public class FooterViewTests : RuntimeTestBase
 
         var submitButton = view.FindFirstDescendant<Button>("submitButton");
         submitButton?.Command.Execute(null);
+        await UnitTestsUIContentHelper.WaitForIdle();
 
         // Assert
         mockRuntime.Reporter.Verify(x => x.SubmitAsync(envelope, It.IsAny<CancellationToken>()), Times.Once);
