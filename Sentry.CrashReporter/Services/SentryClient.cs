@@ -59,6 +59,11 @@ public class SentryClient(IHttpClientFactory httpClientFactory) : ISentryClient
 
         protected override async Task SerializeToStreamAsync(Stream stream, TransportContext? context)
         {
+            if (_source.CanSeek)
+            {
+                _source.Position = 0;
+            }
+
             var buffer = new byte[BufferSize];
             var totalLength = _source.Length;
             long uploaded = 0;
