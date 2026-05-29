@@ -61,7 +61,7 @@ public class CrashReporter(
         catch (Exception)
         {
             _submittingEnvelope = null;
-            await CacheAsync(envelope, cancellationToken);
+            await CacheAsync(envelope, CancellationToken.None);
             throw;
         }
         finally
