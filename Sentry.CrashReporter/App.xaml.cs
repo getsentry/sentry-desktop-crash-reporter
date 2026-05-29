@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Microsoft.Extensions.Http.Resilience;
+using Polly;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.Services;
 using Path = System.IO.Path;
@@ -59,11 +60,14 @@ public partial class App : Application
     {
         var maxRetryAttempts = 3; // default
         var retryDelay = TimeSpan.FromSeconds(2); // exponential: 2, 4, 8...
+        var totalRetryDelay = TimeSpan.FromTicks(retryDelay.Ticks * ((1L << maxRetryAttempts) - 1));
         var totalRequestTimeout = TimeSpan.FromHours(24); // max
 
         options.TotalRequestTimeout.Timeout = totalRequestTimeout;
-        options.AttemptTimeout.Timeout = (totalRequestTimeout - retryDelay * maxRetryAttempts) / (maxRetryAttempts + 1);
+        options.AttemptTimeout.Timeout = (totalRequestTimeout - totalRetryDelay) / (maxRetryAttempts + 1);
         options.CircuitBreaker.SamplingDuration = totalRequestTimeout;
+        options.Retry.BackoffType = DelayBackoffType.Exponential;
+        options.Retry.UseJitter = false;
         options.Retry.MaxRetryAttempts = maxRetryAttempts;
         options.Retry.Delay = retryDelay;
         options.Retry.ShouldHandle = args => ValueTask.FromResult(
