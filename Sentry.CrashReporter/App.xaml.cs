@@ -57,8 +57,15 @@ public partial class App : Application
 
     public static void ConfigureResilience(HttpStandardResilienceOptions options)
     {
-        options.Retry.MaxRetryAttempts = 3; // default
-        options.Retry.Delay = TimeSpan.FromSeconds(2); // default
+        var maxRetryAttempts = 3; // default
+        var retryDelay = TimeSpan.FromSeconds(2); // exponential: 2, 4, 8...
+        var totalRequestTimeout = TimeSpan.FromHours(24); // max
+
+        options.TotalRequestTimeout.Timeout = totalRequestTimeout;
+        options.AttemptTimeout.Timeout = (totalRequestTimeout - retryDelay * maxRetryAttempts) / (maxRetryAttempts + 1);
+        options.CircuitBreaker.SamplingDuration = totalRequestTimeout;
+        options.Retry.MaxRetryAttempts = maxRetryAttempts;
+        options.Retry.Delay = retryDelay;
         options.Retry.ShouldHandle = args => ValueTask.FromResult(
             args.Outcome.Exception is HttpRequestException ||
             (args.Outcome.Result?.StatusCode >= HttpStatusCode.InternalServerError) ||

@@ -11,7 +11,7 @@ public interface ICrashReporter
     CacheKeep EffectiveCacheKeep { get; }
     public Task<Envelope?> LoadAsync(CancellationToken cancellationToken = default);
     public Task CacheAsync(Envelope envelope, CancellationToken cancellationToken = default);
-    public Task SubmitAsync(Envelope envelope, CancellationToken cancellationToken = default);
+    public Task SubmitAsync(Envelope envelope, IProgress<double>? progress = null, CancellationToken cancellationToken = default);
     public void UpdateFeedback(Feedback? feedback);
 }
 
@@ -45,7 +45,7 @@ public class CrashReporter(
         return envelope;
     }
 
-    public async Task SubmitAsync(Envelope envelope, CancellationToken cancellationToken = default)
+    public async Task SubmitAsync(Envelope envelope, IProgress<double>? progress = null, CancellationToken cancellationToken = default)
     {
         var dsn = envelope.TryGetDsn()
                   ?? throw new InvalidOperationException("Envelope does not contain a valid DSN.");
@@ -53,7 +53,7 @@ public class CrashReporter(
         _submittingEnvelope = envelope;
         try
         {
-            await _client.SubmitEnvelopeAsync(dsn, envelope, cancellationToken);
+            await _client.SubmitEnvelopeAsync(dsn, envelope, progress, cancellationToken);
             var cachedEnvelopePath = await CacheAsync(envelope, EffectiveCacheKeep, cancellationToken);
             _submittedEnvelopes.Add(envelope);
             DeleteEnvelope(envelope, cachedEnvelopePath);
@@ -61,7 +61,7 @@ public class CrashReporter(
         catch (Exception)
         {
             _submittingEnvelope = null;
-            await CacheAsync(envelope);
+            await CacheAsync(envelope, cancellationToken);
             throw;
         }
         finally
@@ -91,7 +91,7 @@ public class CrashReporter(
                     })
                 ]
             );
-            await _client.SubmitEnvelopeAsync(dsn, feedback, cancellationToken);
+            await _client.SubmitEnvelopeAsync(dsn, feedback, progress, cancellationToken);
         }
     }
 

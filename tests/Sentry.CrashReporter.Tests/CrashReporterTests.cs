@@ -65,7 +65,7 @@ public class CrashReporterTests
             Assert.That(envelope, Is.Not.Null);
             client.Verify(c => c.SubmitEnvelopeAsync(It.IsAny<string>(),
                 envelope!,
-                It.IsAny<CancellationToken>()),
+                It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()),
                 Times.Once);
         }
         finally
@@ -283,7 +283,7 @@ public class CrashReporterTests
     {
         // Arrange
         var client = new Mock<ISentryClient>();
-        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<CancellationToken>()))
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("upload failed"));
 
         var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
@@ -314,7 +314,7 @@ public class CrashReporterTests
     {
         // Arrange
         var client = new Mock<ISentryClient>();
-        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<CancellationToken>()))
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new OperationCanceledException("upload canceled"));
 
         var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
@@ -328,7 +328,7 @@ public class CrashReporterTests
         {
             // Act
             var ex = Assert.ThrowsAsync<OperationCanceledException>(() =>
-                reporter.SubmitAsync(envelope, cancellation.Token));
+                reporter.SubmitAsync(envelope, cancellationToken: cancellation.Token));
 
             // Assert
             ex?.Message.Should().Be("upload canceled");
@@ -348,7 +348,7 @@ public class CrashReporterTests
     {
         // Arrange
         var client = new Mock<ISentryClient>();
-        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<CancellationToken>()))
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("send failed"));
 
         var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
@@ -366,7 +366,7 @@ public class CrashReporterTests
             secondException?.Message.Should().Be("send failed");
             Directory.GetFiles(cacheDir, "*.envelope").Should().HaveCount(1);
             Directory.GetFiles(cacheDir, "*.dmp").Should().HaveCount(1);
-            client.Verify(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), envelope, It.IsAny<CancellationToken>()),
+            client.Verify(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), envelope, It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()),
                 Times.Exactly(2));
         }
         finally
@@ -386,7 +386,7 @@ public class CrashReporterTests
         client.SetupSequence(c => c.SubmitEnvelopeAsync(
                 It.IsAny<string>(),
                 It.IsAny<Envelope>(),
-                It.IsAny<CancellationToken>()))
+                It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("upload failed"))
             .Returns(Task.CompletedTask);
 
@@ -424,7 +424,7 @@ public class CrashReporterTests
         client.SetupSequence(c => c.SubmitEnvelopeAsync(
                 It.IsAny<string>(),
                 It.IsAny<Envelope>(),
-                It.IsAny<CancellationToken>()))
+                It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("upload failed"))
             .Returns(Task.CompletedTask);
 
@@ -565,7 +565,7 @@ public class CrashReporterTests
         // Arrange
         var client = new Mock<ISentryClient>();
         var submitCompletion = new TaskCompletionSource();
-        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<CancellationToken>()))
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .Returns(submitCompletion.Task);
 
         var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
@@ -670,7 +670,7 @@ public class CrashReporterTests
         client.SetupSequence(c => c.SubmitEnvelopeAsync(
                 It.IsAny<string>(),
                 It.IsAny<Envelope>(),
-                It.IsAny<CancellationToken>()))
+                It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask)
             .ThrowsAsync(new HttpRequestException("feedback failed"));
 
@@ -708,8 +708,8 @@ public class CrashReporterTests
         var file = await CopyFixtureAsync(filePath, tempDir);
         var reporter = new Services.CrashReporter(file, client.Object);
         var submittedEnvelopes = new List<Envelope>();
-        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<CancellationToken>()))
-            .Callback<string, Envelope, CancellationToken>((_, e, _) => submittedEnvelopes.Add(e));
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
+            .Callback<string, Envelope, IProgress<double>?, CancellationToken>((_, e, _, _) => submittedEnvelopes.Add(e));
         var feedback = new Feedback("John Doe", "john.doe@example.com", "It crashed!");
 
         try
