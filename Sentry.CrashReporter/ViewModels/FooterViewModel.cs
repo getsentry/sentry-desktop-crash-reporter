@@ -19,6 +19,7 @@ public partial class FooterViewModel : ReactiveObject
     private readonly IWindowService _window;
     private readonly ICacheService _cache;
     private readonly IClipboardService _clipboard;
+    private CancellationTokenSource? _submitCts;
     [Reactive] private Envelope? _envelope;
     [ObservableAsProperty] private string? _dsn = string.Empty;
     [ObservableAsProperty] private string? _eventId = string.Empty;
@@ -199,19 +200,34 @@ public partial class FooterViewModel : ReactiveObject
     {
         ErrorMessage = null;
         Progress = 0;
+        _submitCts?.Dispose();
+        _submitCts = new CancellationTokenSource();
+        var submitCts = _submitCts;
         _window.SetClosable(false);
         try
         {
             var progress = new Progress<double>(value => Progress = Math.Clamp(value * 100, 0, 100));
-            await _reporter.SubmitAsync(_envelope!, progress: progress);
+            await _reporter.SubmitAsync(_envelope!, progress: progress, cancellationToken: submitCts.Token);
             Progress = 100;
             await Task.Yield();
             _window.Close();
+        }
+        catch (OperationCanceledException)
+        {
+            _window.SetClosable(App.CanClose);
         }
         catch (Exception e)
         {
             ErrorMessage = e.Message;
             _window.SetClosable(App.CanClose);
+        }
+        finally
+        {
+            if (ReferenceEquals(_submitCts, submitCts))
+            {
+                submitCts.Dispose();
+                _submitCts = null;
+            }
         }
     }
 
@@ -220,6 +236,7 @@ public partial class FooterViewModel : ReactiveObject
     {
         if (IsSubmitting)
         {
+            _submitCts?.Cancel();
             return;
         }
 
