@@ -91,7 +91,7 @@ public class CrashReporter(
                     })
                 ]
             );
-            await _client.SubmitEnvelopeAsync(dsn, feedback, progress, cancellationToken);
+            await _client.SubmitEnvelopeAsync(dsn, feedback, null, cancellationToken);
         }
     }
 
