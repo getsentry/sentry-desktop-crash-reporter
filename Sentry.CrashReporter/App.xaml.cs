@@ -23,8 +23,12 @@ public partial class App : Application
     public static IServiceProvider ConfigureServices(StorageFile? file, ICacheService? cache = null)
     {
         var services = new ServiceCollection();
+        var envelopeDir = Path.GetDirectoryName(file?.Path);
+        var databaseDir = Path.GetDirectoryName(envelopeDir);
+        var config = AppConfig.Load(envelopeDir, databaseDir, AppContext.BaseDirectory) ?? new AppConfig();
+
         services.AddHttpClient()
-            .ConfigureHttpClientDefaults(b => b.AddStandardResilienceHandler(ConfigureResilience));
+            .ConfigureHttpClientDefaults(b => b.AddStandardResilienceHandler(options => ConfigureResilience(options, config)));
         if (file is not null)
         {
             services.AddSingleton<IStorageFile>(file);
@@ -39,10 +43,7 @@ public partial class App : Application
         {
             services.AddSingleton<ICacheService, CacheService>();
         }
-        var envelopeDir = Path.GetDirectoryName(file?.Path);
-        var databaseDir = Path.GetDirectoryName(envelopeDir);
-        var config = AppConfig.Load(envelopeDir, databaseDir, AppContext.BaseDirectory);
-        services.AddSingleton<AppConfig>(config ?? new AppConfig());
+        services.AddSingleton<AppConfig>(config);
         services.AddSingleton<IWindowService, WindowService>();
         services.AddSingleton<IClipboardService, ClipboardService>();
         services.AddSingleton<IFilePickerService, FilePickerService>();
@@ -55,10 +56,17 @@ public partial class App : Application
         return Services;
     }
 
-    public static void ConfigureResilience(HttpStandardResilienceOptions options)
+    public static void ConfigureResilience(HttpStandardResilienceOptions options, AppConfig config)
     {
-        options.Retry.MaxRetryAttempts = 3; // default
-        options.Retry.Delay = TimeSpan.FromSeconds(2); // default
+        var maxRetryAttempts = Math.Max(config.HttpRetry ?? 3, 0);
+        var retryDelay = TimeSpan.FromSeconds(2);
+        var attemptTimeout = TimeSpan.FromSeconds(Math.Max(config.HttpTimeout ?? 60, 1));
+
+        options.AttemptTimeout.Timeout = attemptTimeout;
+        options.TotalRequestTimeout.Timeout = (attemptTimeout + retryDelay) * (maxRetryAttempts + 1);
+        options.CircuitBreaker.SamplingDuration = attemptTimeout * 2;
+        options.Retry.MaxRetryAttempts = maxRetryAttempts;
+        options.Retry.Delay = retryDelay;
         options.Retry.ShouldHandle = args => ValueTask.FromResult(
             args.Outcome.Exception is HttpRequestException ||
             (args.Outcome.Result?.StatusCode >= HttpStatusCode.InternalServerError) ||

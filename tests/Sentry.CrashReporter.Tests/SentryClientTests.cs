@@ -17,7 +17,7 @@ public class SentryClientTests
             .ConfigurePrimaryHttpMessageHandler(() => _messageHandler.Object)
             .AddStandardResilienceHandler(options =>
             {
-                App.ConfigureResilience(options);
+                App.ConfigureResilience(options, new AppConfig());
                 options.Retry.Delay = TimeSpan.FromMilliseconds(1);
             });
         var serviceProvider = services.BuildServiceProvider();

@@ -176,6 +176,25 @@ public class AppConfigTests
     }
 
     [Test]
+    public void Load_HttpResilienceSettings_ReturnValues()
+    {
+        var dir = WriteConfig("""
+        {
+          "AppConfig": {
+            "HttpRetry": 5,
+            "HttpTimeout": 90
+          }
+        }
+        """);
+
+        var result = AppConfig.Load(dir);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.HttpRetry, Is.EqualTo(5));
+        Assert.That(result.HttpTimeout, Is.EqualTo(90));
+    }
+
+    [Test]
     public void Load_EmptyCancelButtonText_ReturnsEmptyString()
     {
         var dir = WriteConfig("""

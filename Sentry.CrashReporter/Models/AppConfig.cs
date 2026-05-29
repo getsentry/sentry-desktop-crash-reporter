@@ -32,6 +32,8 @@ public record AppConfig
     public string? LogoDark { get; init; }
     [JsonConverter(typeof(JsonStringEnumConverter<CacheKeep>))]
     public CacheKeep? CacheKeep { get; init; }
+    public int? HttpRetry { get; init; }
+    public int? HttpTimeout { get; init; }
 
     private const string FileName = "appsettings.json";
 
