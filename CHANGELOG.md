@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.2
+
+### Features
+
+- feat: maximize HTTP timeout & visualize progress by @jpnurmi in [#223](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/223)
+
+### Fixes
+
+- fix: window close / process exit in release mode by @jpnurmi in [#222](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/222)
+
 ## 0.3.1
 
 ### Features
