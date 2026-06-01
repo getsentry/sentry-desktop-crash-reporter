@@ -289,7 +289,7 @@ public class FooterViewModelTests
         );
         var mockReporter = MockReporter();
         var tcs = new TaskCompletionSource<object?>();
-        mockReporter.Setup(x => x.SubmitAsync(envelope, It.IsAny<CancellationToken>()))
+        mockReporter.Setup(x => x.SubmitAsync(envelope, It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .Returns(tcs.Task);
         var mockWindow = new Mock<IWindowService>();
 
@@ -319,7 +319,7 @@ public class FooterViewModelTests
             new List<EnvelopeItem>()
         );
         var mockReporter = MockReporter();
-        mockReporter.Setup(x => x.SubmitAsync(It.IsAny<Envelope>(), It.IsAny<CancellationToken>()))
+        mockReporter.Setup(x => x.SubmitAsync(It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Failure"));
         var mockWindow = new Mock<IWindowService>();
 
@@ -395,7 +395,7 @@ public class FooterViewModelTests
         await viewModel.SubmitCommand.Execute();
 
         // Assert
-        mockReporter.Verify(x => x.SubmitAsync(envelope, It.IsAny<CancellationToken>()), Times.Once);
+        mockReporter.Verify(x => x.SubmitAsync(envelope, It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()), Times.Once);
         mockWindow.Verify(x => x.Close(), Times.Once);
     }
 
@@ -409,7 +409,7 @@ public class FooterViewModelTests
         );
         var mockReporter = MockReporter();
         var tcs = new TaskCompletionSource<object?>();
-        mockReporter.Setup(x => x.SubmitAsync(envelope, It.IsAny<CancellationToken>()))
+        mockReporter.Setup(x => x.SubmitAsync(envelope, It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .Returns(tcs.Task);
         var mockWindow = new Mock<IWindowService>();
 
@@ -440,7 +440,7 @@ public class FooterViewModelTests
             new List<EnvelopeItem>()
         );
         var mockReporter = MockReporter();
-        mockReporter.Setup(x => x.SubmitAsync(envelope, It.IsAny<CancellationToken>()))
+        mockReporter.Setup(x => x.SubmitAsync(envelope, It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Failure"));
         var mockWindow = new Mock<IWindowService>();
 
@@ -471,7 +471,7 @@ public class FooterViewModelTests
         await viewModel.CancelCommand.Execute();
 
         // Assert
-        mockReporter.Verify(x => x.SubmitAsync(It.IsAny<Envelope>(), It.IsAny<CancellationToken>()), Times.Never);
+        mockReporter.Verify(x => x.SubmitAsync(It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()), Times.Never);
         mockReporter.Verify(x => x.CacheAsync(It.IsAny<Envelope>(), It.IsAny<CancellationToken>()), Times.Never);
         mockWindow.Verify(x => x.Close(), Times.Once);
     }
@@ -495,13 +495,13 @@ public class FooterViewModelTests
         await viewModel.CancelCommand.Execute();
 
         // Assert
-        mockReporter.Verify(x => x.SubmitAsync(It.IsAny<Envelope>(), It.IsAny<CancellationToken>()), Times.Never);
+        mockReporter.Verify(x => x.SubmitAsync(It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()), Times.Never);
         mockReporter.Verify(x => x.CacheAsync(envelope, It.IsAny<CancellationToken>()), Times.Once);
         mockWindow.Verify(x => x.Close(), Times.Once);
     }
 
     [Test]
-    public async Task Cancel_DoesNothingWhileSubmitting()
+    public async Task Cancel_CancelsSubmitWithoutClosingWindow()
     {
         // Arrange
         var envelope = new Envelope(
@@ -509,8 +509,14 @@ public class FooterViewModelTests
             new List<EnvelopeItem>()
         );
         var mockReporter = MockReporter();
+        CancellationToken capturedToken = default;
         var tcs = new TaskCompletionSource<object?>();
-        mockReporter.Setup(x => x.SubmitAsync(envelope, It.IsAny<CancellationToken>()))
+        mockReporter.Setup(x => x.SubmitAsync(envelope, It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
+            .Callback<Envelope, IProgress<double>?, CancellationToken>((_, _, token) =>
+            {
+                capturedToken = token;
+                token.Register(() => tcs.TrySetCanceled(token));
+            })
             .Returns(tcs.Task);
         var mockWindow = new Mock<IWindowService>();
         var viewModel = new FooterViewModel(mockReporter.Object, mockWindow.Object)
@@ -526,12 +532,20 @@ public class FooterViewModelTests
         await viewModel.CancelCommand.Execute();
 
         // Assert
+        Assert.That(capturedToken.CanBeCanceled, Is.True);
+        Assert.That(capturedToken.IsCancellationRequested, Is.True);
         mockReporter.Verify(x => x.CacheAsync(It.IsAny<Envelope>(), It.IsAny<CancellationToken>()), Times.Never);
         mockWindow.Verify(x => x.Close(), Times.Never);
 
         // Cleanup
-        tcs.SetResult(null);
-        await submitTask;
+        try
+        {
+            await submitTask;
+        }
+        catch (TaskCanceledException)
+        {
+            // Expected.
+        }
     }
 
     private static Mock<ICrashReporter> MockReporter(ICacheService? cache = null, AppConfig? config = null)

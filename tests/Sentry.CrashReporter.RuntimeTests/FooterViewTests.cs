@@ -101,7 +101,7 @@ public class FooterViewTests : RuntimeTestBase
         var envelope = new Envelope(new JsonObject { { "dsn", "https://foo@bar.com/123" }, { "event_id" , "12345678901234567890123456789012" } }, []);
         var mockRuntime = MockRuntime();
         var tcs = new TaskCompletionSource();
-        mockRuntime.Reporter.Setup(r => r.SubmitAsync(envelope, It.IsAny<CancellationToken>())).Returns(tcs.Task);
+        mockRuntime.Reporter.Setup(r => r.SubmitAsync(envelope, It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>())).Returns(tcs.Task);
 
         // Act
         var view = new FooterView().Envelope(envelope);
@@ -117,6 +117,11 @@ public class FooterViewTests : RuntimeTestBase
         var progressRing = statusLabel.FindFirstDescendant<ProgressRing>();
         Assert.IsNotNull(progressRing);
         Assert.IsTrue(progressRing.IsActive);
+
+        var progressBar = view.FindFirstDescendant<ProgressBar>();
+        Assert.IsNotNull(progressBar);
+        Assert.IsFalse(progressBar.IsIndeterminate);
+        Assert.AreEqual(Visibility.Visible, progressBar.Visibility);
 
         var cancelButton = view.FindFirstDescendant<Button>("cancelButton");
         Assert.IsNotNull(cancelButton);
@@ -136,7 +141,7 @@ public class FooterViewTests : RuntimeTestBase
         // Arrange
         var envelope = new Envelope(new JsonObject { { "dsn", "https://foo@bar.com/123" }, { "event_id" , "12345678901234567890123456789012" } }, []);
         var mockRuntime = MockRuntime();
-        mockRuntime.Reporter.Setup(r => r.SubmitAsync(envelope, It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Something went wrong"));
+        mockRuntime.Reporter.Setup(r => r.SubmitAsync(envelope, It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Something went wrong"));
 
         // Act
         var view = new FooterView().Envelope(envelope);
@@ -177,7 +182,7 @@ public class FooterViewTests : RuntimeTestBase
         await UnitTestsUIContentHelper.WaitForIdle();
 
         // Assert
-        mockRuntime.Reporter.Verify(x => x.SubmitAsync(envelope, It.IsAny<CancellationToken>()), Times.Once);
+        mockRuntime.Reporter.Verify(x => x.SubmitAsync(envelope, It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()), Times.Once);
         mockRuntime.Window.Verify(x => x.Close(), Times.Once);
     }
 

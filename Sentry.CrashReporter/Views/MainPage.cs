@@ -9,6 +9,8 @@ namespace Sentry.CrashReporter.Views;
 
 public sealed class MainPage : Page
 {
+    internal const double ContentPadding = 16;
+
     private static readonly CollectionVisibilityConverter ToVisibility = new();
     private static readonly EmptyObjectToObjectConverter ErrorToVisible = new()
     {
@@ -123,7 +125,7 @@ public sealed class MainPage : Page
                             .Height(72))
                         .Content(new Grid()
                             .Region(attached: true)
-                            .Padding(new Thickness(16))
+                            .Padding(new Thickness(ContentPadding))
                             .RowSpacing(16)
                             .RowDefinitions("Auto,Auto,*,Auto")
                             .Children(

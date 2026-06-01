@@ -43,6 +43,18 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
             .ColumnSpacing(8)
             .ColumnDefinitions("*,Auto,Auto")
             .Children(
+                new ProgressBar()
+                    .Grid(column: 0, columnSpan: 3)
+                    .Margin(-MainPage.ContentPadding, 0, -MainPage.ContentPadding, -MainPage.ContentPadding)
+                    .VerticalAlignment(VerticalAlignment.Bottom)
+                    .Height(4)
+                    .IsHitTestVisible(false)
+                    .IsIndeterminate(false)
+                    .Minimum(0)
+                    .Maximum(100)
+                    .Value(x => x.Binding(() => vm.Progress))
+                    .Visibility(x => x.Binding(() => vm.Status)
+                        .Convert(status => status == FooterStatus.Busy ? Visibility.Visible : Visibility.Collapsed)),
                 new ContentControl()
                     .Grid(0)
                     .Content(x => x.Binding(() => vm.Status).Convert(status => BuildStatusLabelSafe(vm, status))),
