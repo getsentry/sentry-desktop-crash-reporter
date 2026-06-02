@@ -21,7 +21,7 @@ env:
 jobs:
   smoke_test:
     name: Smoke Test
-    runs-on: windows-latest
+    runs-on: windows-2025
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -42,13 +42,13 @@ jobs:
       fail-fast: false
       matrix:
        include:
-         - os: macos-latest
+         - os: macos-26
            rid: osx-arm64
-         - os: ubuntu-latest
+         - os: ubuntu-24.04
            rid: linux-x64
          - os: ubuntu-24.04-arm
            rid: linux-arm64
-         - os: windows-latest
+         - os: windows-2025
            rid: win-x64
          - os: windows-11-arm
            rid: win-arm64
@@ -158,7 +158,7 @@ jobs:
 
   unit_test:
     name: Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -193,7 +193,7 @@ jobs:
 
   ui_test:
     name: UI Tests
-    runs-on: windows-latest
+    runs-on: windows-2025
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -233,7 +233,7 @@ jobs:
 
   runtime_test:
     name: Runtime Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
