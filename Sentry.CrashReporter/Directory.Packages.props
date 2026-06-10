@@ -12,7 +12,7 @@
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.5.0" />
     <PackageVersion Include="Symbolic.NET" Version="0.1.0" />
     <PackageVersion Include="GitInfo" Version="3.6.0" />
-    <PackageVersion Include="ReactiveUI.SourceGenerators" Version="2.6.30" />
+    <PackageVersion Include="ReactiveUI.SourceGenerators" Version="3.1.0" />
     <PackageVersion Include="ReactiveUI.Uno.WinUI" Version="20.0.36" />
     <PackageVersion Include="Uno.CommunityToolkit.WinUI.UI.Controls.DataGrid" Version="7.1.204" />
   </ItemGroup>
