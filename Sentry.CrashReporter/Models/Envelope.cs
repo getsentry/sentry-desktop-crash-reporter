@@ -227,6 +227,11 @@ public sealed class Envelope
         return TryGetStream<Minidump.StacktraceStream>(Minidump.StreamTypes.SentryStacktrace);
     }
 
+    public Minidump.ModuleList? TryGetModuleList()
+    {
+        return TryGetStream<Minidump.ModuleList>(Minidump.StreamTypes.ModuleList);
+    }
+
     private T? TryGetStream<T>(Minidump.StreamTypes type) where T : class
     {
         try

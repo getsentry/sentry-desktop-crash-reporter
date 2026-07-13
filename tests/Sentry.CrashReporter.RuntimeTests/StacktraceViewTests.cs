@@ -114,6 +114,23 @@ public class StacktraceViewTests : RuntimeTestBase
     }
 
     [TestMethod]
+    public async Task StacktraceView_DisplaysFrameImage()
+    {
+        // Arrange
+        await using var file = OpenTestFile("data/crashpad.envelope");
+        var envelope = await Envelope.FromFileStreamAsync(file);
+        _ = MockRuntime(envelope);
+
+        // Act
+        var view = new StacktraceView().Envelope(envelope);
+        await LoadTestContent(view);
+
+        // Assert
+        var image = view.FindFirstDescendant<TextBlock>(tb => tb.Text == "VCRUNTIME140D.dll");
+        Assert.IsNotNull(image);
+    }
+
+    [TestMethod]
     public async Task StacktraceView_CrashedThreadHasBugIcon()
     {
         // Arrange
@@ -174,7 +191,7 @@ public class StacktraceViewTests : RuntimeTestBase
     }
 
     [TestMethod]
-    public async Task StacktraceView_FrameGridHasTwoColumns()
+    public async Task StacktraceView_FrameGridHasThreeColumns()
     {
         // Arrange
         await using var file = OpenTestFile("data/crashpad.envelope");
@@ -188,7 +205,7 @@ public class StacktraceViewTests : RuntimeTestBase
         // Assert
         var grid = view.FindFirstDescendant<StacktraceFrameGrid>();
         Assert.IsNotNull(grid);
-        Assert.AreEqual(2, grid.Columns.Count);
+        Assert.AreEqual(3, grid.Columns.Count);
     }
 
     [TestMethod]
@@ -209,7 +226,7 @@ public class StacktraceViewTests : RuntimeTestBase
 
         // Assert
         var selectedText = grid.GetSelectedText();
-        Assert.AreEqual("0x7FFC9BFA2766\tmemset", selectedText);
+        Assert.AreEqual("VCRUNTIME140D.dll\t0x7FFC9BFA2766\tmemset", selectedText);
     }
 
     [TestMethod]
@@ -358,7 +375,7 @@ public class StacktraceViewTests : RuntimeTestBase
         await UnitTestsUIContentHelper.WaitForIdle();
 
         // Assert
-        mockRuntime.Clipboard.Verify(c => c.SetText("0x7FFC9BFA2766\tmemset"), Times.Once);
+        mockRuntime.Clipboard.Verify(c => c.SetText("VCRUNTIME140D.dll\t0x7FFC9BFA2766\tmemset"), Times.Once);
     }
 
     [TestMethod]
