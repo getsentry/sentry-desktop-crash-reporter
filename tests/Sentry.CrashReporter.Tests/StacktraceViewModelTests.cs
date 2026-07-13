@@ -94,8 +94,10 @@ public class StacktraceViewModelTests
         // Assert
         Assert.That(viewModel.Frames, Is.Not.Null);
         Assert.That(viewModel.Frames, Has.Count.EqualTo(48));
+        Assert.That(viewModel.Frames![0].Image, Is.EqualTo("VCRUNTIME140D.dll"));
         Assert.That(viewModel.Frames![0].Address, Is.EqualTo("0x7FFC9BFA2766"));
         Assert.That(viewModel.Frames[0].Symbol, Is.EqualTo("memset"));
+        Assert.That(viewModel.Frames[1].Image, Is.EqualTo("sentry-playground.exe"));
     }
 
     [Test]
@@ -241,6 +243,7 @@ public class StacktraceViewModelTests
         Assert.That(viewModel.Threads![0].ThreadId, Is.EqualTo("1000"));
         Assert.That(viewModel.Threads[0].Crashed, Is.True);
         Assert.That(viewModel.Threads[0].Frames, Has.Count.EqualTo(7));
+        Assert.That(viewModel.Threads[0].Frames[0].Image, Is.Empty);
         Assert.That(viewModel.Threads[0].Frames[0].Address, Is.EqualTo("0x400500"));
         Assert.That(viewModel.Threads[0].Frames[0].Symbol, Is.EqualTo("crash_here"));
         Assert.That(viewModel.SelectedThreadIndex, Is.EqualTo(0));
@@ -351,6 +354,7 @@ public class StacktraceViewModelTests
         Assert.That(viewModel.Threads![0].ThreadId, Is.EqualTo("18732"));
         Assert.That(viewModel.Threads[0].Crashed, Is.True);
         Assert.That(viewModel.Threads[0].Frames, Has.Count.EqualTo(28));
+        Assert.That(viewModel.Threads[0].Frames[0].Image, Is.EqualTo("sentry-playground.exe"));
         Assert.That(viewModel.Threads[0].Frames[0].Symbol, Is.EqualTo("trigger_crash"));
     }
 

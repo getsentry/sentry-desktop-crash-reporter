@@ -545,6 +545,13 @@ public class Minidump : KaitaiStruct
                         _data = new ThreadList(io___raw_data, this, M_Root);
                         break;
                     }
+                    case StreamTypes.ModuleList:
+                    {
+                        M_RawData = m_io.ReadBytes(LenData);
+                        var io___raw_data = new KaitaiStream(M_RawData);
+                        _data = new ModuleList(io___raw_data, this, M_Root);
+                        break;
+                    }
                     case StreamTypes.Exception:
                     {
                         M_RawData = m_io.ReadBytes(LenData);
@@ -648,6 +655,106 @@ public class Minidump : KaitaiStruct
         public Minidump M_Root { get; }
 
         public ThreadList M_Parent { get; }
+    }
+
+    public class ModuleList : KaitaiStruct
+    {
+        public ModuleList(KaitaiStream p__io, Dir p__parent = null, Minidump p__root = null) : base(p__io)
+        {
+            M_Parent = p__parent;
+            M_Root = p__root;
+            _read();
+        }
+
+        private void _read()
+        {
+            NumModules = m_io.ReadU4le();
+            Modules = new List<Module>();
+            for (var i = 0; i < NumModules; i++)
+            {
+                Modules.Add(new Module(m_io, this, M_Root));
+            }
+        }
+
+        public uint NumModules { get; private set; }
+
+        public List<Module> Modules { get; private set; }
+
+        public Minidump M_Root { get; }
+
+        public Dir M_Parent { get; }
+    }
+
+    public class Module : KaitaiStruct
+    {
+        public Module(KaitaiStream p__io, ModuleList p__parent = null, Minidump p__root = null) : base(p__io)
+        {
+            M_Parent = p__parent;
+            M_Root = p__root;
+            f_name = false;
+            _read();
+        }
+
+        private void _read()
+        {
+            BaseOfImage = m_io.ReadU8le();
+            SizeOfImage = m_io.ReadU4le();
+            CheckSum = m_io.ReadU4le();
+            TimeDateStamp = m_io.ReadU4le();
+            OfsModuleName = m_io.ReadU4le();
+            VersionInfo = m_io.ReadBytes(52);
+            CvRecord = new LocationDescriptor(m_io, this, M_Root);
+            MiscRecord = new LocationDescriptor(m_io, this, M_Root);
+            Reserved0 = m_io.ReadU8le();
+            Reserved1 = m_io.ReadU8le();
+        }
+
+        private bool f_name;
+        private string _name;
+
+        public string Name
+        {
+            get
+            {
+                if (f_name)
+                {
+                    return _name;
+                }
+
+                var io = M_Root.M_Io;
+                var _pos = io.Pos;
+                io.Seek(OfsModuleName);
+                var len = io.ReadU4le();
+                _name = Encoding.GetEncoding("UTF-16LE").GetString(io.ReadBytes(len));
+                io.Seek(_pos);
+                f_name = true;
+                return _name;
+            }
+        }
+
+        public ulong BaseOfImage { get; private set; }
+
+        public uint SizeOfImage { get; private set; }
+
+        public uint CheckSum { get; private set; }
+
+        public uint TimeDateStamp { get; private set; }
+
+        public uint OfsModuleName { get; private set; }
+
+        public byte[] VersionInfo { get; private set; }
+
+        public LocationDescriptor CvRecord { get; private set; }
+
+        public LocationDescriptor MiscRecord { get; private set; }
+
+        public ulong Reserved0 { get; private set; }
+
+        public ulong Reserved1 { get; private set; }
+
+        public Minidump M_Root { get; }
+
+        public ModuleList M_Parent { get; }
     }
 
     /// <remarks>

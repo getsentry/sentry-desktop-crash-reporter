@@ -137,6 +137,18 @@ internal class StacktraceFrameGrid : DataGrid
 
         Columns.Add(new DataGridTemplateColumn
         {
+            Header = "Image",
+            Width = DataGridLength.Auto,
+            CellTemplate = new DataTemplate(() =>
+                new TextBlock()
+                    .WithSourceCodePro()
+                    .Margin(new Thickness(8, 0))
+                    .VerticalAlignment(VerticalAlignment.Center)
+                    .Text(x => x.Binding("Image")))
+        });
+
+        Columns.Add(new DataGridTemplateColumn
+        {
             Header = "Address",
             Width = DataGridLength.Auto,
             CellTemplate = new DataTemplate(() =>
@@ -167,7 +179,10 @@ internal class StacktraceFrameGrid : DataGrid
             !SelectedItems.Contains(item))
         {
             SelectedIndex = items.IndexOf(item);
-            CurrentColumn = Columns[e.GetPosition(this).X < Columns[0].ActualWidth ? 0 : 1];
+            var position = e.GetPosition(this).X;
+            CurrentColumn = position < Columns[0].ActualWidth ? Columns[0]
+                : position < Columns[0].ActualWidth + Columns[1].ActualWidth ? Columns[1]
+                : Columns[2];
         }
     }
 
@@ -209,12 +224,12 @@ internal class StacktraceFrameGrid : DataGrid
         if (SelectedItems.Count > 1)
         {
             return string.Join("\n", SelectedItems.OfType<StacktraceFrameItem>()
-                .Select(x => $"{x.Address}\t{x.Symbol}"));
+                .Select(FormatFrame));
         }
 
         if (SelectedItem is StacktraceFrameItem frame)
         {
-            return $"{frame.Address}\t{frame.Symbol}";
+            return FormatFrame(frame);
         }
 
         return null;
@@ -225,6 +240,9 @@ internal class StacktraceFrameGrid : DataGrid
         if (ItemsSource is not List<StacktraceFrameItem> items || items.Count == 0)
             return null;
 
-        return string.Join("\n", items.Select(x => $"{x.Address}\t{x.Symbol}"));
+        return string.Join("\n", items.Select(FormatFrame));
     }
+
+    private static string FormatFrame(StacktraceFrameItem frame) =>
+        $"{frame.Image}\t{frame.Address}\t{frame.Symbol}";
 }
