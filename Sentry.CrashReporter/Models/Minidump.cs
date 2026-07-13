@@ -721,14 +721,27 @@ public class Minidump : KaitaiStruct
                     return _name;
                 }
 
+                if (OfsModuleName == 0)
+                {
+                    _name = "";
+                    f_name = true;
+                    return _name;
+                }
+
                 var io = M_Root.M_Io;
                 var _pos = io.Pos;
-                io.Seek(OfsModuleName);
-                var len = io.ReadU4le();
-                _name = Encoding.GetEncoding("UTF-16LE").GetString(io.ReadBytes(len));
-                io.Seek(_pos);
-                f_name = true;
-                return _name;
+                try
+                {
+                    io.Seek(OfsModuleName);
+                    var len = io.ReadU4le();
+                    _name = Encoding.GetEncoding("UTF-16LE").GetString(io.ReadBytes(len));
+                    f_name = true;
+                    return _name;
+                }
+                finally
+                {
+                    io.Seek(_pos);
+                }
             }
         }
 
