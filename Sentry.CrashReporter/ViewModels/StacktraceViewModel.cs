@@ -38,8 +38,7 @@ public partial class StacktraceViewModel : ReactiveObject
                 var stacktrace = envelope?.TryGetStacktrace();
                 if (stacktrace is not null)
                 {
-                    var images = ParseImages(envelope?.TryGetEvent()?.TryParseAsJson());
-                    images.AddRange(ParseImages(envelope?.TryGetModuleList()));
+                    var images = ParseImages(envelope);
                     var crashedThreadId = envelope?.TryGetCrashedThreadId();
                     return stacktrace.Threads
                         .Select(t => new StacktraceThreadItem(
@@ -99,8 +98,7 @@ public partial class StacktraceViewModel : ReactiveObject
 
         var exceptions = payload.TryGetProperty("exception.values") as JsonArray;
         var threads = payload.TryGetProperty("threads.values") as JsonArray;
-        var images = ParseImages(payload);
-        images.AddRange(ParseImages(envelope?.TryGetModuleList()));
+        var images = ParseImages(envelope);
 
         if (threads is not { Count: > 0 } && exceptions is null) return null;
 
@@ -220,6 +218,14 @@ public partial class StacktraceViewModel : ReactiveObject
                 return new StacktraceImageItem(address, size, GetFileName(file));
             })
             .OfType<StacktraceImageItem>()
+            .OrderBy(image => image.Address)
+            .ToList();
+    }
+
+    private static List<StacktraceImageItem> ParseImages(Envelope? envelope)
+    {
+        return ParseImages(envelope?.TryGetEvent()?.TryParseAsJson())
+            .Concat(ParseImages(envelope?.TryGetModuleList()))
             .OrderBy(image => image.Address)
             .ToList();
     }
