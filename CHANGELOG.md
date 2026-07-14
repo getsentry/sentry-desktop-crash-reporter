@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.3
+
+### Features
+
+- feat(rate-limiting): Accept 429 as success for partial relay ingestion by @mujacica in [#248](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/248)
+- feat: display frame image names in the stacktrace view by @jpnurmi in [#247](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/247)
+
+### Dependencies
+
+#### Deps
+
+- chore(deps): Bump GitInfo from 3.6.0 to 3.6.1 by @dependabot in [#244](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/244)
+- chore(deps): Bump ReactiveUI.SourceGenerators from 2.6.30 to 3.1.0 by @dependabot in [#233](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/233)
+
 ## 0.3.2
 
 ### Features
