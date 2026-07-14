@@ -310,7 +310,76 @@ public class CrashReporterTests
     }
 
     [Test]
-    public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeRateLimited_CachesCrashEnvelopeAndMinidump()
+    public async Task SubmitAsync_WithCacheDir_WhenServerRejectsWithStatus_DiscardsWithoutCaching()
+    {
+        // Arrange - a 4xx/5xx status error (as opposed to a network failure) must not be
+        // kept in the offline cache for retry.
+        var client = new Mock<ISentryClient>();
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("rejected", null, HttpStatusCode.BadRequest));
+
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var minidump = new byte[] { 0x01, 0x02, 0x03 };
+        var envelope = CreateCrashEnvelope(cacheDir, minidump);
+
+        try
+        {
+            // Act - the error still surfaces to the caller...
+            Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
+
+            // ...but the crash is discarded, not written to the offline cache.
+            Directory.Exists(cacheDir).Should().BeFalse();
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task CacheAsync_WhenCacheIsFull_EvictsOldestEnvelope()
+    {
+        // Arrange - fill the offline cache to capacity with dummy envelopes, oldest first.
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, new Mock<ISentryClient>().Object);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(cacheDir);
+
+        var oldestPath = Path.Combine(cacheDir, "dummy-000.envelope");
+        for (var i = 0; i < Services.CrashReporter.MaxCachedEnvelopes; i++)
+        {
+            var path = Path.Combine(cacheDir, $"dummy-{i:D3}.envelope");
+            await File.WriteAllTextAsync(path, "{}");
+            File.SetLastWriteTimeUtc(path, new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMinutes(i));
+        }
+
+        var envelope = CreateCrashEnvelopeWithoutMinidump(cacheDir);
+        var newEnvelopePath = Path.Combine(cacheDir, "c993afb6-b4ac-48a6-b61b-2558e601d65d.envelope");
+
+        try
+        {
+            // Act - caching one more must stay within the cap by evicting the oldest.
+            await reporter.CacheAsync(envelope);
+
+            // Assert
+            Directory.GetFiles(cacheDir, "*.envelope").Should().HaveCount(Services.CrashReporter.MaxCachedEnvelopes);
+            File.Exists(oldestPath).Should().BeFalse();
+            File.Exists(newEnvelopePath).Should().BeTrue();
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeRateLimited_DiscardsWithoutRetry()
     {
         // Arrange
         var client = new Mock<ISentryClient>();
@@ -327,8 +396,9 @@ public class CrashReporterTests
             // Act - a rate-limited submit must not throw (so the window can close)...
             await reporter.SubmitAsync(envelope);
 
-            // ...but the crash must be kept cached for a later retry, not discarded.
-            await AssertCachedCrashEnvelope(cacheDir, minidump);
+            // ...and per the offline-caching spec a 429 is discarded and NOT retried, so the
+            // crash is not written to the offline cache (only network failures are retried).
+            Directory.Exists(cacheDir).Should().BeFalse();
         }
         finally
         {

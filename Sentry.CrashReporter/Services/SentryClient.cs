@@ -70,6 +70,14 @@ public class SentryClient(IHttpClientFactory httpClientFactory) : ISentryClient
 
             if (response.StatusCode != HttpStatusCode.TooManyRequests)
             {
+                if (response.StatusCode == HttpStatusCode.RequestEntityTooLarge)
+                {
+                    // HTTP 413: the envelope exceeds size limits. Per the offline-caching
+                    // spec it must be discarded and never retried; log it here, then let
+                    // EnsureSuccessStatusCode throw (the caller discards on a status error).
+                    this.Log().LogError("Envelope discarded: exceeds size limits (HTTP 413 Content Too Large).");
+                }
+
                 response.EnsureSuccessStatusCode();
                 progress?.Report(1);
 

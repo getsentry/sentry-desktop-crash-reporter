@@ -200,6 +200,31 @@ public class SentryClientTests
 
     [Test]
     [TestCase("data/two_items.envelope")]
+    public async Task SubmitEnvelope_On_RequestEntityTooLarge_Throws_With_Status_And_Does_Not_Retry(string filePath)
+    {
+        await using var file = File.OpenRead(filePath);
+        var envelope = await Envelope.DeserializeAsync(file);
+        var dsn = envelope.TryGetDsn()!;
+
+        var requestContents = new List<string>();
+        _messageHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
+            {
+                requestContents.Add(request.Content!.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult());
+            })
+            .ReturnsAsync(() => new HttpResponseMessage(HttpStatusCode.RequestEntityTooLarge));
+
+        // 413 must surface as a status-bearing exception (so the caller discards it) and
+        // must not be retried.
+        var exception = Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
+
+        Assert.That(exception!.StatusCode, Is.EqualTo(HttpStatusCode.RequestEntityTooLarge));
+        Assert.That(requestContents, Has.Count.EqualTo(1)); // No retries for 413
+    }
+
+    [Test]
+    [TestCase("data/two_items.envelope")]
     public async Task SubmitEnvelope_DoesNot_Retry_On_NotFound(string filePath)
     {
         await using var file = File.OpenRead(filePath);
