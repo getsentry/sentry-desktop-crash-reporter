@@ -8,7 +8,8 @@ public enum RateLimitCategory
     Error,
     Session,
     Transaction,
-    Replay
+    Replay,
+    Feedback
 }
 
 /// <summary>
@@ -35,6 +36,7 @@ public sealed class RateLimiter(TimeProvider? timeProvider = null)
             "session" => RateLimitCategory.Session,
             "transaction" => RateLimitCategory.Transaction,
             "replay_video" => RateLimitCategory.Replay,
+            "feedback" => RateLimitCategory.Feedback,
             "client_report" => null,
             // NOTE: the type here can be "event" or "attachment". Like sentry-native,
             // attachments currently share the ERROR bucket.
@@ -85,7 +87,7 @@ public sealed class RateLimiter(TimeProvider? timeProvider = null)
                 continue;
             }
 
-            var retryAfter = ClampRetryAfter(TimeSpan.FromSeconds(seconds));
+            var retryAfter = RetryAfterFromSeconds(seconds);
             var categories = fields.Length > 1 ? fields[1] : string.Empty;
             if (string.IsNullOrEmpty(categories))
             {
@@ -108,7 +110,7 @@ public sealed class RateLimiter(TimeProvider? timeProvider = null)
     private void UpdateFromRetryAfter(string? retryAfter)
     {
         var delay = long.TryParse(retryAfter, out var seconds)
-            ? ClampRetryAfter(TimeSpan.FromSeconds(seconds))
+            ? RetryAfterFromSeconds(seconds)
             : DefaultRetryAfter;
         Disable(RateLimitCategory.Any, delay);
     }
@@ -129,6 +131,9 @@ public sealed class RateLimiter(TimeProvider? timeProvider = null)
             case "replay":
                 category = RateLimitCategory.Replay;
                 return true;
+            case "feedback":
+                category = RateLimitCategory.Feedback;
+                return true;
             default:
                 // Unknown categories are ignored, matching sentry-native.
                 category = default;
@@ -136,12 +141,32 @@ public sealed class RateLimiter(TimeProvider? timeProvider = null)
         }
     }
 
-    private static TimeSpan ClampRetryAfter(TimeSpan retryAfter) =>
-        retryAfter < TimeSpan.Zero ? TimeSpan.Zero :
-        retryAfter > MaxRetryAfter ? MaxRetryAfter : retryAfter;
+    // Clamp the raw seconds *before* building a TimeSpan: TimeSpan.FromSeconds throws
+    // on very large values, so a malformed or hostile header must never reach it
+    // unclamped and fail an otherwise successful submit.
+    private static TimeSpan RetryAfterFromSeconds(long seconds)
+    {
+        var maxSeconds = (long)MaxRetryAfter.TotalSeconds;
+        if (seconds < 0)
+        {
+            seconds = 0;
+        }
+        else if (seconds > maxSeconds)
+        {
+            seconds = maxSeconds;
+        }
+
+        return TimeSpan.FromSeconds(seconds);
+    }
 
     private void Disable(RateLimitCategory category, TimeSpan duration)
     {
-        _disabledUntil[category] = _time.GetUtcNow() + duration;
+        var until = _time.GetUtcNow() + duration;
+        // Keep the longest backoff: a later, shorter limit for the same category must
+        // not let it resume sending earlier than an existing one already requires.
+        if (!_disabledUntil.TryGetValue(category, out var existing) || until > existing)
+        {
+            _disabledUntil[category] = until;
+        }
     }
 }

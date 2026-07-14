@@ -35,7 +35,7 @@ public class RateLimiterTests
 
     [TestCase("event", RateLimitCategory.Error)]
     [TestCase("attachment", RateLimitCategory.Error)]
-    [TestCase("feedback", RateLimitCategory.Error)]
+    [TestCase("feedback", RateLimitCategory.Feedback)]
     [TestCase("session", RateLimitCategory.Session)]
     [TestCase("transaction", RateLimitCategory.Transaction)]
     [TestCase("replay_video", RateLimitCategory.Replay)]
@@ -145,6 +145,60 @@ public class RateLimiterTests
     {
         _rateLimiter.Update(Response(HttpStatusCode.TooManyRequests, ("X-Sentry-Rate-Limits", "0:error")));
 
+        Assert.That(_rateLimiter.IsDisabled(RateLimitCategory.Error), Is.False);
+    }
+
+    [Test]
+    public void Error_Limit_Does_Not_Disable_Feedback()
+    {
+        // User feedback is a distinct data category, so an `error` limit must not drop it.
+        _rateLimiter.Update(Response(HttpStatusCode.TooManyRequests, ("X-Sentry-Rate-Limits", "60:error")));
+
+        Assert.That(_rateLimiter.IsDisabled(RateLimitCategory.Error), Is.True);
+        Assert.That(_rateLimiter.IsDisabled(RateLimitCategory.Feedback), Is.False);
+    }
+
+    [Test]
+    public void Feedback_Can_Be_Limited_Explicitly()
+    {
+        _rateLimiter.Update(Response(HttpStatusCode.TooManyRequests, ("X-Sentry-Rate-Limits", "60:feedback")));
+
+        Assert.That(_rateLimiter.IsDisabled(RateLimitCategory.Feedback), Is.True);
+    }
+
+    [Test]
+    public void Huge_Retry_After_Is_Capped_And_Does_Not_Throw()
+    {
+        // A hostile/overflowing value must be clamped to the 24h cap, not throw.
+        Assert.DoesNotThrow(() => _rateLimiter.Update(
+            Response(HttpStatusCode.TooManyRequests, ("X-Sentry-Rate-Limits", $"{long.MaxValue}:error"))));
+
+        Assert.That(_rateLimiter.IsDisabled(RateLimitCategory.Error), Is.True);
+
+        _time.Now += TimeSpan.FromHours(24) + TimeSpan.FromSeconds(1);
+        Assert.That(_rateLimiter.IsDisabled(RateLimitCategory.Error), Is.False);
+    }
+
+    [Test]
+    public void Huge_RetryAfter_Header_Is_Capped_And_Does_Not_Throw()
+    {
+        Assert.DoesNotThrow(() => _rateLimiter.Update(
+            Response(HttpStatusCode.TooManyRequests, ("Retry-After", long.MaxValue.ToString()))));
+
+        Assert.That(_rateLimiter.IsDisabled(RateLimitCategory.Error), Is.True);
+    }
+
+    [Test]
+    public void Later_Shorter_Limit_Does_Not_Shorten_Existing_Backoff()
+    {
+        _rateLimiter.Update(Response(HttpStatusCode.TooManyRequests, ("X-Sentry-Rate-Limits", "60:error")));
+        _rateLimiter.Update(Response(HttpStatusCode.TooManyRequests, ("X-Sentry-Rate-Limits", "10:error")));
+
+        // The 10s limit must not let the category resume before the original 60s elapses.
+        _time.Now += TimeSpan.FromSeconds(30);
+        Assert.That(_rateLimiter.IsDisabled(RateLimitCategory.Error), Is.True);
+
+        _time.Now += TimeSpan.FromSeconds(31);
         Assert.That(_rateLimiter.IsDisabled(RateLimitCategory.Error), Is.False);
     }
 

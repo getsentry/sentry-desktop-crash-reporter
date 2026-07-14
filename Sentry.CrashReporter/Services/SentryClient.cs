@@ -2,9 +2,21 @@ using System.Net;
 
 namespace Sentry.CrashReporter.Services;
 
+public enum SubmitResult
+{
+    /// <summary>The payload was accepted by Sentry; the crash event was delivered.</summary>
+    Delivered,
+
+    /// <summary>
+    ///     Rate limiting stopped the crash event from being delivered. The caller should
+    ///     keep the envelope cached for a later retry rather than treating it as sent.
+    /// </summary>
+    RateLimited
+}
+
 public interface ISentryClient
 {
-    public Task SubmitEnvelopeAsync(string dsn, Envelope envelope, IProgress<double>? progress = null, CancellationToken cancellationToken = default);
+    public Task<SubmitResult> SubmitEnvelopeAsync(string dsn, Envelope envelope, IProgress<double>? progress = null, CancellationToken cancellationToken = default);
 }
 
 public class SentryClient(IHttpClientFactory httpClientFactory) : ISentryClient
@@ -15,9 +27,10 @@ public class SentryClient(IHttpClientFactory httpClientFactory) : ISentryClient
 
     private readonly RateLimiter _rateLimiter = new();
 
-    public async Task SubmitEnvelopeAsync(string dsn, Envelope envelope, IProgress<double>? progress = null, CancellationToken cancellationToken = default)
+    public async Task<SubmitResult> SubmitEnvelopeAsync(string dsn, Envelope envelope, IProgress<double>? progress = null, CancellationToken cancellationToken = default)
     {
         var endpoint = BuildEndpoint(dsn);
+        var eventItem = envelope.TryGetEvent();
 
         // Mirror sentry-native: filter rate-limited categories out before serializing,
         // and on a 429 back off and resend whatever is still allowed. This lets the
@@ -36,7 +49,7 @@ public class SentryClient(IHttpClientFactory httpClientFactory) : ISentryClient
             {
                 // Every category is backed off; there is nothing left to send.
                 progress?.Report(1);
-                return;
+                return SubmitResult.RateLimited;
             }
 
             var stream = new MemoryStream();
@@ -62,7 +75,12 @@ public class SentryClient(IHttpClientFactory httpClientFactory) : ISentryClient
 
                 var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 this.Log().LogInformation(content);
-                return;
+
+                // Delivered, unless the crash event itself was rate-limited out of the
+                // request we just succeeded with (e.g. a non-event item still went through).
+                return eventItem is null || items.Contains(eventItem)
+                    ? SubmitResult.Delivered
+                    : SubmitResult.RateLimited;
             }
 
             // 429: the limiter was updated above. Resend the still-allowed subset on the
@@ -72,12 +90,13 @@ public class SentryClient(IHttpClientFactory httpClientFactory) : ISentryClient
             {
                 this.Log().LogWarning("Rate limited (HTTP 429); no further items can be sent.");
                 progress?.Report(1);
-                return;
+                return SubmitResult.RateLimited;
             }
         }
 
         this.Log().LogWarning("Rate limited (HTTP 429); giving up after {Attempts} attempts.", MaxRateLimitAttempts);
         progress?.Report(1);
+        return SubmitResult.RateLimited;
 
         bool NotRateLimited(EnvelopeItem item)
         {

@@ -310,6 +310,36 @@ public class CrashReporterTests
     }
 
     [Test]
+    public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeRateLimited_CachesCrashEnvelopeAndMinidump()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(SubmitResult.RateLimited);
+
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var minidump = new byte[] { 0x01, 0x02, 0x03 };
+        var envelope = CreateCrashEnvelope(cacheDir, minidump);
+
+        try
+        {
+            // Act - a rate-limited submit must not throw (so the window can close)...
+            await reporter.SubmitAsync(envelope);
+
+            // ...but the crash must be kept cached for a later retry, not discarded.
+            await AssertCachedCrashEnvelope(cacheDir, minidump);
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
     public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeSubmitIsCanceled_CachesCrashEnvelopeAndMinidump()
     {
         // Arrange
@@ -388,7 +418,7 @@ public class CrashReporterTests
                 It.IsAny<Envelope>(),
                 It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("upload failed"))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(SubmitResult.Delivered);
 
         var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
         var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
@@ -426,7 +456,7 @@ public class CrashReporterTests
                 It.IsAny<Envelope>(),
                 It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("upload failed"))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(SubmitResult.Delivered);
 
         var cacheKeep = new MemoryCacheService(CacheKeep.Always);
         var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object, cacheKeep);
@@ -564,7 +594,7 @@ public class CrashReporterTests
     {
         // Arrange
         var client = new Mock<ISentryClient>();
-        var submitCompletion = new TaskCompletionSource();
+        var submitCompletion = new TaskCompletionSource<SubmitResult>();
         client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .Returns(submitCompletion.Task);
 
@@ -577,7 +607,7 @@ public class CrashReporterTests
         {
             // Act
             await reporter.CacheAsync(envelope);
-            submitCompletion.SetResult();
+            submitCompletion.SetResult(SubmitResult.Delivered);
             await submitTask;
 
             // Assert
@@ -587,7 +617,7 @@ public class CrashReporterTests
         {
             if (!submitCompletion.Task.IsCompleted)
             {
-                submitCompletion.SetResult();
+                submitCompletion.SetResult(SubmitResult.Delivered);
                 await submitTask;
             }
 
@@ -671,7 +701,7 @@ public class CrashReporterTests
                 It.IsAny<string>(),
                 It.IsAny<Envelope>(),
                 It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask)
+            .ReturnsAsync(SubmitResult.Delivered)
             .ThrowsAsync(new HttpRequestException("feedback failed"));
 
         var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);

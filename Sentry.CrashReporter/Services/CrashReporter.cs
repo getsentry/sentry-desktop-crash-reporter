@@ -53,10 +53,21 @@ public class CrashReporter(
         _submittingEnvelope = envelope;
         try
         {
-            await _client.SubmitEnvelopeAsync(dsn, envelope, progress, cancellationToken);
-            var cachedEnvelopePath = await CacheAsync(envelope, EffectiveCacheKeep, cancellationToken);
-            _submittedEnvelopes.Add(envelope);
-            DeleteEnvelope(envelope, cachedEnvelopePath);
+            var result = await _client.SubmitEnvelopeAsync(dsn, envelope, progress, cancellationToken);
+            if (result == SubmitResult.RateLimited)
+            {
+                // The crash was rate-limited before it could be delivered. Keep it in the
+                // offline cache so it can be retried later instead of discarding it as if
+                // it had been sent.
+                _submittingEnvelope = null;
+                await CacheAsync(envelope, cancellationToken);
+            }
+            else
+            {
+                var cachedEnvelopePath = await CacheAsync(envelope, EffectiveCacheKeep, cancellationToken);
+                _submittedEnvelopes.Add(envelope);
+                DeleteEnvelope(envelope, cachedEnvelopePath);
+            }
         }
         catch (Exception)
         {

@@ -287,10 +287,12 @@ public class SentryClientTests
 
         // A 429 must not throw: it backs off the limited category so the submission
         // completes and the crash reporter window can close.
-        await _client.SubmitEnvelopeAsync(dsn, envelope);
+        var result = await _client.SubmitEnvelopeAsync(dsn, envelope);
 
-        // Every item is ERROR, so after the first 429 there is nothing left to resend.
+        // Every item is ERROR, so after the first 429 there is nothing left to resend,
+        // and the crash was not delivered.
         Assert.That(requestContents, Has.Count.EqualTo(1));
+        Assert.That(result, Is.EqualTo(SubmitResult.RateLimited));
     }
 
     [Test]
@@ -327,7 +329,7 @@ public class SentryClientTests
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
             });
 
-        await _client.SubmitEnvelopeAsync(dsn, envelope);
+        var result = await _client.SubmitEnvelopeAsync(dsn, envelope);
 
         Assert.That(requestContents, Has.Count.EqualTo(2));
         // First attempt carries both items; the retry drops the rate-limited session
@@ -335,6 +337,8 @@ public class SentryClientTests
         Assert.That(requestContents[0], Does.Contain("\"type\":\"session\""));
         Assert.That(requestContents[1], Does.Contain("\"type\":\"event\""));
         Assert.That(requestContents[1], Does.Not.Contain("\"type\":\"session\""));
+        // The crash event was delivered, so this counts as delivered.
+        Assert.That(result, Is.EqualTo(SubmitResult.Delivered));
     }
 
     [Test]
