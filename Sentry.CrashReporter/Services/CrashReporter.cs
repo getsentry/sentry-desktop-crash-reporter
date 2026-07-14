@@ -21,9 +21,12 @@ public class CrashReporter(
     ICacheService? cache = null,
     AppConfig? config = null) : ICrashReporter
 {
-    // Cap on the number of envelopes retained in the offline cache (offline-caching spec:
-    // SDKs MUST cap the number of stored envelopes). Oldest are evicted first.
-    public const int MaxCachedEnvelopes = 30;
+    // Default cap on the number of envelopes retained in the on-disk cache (offline-caching
+    // spec: SDKs MUST cap the number of stored envelopes). Applies to every write into the
+    // cache directory - offline retries and CacheKeep.Always copies alike. Oldest are evicted
+    // first. Matches sentry-native's `cache_max_items` default; overridable via
+    // AppConfig.MaxCachedEnvelopes.
+    public const int DefaultMaxCachedEnvelopes = 30;
 
     private readonly IStorageFile? _file = file ?? App.Services.GetService<IStorageFile>();
     private readonly ISentryClient _client = client ?? App.Services.GetRequiredService<ISentryClient>();
@@ -194,6 +197,11 @@ public class CrashReporter(
 
     public CacheKeep EffectiveCacheKeep => (_cache.CacheKeep ?? _config.CacheKeep ?? CacheKeep.Offline).Normalize();
 
+    // A non-positive configured value is ignored so the cache always stays capped (the spec
+    // requires a cap), falling back to the native-matching default.
+    private int EffectiveMaxCachedEnvelopes =>
+        _config.MaxCachedEnvelopes is > 0 ? _config.MaxCachedEnvelopes.Value : DefaultMaxCachedEnvelopes;
+
     private async Task<string?> CacheAsync(Envelope envelope, CacheKeep cacheKeep, CancellationToken cancellationToken)
     {
         if (cacheKeep != CacheKeep.Always)
@@ -213,6 +221,7 @@ public class CrashReporter(
 
             var eventId = GetCacheEventId(envelope);
             var envelopePath = System.IO.Path.Combine(cacheDir, $"{eventId}.envelope");
+            EnforceCacheCap(cacheDir, envelopePath);
             var minidumps = GetMinidumps(envelope);
             await WriteMinidumpsAsync(cacheDir, eventId, minidumps, cancellationToken);
             if (File.Exists(envelopePath))
@@ -383,7 +392,7 @@ public class CrashReporter(
         return true;
     }
 
-    // Enforces the stored-envelope cap on the offline cache, evicting oldest-first and
+    // Enforces the stored-envelope cap on the cache directory, evicting oldest-first and
     // leaving room for `headroom` new entries. `keepPath` is excluded from eviction (it is
     // the envelope currently being cached). Best-effort: never throws to the caller.
     private void EnforceCacheCap(string cacheDir, string? keepPath = null, int headroom = 1)
@@ -401,7 +410,7 @@ public class CrashReporter(
                 .OrderBy(f => f.LastWriteTimeUtc)
                 .ToList();
 
-            var maxKeep = Math.Max(0, MaxCachedEnvelopes - headroom);
+            var maxKeep = Math.Max(0, EffectiveMaxCachedEnvelopes - headroom);
             for (var i = 0; i < envelopes.Count - maxKeep; i++)
             {
                 EvictCachedEnvelope(envelopes[i].FullName);

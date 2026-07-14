@@ -349,7 +349,7 @@ public class CrashReporterTests
         Directory.CreateDirectory(cacheDir);
 
         var oldestPath = Path.Combine(cacheDir, "dummy-000.envelope");
-        for (var i = 0; i < Services.CrashReporter.MaxCachedEnvelopes; i++)
+        for (var i = 0; i < Services.CrashReporter.DefaultMaxCachedEnvelopes; i++)
         {
             var path = Path.Combine(cacheDir, $"dummy-{i:D3}.envelope");
             await File.WriteAllTextAsync(path, "{}");
@@ -365,7 +365,93 @@ public class CrashReporterTests
             await reporter.CacheAsync(envelope);
 
             // Assert
-            Directory.GetFiles(cacheDir, "*.envelope").Should().HaveCount(Services.CrashReporter.MaxCachedEnvelopes);
+            Directory.GetFiles(cacheDir, "*.envelope").Should().HaveCount(Services.CrashReporter.DefaultMaxCachedEnvelopes);
+            File.Exists(oldestPath).Should().BeFalse();
+            File.Exists(newEnvelopePath).Should().BeTrue();
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task SubmitAsync_WithCacheKeepAlways_EnforcesEnvelopeCap()
+    {
+        // Arrange - a successful submit with CacheKeep.Always writes a copy through the
+        // private cache overload, which must also honor the cap on the same directory.
+        const int cap = 3;
+        var reporter = new Services.CrashReporter(
+            new Mock<IStorageFile>().Object,
+            new Mock<ISentryClient>().Object,
+            cache: new MemoryCacheService(CacheKeep.Always),
+            config: new AppConfig { MaxCachedEnvelopes = cap });
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(cacheDir);
+
+        var oldestPath = Path.Combine(cacheDir, "dummy-0.envelope");
+        for (var i = 0; i < cap; i++)
+        {
+            var path = Path.Combine(cacheDir, $"dummy-{i}.envelope");
+            await File.WriteAllTextAsync(path, "{}");
+            File.SetLastWriteTimeUtc(path, new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMinutes(i));
+        }
+
+        var envelope = CreateCrashEnvelopeWithoutMinidump(cacheDir);
+        var newEnvelopePath = Path.Combine(cacheDir, "c993afb6-b4ac-48a6-b61b-2558e601d65d.envelope");
+
+        try
+        {
+            // Act
+            await reporter.SubmitAsync(envelope);
+
+            // Assert - the Always copy is written, but the directory stays within the cap.
+            Directory.GetFiles(cacheDir, "*.envelope").Should().HaveCount(cap);
+            File.Exists(oldestPath).Should().BeFalse();
+            File.Exists(newEnvelopePath).Should().BeTrue();
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task CacheAsync_WithConfiguredCap_EvictsOldestBeyondConfiguredLimit()
+    {
+        // Arrange - override the default cap via AppConfig.
+        const int cap = 3;
+        var reporter = new Services.CrashReporter(
+            new Mock<IStorageFile>().Object,
+            new Mock<ISentryClient>().Object,
+            config: new AppConfig { MaxCachedEnvelopes = cap });
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(cacheDir);
+
+        var oldestPath = Path.Combine(cacheDir, "dummy-0.envelope");
+        for (var i = 0; i < cap; i++)
+        {
+            var path = Path.Combine(cacheDir, $"dummy-{i}.envelope");
+            await File.WriteAllTextAsync(path, "{}");
+            File.SetLastWriteTimeUtc(path, new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMinutes(i));
+        }
+
+        var envelope = CreateCrashEnvelopeWithoutMinidump(cacheDir);
+        var newEnvelopePath = Path.Combine(cacheDir, "c993afb6-b4ac-48a6-b61b-2558e601d65d.envelope");
+
+        try
+        {
+            // Act
+            await reporter.CacheAsync(envelope);
+
+            // Assert - stays within the configured cap, evicting the oldest.
+            Directory.GetFiles(cacheDir, "*.envelope").Should().HaveCount(cap);
             File.Exists(oldestPath).Should().BeFalse();
             File.Exists(newEnvelopePath).Should().BeTrue();
         }
