@@ -32,9 +32,6 @@ public record AppConfig
     public string? LogoDark { get; init; }
     [JsonConverter(typeof(JsonStringEnumConverter<CacheKeep>))]
     public CacheKeep? CacheKeep { get; init; }
-    // Cap on the number of envelopes retained in the offline cache. Mirrors sentry-native's
-    // `cache_max_items`. When unset (or not positive) the default is used.
-    public int? MaxCachedEnvelopes { get; init; }
 
     private const string FileName = "appsettings.json";
 

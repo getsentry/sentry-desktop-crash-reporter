@@ -310,192 +310,6 @@ public class CrashReporterTests
     }
 
     [Test]
-    public async Task SubmitAsync_WithCacheDir_WhenServerRejectsWithStatus_DiscardsWithoutCaching()
-    {
-        // Arrange - a 4xx/5xx status error (as opposed to a network failure) must not be
-        // kept in the offline cache for retry.
-        var client = new Mock<ISentryClient>();
-        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new HttpRequestException("rejected", null, HttpStatusCode.BadRequest));
-
-        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
-        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
-        var minidump = new byte[] { 0x01, 0x02, 0x03 };
-        var envelope = CreateCrashEnvelope(cacheDir, minidump);
-
-        try
-        {
-            // Act - the error still surfaces to the caller...
-            Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
-
-            // ...but the crash is discarded, not written to the offline cache.
-            Directory.Exists(cacheDir).Should().BeFalse();
-        }
-        finally
-        {
-            if (Directory.Exists(cacheDir))
-            {
-                Directory.Delete(cacheDir, true);
-            }
-        }
-    }
-
-    [Test]
-    public async Task CacheAsync_WhenCacheIsFull_EvictsOldestEnvelope()
-    {
-        // Arrange - fill the offline cache to capacity with dummy envelopes, oldest first.
-        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, new Mock<ISentryClient>().Object);
-        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(cacheDir);
-
-        var oldestPath = Path.Combine(cacheDir, "dummy-000.envelope");
-        for (var i = 0; i < Services.CrashReporter.DefaultMaxCachedEnvelopes; i++)
-        {
-            var path = Path.Combine(cacheDir, $"dummy-{i:D3}.envelope");
-            await File.WriteAllTextAsync(path, "{}");
-            File.SetLastWriteTimeUtc(path, new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMinutes(i));
-        }
-
-        var envelope = CreateCrashEnvelopeWithoutMinidump(cacheDir);
-        var newEnvelopePath = Path.Combine(cacheDir, "c993afb6-b4ac-48a6-b61b-2558e601d65d.envelope");
-
-        try
-        {
-            // Act - caching one more must stay within the cap by evicting the oldest.
-            await reporter.CacheAsync(envelope);
-
-            // Assert
-            Directory.GetFiles(cacheDir, "*.envelope").Should().HaveCount(Services.CrashReporter.DefaultMaxCachedEnvelopes);
-            File.Exists(oldestPath).Should().BeFalse();
-            File.Exists(newEnvelopePath).Should().BeTrue();
-        }
-        finally
-        {
-            if (Directory.Exists(cacheDir))
-            {
-                Directory.Delete(cacheDir, true);
-            }
-        }
-    }
-
-    [Test]
-    public async Task SubmitAsync_WithCacheKeepAlways_EnforcesEnvelopeCap()
-    {
-        // Arrange - a successful submit with CacheKeep.Always writes a copy through the
-        // private cache overload, which must also honor the cap on the same directory.
-        const int cap = 3;
-        var reporter = new Services.CrashReporter(
-            new Mock<IStorageFile>().Object,
-            new Mock<ISentryClient>().Object,
-            cache: new MemoryCacheService(CacheKeep.Always),
-            config: new AppConfig { MaxCachedEnvelopes = cap });
-        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(cacheDir);
-
-        var oldestPath = Path.Combine(cacheDir, "dummy-0.envelope");
-        for (var i = 0; i < cap; i++)
-        {
-            var path = Path.Combine(cacheDir, $"dummy-{i}.envelope");
-            await File.WriteAllTextAsync(path, "{}");
-            File.SetLastWriteTimeUtc(path, new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMinutes(i));
-        }
-
-        var envelope = CreateCrashEnvelopeWithoutMinidump(cacheDir);
-        var newEnvelopePath = Path.Combine(cacheDir, "c993afb6-b4ac-48a6-b61b-2558e601d65d.envelope");
-
-        try
-        {
-            // Act
-            await reporter.SubmitAsync(envelope);
-
-            // Assert - the Always copy is written, but the directory stays within the cap.
-            Directory.GetFiles(cacheDir, "*.envelope").Should().HaveCount(cap);
-            File.Exists(oldestPath).Should().BeFalse();
-            File.Exists(newEnvelopePath).Should().BeTrue();
-        }
-        finally
-        {
-            if (Directory.Exists(cacheDir))
-            {
-                Directory.Delete(cacheDir, true);
-            }
-        }
-    }
-
-    [Test]
-    public async Task CacheAsync_WithConfiguredCap_EvictsOldestBeyondConfiguredLimit()
-    {
-        // Arrange - override the default cap via AppConfig.
-        const int cap = 3;
-        var reporter = new Services.CrashReporter(
-            new Mock<IStorageFile>().Object,
-            new Mock<ISentryClient>().Object,
-            config: new AppConfig { MaxCachedEnvelopes = cap });
-        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(cacheDir);
-
-        var oldestPath = Path.Combine(cacheDir, "dummy-0.envelope");
-        for (var i = 0; i < cap; i++)
-        {
-            var path = Path.Combine(cacheDir, $"dummy-{i}.envelope");
-            await File.WriteAllTextAsync(path, "{}");
-            File.SetLastWriteTimeUtc(path, new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMinutes(i));
-        }
-
-        var envelope = CreateCrashEnvelopeWithoutMinidump(cacheDir);
-        var newEnvelopePath = Path.Combine(cacheDir, "c993afb6-b4ac-48a6-b61b-2558e601d65d.envelope");
-
-        try
-        {
-            // Act
-            await reporter.CacheAsync(envelope);
-
-            // Assert - stays within the configured cap, evicting the oldest.
-            Directory.GetFiles(cacheDir, "*.envelope").Should().HaveCount(cap);
-            File.Exists(oldestPath).Should().BeFalse();
-            File.Exists(newEnvelopePath).Should().BeTrue();
-        }
-        finally
-        {
-            if (Directory.Exists(cacheDir))
-            {
-                Directory.Delete(cacheDir, true);
-            }
-        }
-    }
-
-    [Test]
-    public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeRateLimited_DiscardsWithoutRetry()
-    {
-        // Arrange
-        var client = new Mock<ISentryClient>();
-        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(SubmitResult.RateLimited);
-
-        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
-        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
-        var minidump = new byte[] { 0x01, 0x02, 0x03 };
-        var envelope = CreateCrashEnvelope(cacheDir, minidump);
-
-        try
-        {
-            // Act - a rate-limited submit must not throw (so the window can close)...
-            await reporter.SubmitAsync(envelope);
-
-            // ...and per the offline-caching spec a 429 is discarded and NOT retried, so the
-            // crash is not written to the offline cache (only network failures are retried).
-            Directory.Exists(cacheDir).Should().BeFalse();
-        }
-        finally
-        {
-            if (Directory.Exists(cacheDir))
-            {
-                Directory.Delete(cacheDir, true);
-            }
-        }
-    }
-
-    [Test]
     public async Task SubmitAsync_WithCacheDir_WhenCrashEnvelopeSubmitIsCanceled_CachesCrashEnvelopeAndMinidump()
     {
         // Arrange
@@ -574,7 +388,7 @@ public class CrashReporterTests
                 It.IsAny<Envelope>(),
                 It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("upload failed"))
-            .ReturnsAsync(SubmitResult.Delivered);
+            .Returns(Task.CompletedTask);
 
         var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
         var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
@@ -612,7 +426,7 @@ public class CrashReporterTests
                 It.IsAny<Envelope>(),
                 It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("upload failed"))
-            .ReturnsAsync(SubmitResult.Delivered);
+            .Returns(Task.CompletedTask);
 
         var cacheKeep = new MemoryCacheService(CacheKeep.Always);
         var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object, cacheKeep);
@@ -750,7 +564,7 @@ public class CrashReporterTests
     {
         // Arrange
         var client = new Mock<ISentryClient>();
-        var submitCompletion = new TaskCompletionSource<SubmitResult>();
+        var submitCompletion = new TaskCompletionSource();
         client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
             .Returns(submitCompletion.Task);
 
@@ -763,7 +577,7 @@ public class CrashReporterTests
         {
             // Act
             await reporter.CacheAsync(envelope);
-            submitCompletion.SetResult(SubmitResult.Delivered);
+            submitCompletion.SetResult();
             await submitTask;
 
             // Assert
@@ -773,7 +587,7 @@ public class CrashReporterTests
         {
             if (!submitCompletion.Task.IsCompleted)
             {
-                submitCompletion.SetResult(SubmitResult.Delivered);
+                submitCompletion.SetResult();
                 await submitTask;
             }
 
@@ -857,7 +671,7 @@ public class CrashReporterTests
                 It.IsAny<string>(),
                 It.IsAny<Envelope>(),
                 It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(SubmitResult.Delivered)
+            .Returns(Task.CompletedTask)
             .ThrowsAsync(new HttpRequestException("feedback failed"));
 
         var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);

@@ -200,7 +200,7 @@ public class SentryClientTests
 
     [Test]
     [TestCase("data/two_items.envelope")]
-    public async Task SubmitEnvelope_On_RequestEntityTooLarge_Throws_With_Status_And_Does_Not_Retry(string filePath)
+    public async Task SubmitEnvelope_On_TooManyRequests_Succeeds_Without_Throwing(string filePath)
     {
         await using var file = File.OpenRead(filePath);
         var envelope = await Envelope.DeserializeAsync(file);
@@ -213,14 +213,13 @@ public class SentryClientTests
             {
                 requestContents.Add(request.Content!.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult());
             })
-            .ReturnsAsync(() => new HttpResponseMessage(HttpStatusCode.RequestEntityTooLarge));
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.TooManyRequests });
 
-        // 413 must surface as a status-bearing exception (so the caller discards it) and
-        // must not be retried.
-        var exception = Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
+        // Relay drops only the rate-limited items and accepts the rest, so a 429 is treated
+        // as a successful submit: it must not throw or retry (the window then closes).
+        await _client.SubmitEnvelopeAsync(dsn, envelope);
 
-        Assert.That(exception!.StatusCode, Is.EqualTo(HttpStatusCode.RequestEntityTooLarge));
-        Assert.That(requestContents, Has.Count.EqualTo(1)); // No retries for 413
+        Assert.That(requestContents, Has.Count.EqualTo(1));
     }
 
     [Test]
@@ -285,85 +284,6 @@ public class SentryClientTests
         {
             Assert.That(requestContent.RemoveBlankLines(), Is.EqualTo(expectedContent.RemoveBlankLines()));
         }
-    }
-
-    [Test]
-    [TestCase("data/two_items.envelope")]
-    public async Task SubmitEnvelope_On_TooManyRequests_Drops_Limited_Items_Without_Throwing(string filePath)
-    {
-        await using var file = File.OpenRead(filePath);
-        var envelope = await Envelope.DeserializeAsync(file);
-        var dsn = envelope.TryGetDsn()!;
-
-        // two_items.envelope contains an event + attachment, both in the ERROR category.
-        var requestContents = new List<string>();
-        _messageHandler.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .Callback<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
-            {
-                requestContents.Add(request.Content!.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult());
-            })
-            .ReturnsAsync(() =>
-            {
-                var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
-                response.Headers.TryAddWithoutValidation("X-Sentry-Rate-Limits", "60:error");
-                return response;
-            });
-
-        // A 429 must not throw: it backs off the limited category so the submission
-        // completes and the crash reporter window can close.
-        var result = await _client.SubmitEnvelopeAsync(dsn, envelope);
-
-        // Every item is ERROR, so after the first 429 there is nothing left to resend,
-        // and the crash was not delivered.
-        Assert.That(requestContents, Has.Count.EqualTo(1));
-        Assert.That(result, Is.EqualTo(SubmitResult.RateLimited));
-    }
-
-    [Test]
-    public async Task SubmitEnvelope_On_TooManyRequests_Resends_Still_Allowed_Items()
-    {
-        var dsn = "https://key@host/1";
-        var envelope = Envelope.FromJson(
-            new JsonObject { ["dsn"] = dsn, ["event_id"] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
-            new[]
-            {
-                (Header: new JsonObject { ["type"] = "event" }, Payload: new JsonObject { ["message"] = "boom" }),
-                (Header: new JsonObject { ["type"] = "session" }, Payload: new JsonObject { ["sid"] = "s" })
-            });
-
-        var requestContents = new List<string>();
-        var attemptCount = 0;
-        _messageHandler.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .Callback<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
-            {
-                attemptCount++;
-                requestContents.Add(request.Content!.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult());
-            })
-            .Returns<HttpRequestMessage, CancellationToken>((_, _) =>
-            {
-                // First send is rate limited for the session category only; resend succeeds.
-                if (attemptCount == 1)
-                {
-                    var limited = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
-                    limited.Headers.TryAddWithoutValidation("X-Sentry-Rate-Limits", "60:session");
-                    return Task.FromResult(limited);
-                }
-
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
-            });
-
-        var result = await _client.SubmitEnvelopeAsync(dsn, envelope);
-
-        Assert.That(requestContents, Has.Count.EqualTo(2));
-        // First attempt carries both items; the retry drops the rate-limited session
-        // and still delivers the event.
-        Assert.That(requestContents[0], Does.Contain("\"type\":\"session\""));
-        Assert.That(requestContents[1], Does.Contain("\"type\":\"event\""));
-        Assert.That(requestContents[1], Does.Not.Contain("\"type\":\"session\""));
-        // The crash event was delivered, so this counts as delivered.
-        Assert.That(result, Is.EqualTo(SubmitResult.Delivered));
     }
 
     [Test]

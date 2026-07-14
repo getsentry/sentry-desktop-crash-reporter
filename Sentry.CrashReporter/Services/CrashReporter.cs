@@ -21,13 +21,6 @@ public class CrashReporter(
     ICacheService? cache = null,
     AppConfig? config = null) : ICrashReporter
 {
-    // Default cap on the number of envelopes retained in the on-disk cache (offline-caching
-    // spec: SDKs MUST cap the number of stored envelopes). Applies to every write into the
-    // cache directory - offline retries and CacheKeep.Always copies alike. Oldest are evicted
-    // first. Matches sentry-native's `cache_max_items` default; overridable via
-    // AppConfig.MaxCachedEnvelopes.
-    public const int DefaultMaxCachedEnvelopes = 30;
-
     private readonly IStorageFile? _file = file ?? App.Services.GetService<IStorageFile>();
     private readonly ISentryClient _client = client ?? App.Services.GetRequiredService<ISentryClient>();
     private readonly ICacheService _cache = cache ?? App.Services.GetRequiredService<ICacheService>();
@@ -60,35 +53,13 @@ public class CrashReporter(
         _submittingEnvelope = envelope;
         try
         {
-            var result = await _client.SubmitEnvelopeAsync(dsn, envelope, progress, cancellationToken);
-            if (result == SubmitResult.RateLimited)
-            {
-                // Per the offline-caching spec, a rate-limited (HTTP 429) envelope is
-                // discarded and NOT retried - the offline cache is only for network
-                // failures, not server responses. So we treat it like a completed send
-                // for cache purposes (discard) rather than keeping it to retry, but log it.
-                this.Log().LogWarning("Crash envelope was rate-limited (HTTP 429) and discarded without retry.");
-            }
-
+            await _client.SubmitEnvelopeAsync(dsn, envelope, progress, cancellationToken);
             var cachedEnvelopePath = await CacheAsync(envelope, EffectiveCacheKeep, cancellationToken);
             _submittedEnvelopes.Add(envelope);
             DeleteEnvelope(envelope, cachedEnvelopePath);
         }
-        catch (HttpRequestException e) when (e.StatusCode is not null)
-        {
-            // The server responded with an error status (4xx/5xx, including 413). Per the
-            // offline-caching spec these are discarded and NOT retried - the offline cache
-            // is only for network failures. Drop it from the cache (and mark it done so a
-            // window-close does not re-cache it), but still rethrow so the UI can react.
-            _submittingEnvelope = null;
-            _submittedEnvelopes.Add(envelope);
-            DeleteEnvelope(envelope);
-            throw;
-        }
         catch (Exception)
         {
-            // Network/transport failure (or cancellation): keep the crash cached so it can
-            // be retried on a later run.
             _submittingEnvelope = null;
             await CacheAsync(envelope, CancellationToken.None);
             throw;
@@ -120,14 +91,7 @@ public class CrashReporter(
                     })
                 ]
             );
-            var feedbackResult = await _client.SubmitEnvelopeAsync(dsn, feedback, null, cancellationToken);
-            if (feedbackResult == SubmitResult.RateLimited)
-            {
-                // Feedback rides its own rate-limit category, so this only happens under a
-                // full backoff. It is re-derived from the environment on the next run's
-                // retry, so surface it rather than silently reporting success.
-                this.Log().LogWarning("User feedback was rate-limited and not delivered.");
-            }
+            await _client.SubmitEnvelopeAsync(dsn, feedback, null, cancellationToken);
         }
     }
 
@@ -166,7 +130,6 @@ public class CrashReporter(
 
             var eventId = GetCacheEventId(envelope);
             var envelopePath = System.IO.Path.Combine(cacheDir, $"{eventId}.envelope");
-            EnforceCacheCap(cacheDir, envelopePath);
             if (File.Exists(envelopePath))
             {
                 if (DeleteEnvelope(envelope, envelopePath))
@@ -197,11 +160,6 @@ public class CrashReporter(
 
     public CacheKeep EffectiveCacheKeep => (_cache.CacheKeep ?? _config.CacheKeep ?? CacheKeep.Offline).Normalize();
 
-    // A non-positive configured value is ignored so the cache always stays capped (the spec
-    // requires a cap), falling back to the native-matching default.
-    private int EffectiveMaxCachedEnvelopes =>
-        _config.MaxCachedEnvelopes is > 0 ? _config.MaxCachedEnvelopes.Value : DefaultMaxCachedEnvelopes;
-
     private async Task<string?> CacheAsync(Envelope envelope, CacheKeep cacheKeep, CancellationToken cancellationToken)
     {
         if (cacheKeep != CacheKeep.Always)
@@ -221,7 +179,6 @@ public class CrashReporter(
 
             var eventId = GetCacheEventId(envelope);
             var envelopePath = System.IO.Path.Combine(cacheDir, $"{eventId}.envelope");
-            EnforceCacheCap(cacheDir, envelopePath);
             var minidumps = GetMinidumps(envelope);
             await WriteMinidumpsAsync(cacheDir, eventId, minidumps, cancellationToken);
             if (File.Exists(envelopePath))
@@ -390,54 +347,6 @@ public class CrashReporter(
             DeleteEnvelopeSibling(siblingPath);
         }
         return true;
-    }
-
-    // Enforces the stored-envelope cap on the cache directory, evicting oldest-first and
-    // leaving room for `headroom` new entries. `keepPath` is excluded from eviction (it is
-    // the envelope currently being cached). Best-effort: never throws to the caller.
-    private void EnforceCacheCap(string cacheDir, string? keepPath = null, int headroom = 1)
-    {
-        try
-        {
-            if (!Directory.Exists(cacheDir))
-            {
-                return;
-            }
-
-            var envelopes = new DirectoryInfo(cacheDir)
-                .EnumerateFiles("*.envelope")
-                .Where(f => !SamePath(f.FullName, keepPath))
-                .OrderBy(f => f.LastWriteTimeUtc)
-                .ToList();
-
-            var maxKeep = Math.Max(0, EffectiveMaxCachedEnvelopes - headroom);
-            for (var i = 0; i < envelopes.Count - maxKeep; i++)
-            {
-                EvictCachedEnvelope(envelopes[i].FullName);
-            }
-        }
-        catch (Exception e)
-        {
-            this.Log().LogWarning(e, "Failed to enforce crash cache cap.");
-        }
-    }
-
-    private void EvictCachedEnvelope(string envelopePath)
-    {
-        DeleteEnvelopeSibling(envelopePath);
-
-        var directory = System.IO.Path.GetDirectoryName(envelopePath);
-        var eventId = System.IO.Path.GetFileNameWithoutExtension(envelopePath);
-        if (string.IsNullOrEmpty(directory) || string.IsNullOrEmpty(eventId))
-        {
-            return;
-        }
-
-        DeleteEnvelopeSibling(System.IO.Path.Combine(directory, $"{eventId}.dmp"));
-        foreach (var sibling in Directory.EnumerateFiles(directory, $"{eventId}-*"))
-        {
-            DeleteEnvelopeSibling(sibling);
-        }
     }
 
     private void DeleteEnvelopeSibling(string path)
