@@ -36,6 +36,17 @@ public class SentryClient(IHttpClientFactory httpClientFactory) : ISentryClient
         };
         using var httpClient = httpClientFactory.CreateClient(nameof(SentryClient));
         using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+
+        if (response.StatusCode == HttpStatusCode.TooManyRequests)
+        {
+            // Relay still accepts the envelope and simply drops the rate-limited items, so a
+            // 429 is a successful submit from our side. Log it and return so the report counts
+            // as sent (and the window closes) instead of failing the whole submission.
+            this.Log().LogInformation("Envelope accepted with rate limiting (HTTP 429).");
+            progress?.Report(1);
+            return;
+        }
+
         response.EnsureSuccessStatusCode();
         progress?.Report(1);
 

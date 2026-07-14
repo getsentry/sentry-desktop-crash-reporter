@@ -200,6 +200,30 @@ public class SentryClientTests
 
     [Test]
     [TestCase("data/two_items.envelope")]
+    public async Task SubmitEnvelope_On_TooManyRequests_Succeeds_Without_Throwing(string filePath)
+    {
+        await using var file = File.OpenRead(filePath);
+        var envelope = await Envelope.DeserializeAsync(file);
+        var dsn = envelope.TryGetDsn()!;
+
+        var requestContents = new List<string>();
+        _messageHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, cancellationToken) =>
+            {
+                requestContents.Add(request.Content!.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult());
+            })
+            .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.TooManyRequests });
+
+        // Relay drops only the rate-limited items and accepts the rest, so a 429 is treated
+        // as a successful submit: it must not throw or retry (the window then closes).
+        await _client.SubmitEnvelopeAsync(dsn, envelope);
+
+        Assert.That(requestContents, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    [TestCase("data/two_items.envelope")]
     public async Task SubmitEnvelope_DoesNot_Retry_On_NotFound(string filePath)
     {
         await using var file = File.OpenRead(filePath);
