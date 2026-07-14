@@ -58,17 +58,24 @@ public sealed class RateLimiter(TimeProvider? timeProvider = null)
     /// </summary>
     public void Update(HttpResponseMessage response)
     {
+        // The Sentry-specific X-Sentry-Rate-Limits header always describes rate limits,
+        // so honor it on any status. Retry-After / a bare 429 are only rate-limit signals
+        // on a 429 - other statuses (notably 503) send Retry-After for unrelated reasons
+        // and must not disable every category.
         if (response.Headers.TryGetValues("X-Sentry-Rate-Limits", out var rateLimits))
         {
             UpdateFromHeader(string.Join(',', rateLimits));
         }
-        else if (response.Headers.TryGetValues("Retry-After", out var retryAfter))
-        {
-            UpdateFromRetryAfter(retryAfter.FirstOrDefault());
-        }
         else if (response.StatusCode == HttpStatusCode.TooManyRequests)
         {
-            Disable(RateLimitCategory.Any, DefaultRetryAfter);
+            if (response.Headers.TryGetValues("Retry-After", out var retryAfter))
+            {
+                UpdateFromRetryAfter(retryAfter.FirstOrDefault());
+            }
+            else
+            {
+                Disable(RateLimitCategory.Any, DefaultRetryAfter);
+            }
         }
     }
 

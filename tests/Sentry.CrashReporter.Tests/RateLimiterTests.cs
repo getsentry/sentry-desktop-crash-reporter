@@ -100,6 +100,17 @@ public class RateLimiterTests
     }
 
     [Test]
+    public void RetryAfter_On_Non_429_Is_Ignored()
+    {
+        // A 503 (or any non-429) carrying Retry-After must not disable telemetry - that
+        // header is not a rate-limit signal outside of a 429.
+        _rateLimiter.Update(Response(HttpStatusCode.ServiceUnavailable, ("Retry-After", "30")));
+
+        Assert.That(_rateLimiter.IsDisabled(RateLimitCategory.Error), Is.False);
+        Assert.That(_rateLimiter.IsDisabled(RateLimitCategory.Session), Is.False);
+    }
+
+    [Test]
     public void Bare_429_Disables_Everything()
     {
         _rateLimiter.Update(Response(HttpStatusCode.TooManyRequests));

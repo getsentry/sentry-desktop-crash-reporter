@@ -58,9 +58,10 @@ public class CrashReporter(
             {
                 // The crash was rate-limited before it could be delivered. Keep it in the
                 // offline cache so it can be retried later instead of discarding it as if
-                // it had been sent.
+                // it had been sent. Cache unconditionally (CancellationToken.None) so a
+                // cancel cannot drop the still-undelivered crash.
                 _submittingEnvelope = null;
-                await CacheAsync(envelope, cancellationToken);
+                await CacheAsync(envelope, CancellationToken.None);
             }
             else
             {
@@ -102,7 +103,14 @@ public class CrashReporter(
                     })
                 ]
             );
-            await _client.SubmitEnvelopeAsync(dsn, feedback, null, cancellationToken);
+            var feedbackResult = await _client.SubmitEnvelopeAsync(dsn, feedback, null, cancellationToken);
+            if (feedbackResult == SubmitResult.RateLimited)
+            {
+                // Feedback rides its own rate-limit category, so this only happens under a
+                // full backoff. It is re-derived from the environment on the next run's
+                // retry, so surface it rather than silently reporting success.
+                this.Log().LogWarning("User feedback was rate-limited and not delivered.");
+            }
         }
     }
 
