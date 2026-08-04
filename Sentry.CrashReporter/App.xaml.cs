@@ -12,6 +12,11 @@ namespace Sentry.CrashReporter;
 
 public partial class App : Application
 {
+    internal const int DefaultWindowWidth = 900;
+    internal const int DefaultWindowHeight = 600;
+    private const int MinWindowWidth = 600;
+    private const int MinWindowHeight = 400;
+
     /// <summary>
     ///     Initializes the singleton application object. This is the first line of authored code
     ///     executed, and as such is the logical equivalent of main() or WinMain().
@@ -144,8 +149,8 @@ public partial class App : Application
         Services.GetRequiredService<AppConfig>().Apply(Resources);
 
         MainWindow.Title = (Resources["WindowTitle"] as string)!;
-        MainWindow.Resize(900, 600);
-        MainWindow.SetPreferredMinSize(600, 400);
+        MainWindow.Resize(DefaultWindowWidth, DefaultWindowHeight);
+        MainWindow.SetPreferredMinSize(MinWindowWidth, MinWindowHeight);
         MainWindow.UseSystemTheme();
 #if DEBUG
         MainWindow.UseStudio();

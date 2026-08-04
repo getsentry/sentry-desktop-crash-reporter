@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Sentry.CrashReporter;
+using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.ViewModels;
 using Sentry.CrashReporter.Views;
 using SkiaSharp;
@@ -38,6 +40,7 @@ internal static class GoldenTestCapture
                 throw new InvalidOperationException("The main window has no framework element content to capture.");
             }
 
+            window.Resize(App.DefaultWindowWidth, App.DefaultWindowHeight);
             ApplyTheme(root);
             var viewModel = await WaitForMainPageAsync(root);
             SelectView(viewModel);
@@ -46,9 +49,7 @@ internal static class GoldenTestCapture
             root.UpdateLayout();
 
             var renderer = new RenderTargetBitmap();
-            var width = Math.Max(1, (int)Math.Round(root.ActualWidth));
-            var height = Math.Max(1, (int)Math.Round(root.ActualHeight));
-            await renderer.RenderAsync(root, width, height);
+            await renderer.RenderAsync(root, App.DefaultWindowWidth, App.DefaultWindowHeight);
 
             var pixels = WindowsRuntimeBufferExtensions.ToArray(await renderer.GetPixelsAsync());
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath))!);
