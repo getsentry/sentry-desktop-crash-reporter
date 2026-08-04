@@ -28,6 +28,20 @@ function Resolve-RepoPath {
     return Join-Path $repoRoot $Path
 }
 
+function Format-RepoPath {
+    param([string] $Path)
+
+    $fullPath = [System.IO.Path]::GetFullPath($Path)
+    $repoRootPath = $repoRoot.ProviderPath
+    $relativePath = [System.IO.Path]::GetRelativePath($repoRootPath, $fullPath)
+    $parentPrefix = ".." + [System.IO.Path]::DirectorySeparatorChar
+    if ($relativePath -ne ".." -and !$relativePath.StartsWith($parentPrefix, [System.StringComparison]::Ordinal)) {
+        return $relativePath
+    }
+
+    return $fullPath
+}
+
 function Resolve-RuntimeIdentifier {
     if (![string]::IsNullOrWhiteSpace($RuntimeIdentifier)) {
         return $RuntimeIdentifier
@@ -319,6 +333,7 @@ $goldenTestProject = Resolve-RepoPath "tests/Sentry.CrashReporter.GoldenTests/Se
 $failures = @()
 
 foreach ($case in $goldenCases) {
+    $pendingStatusLine = $false
     try {
         $fixturePath = Resolve-Fixture $Fixture $case.View
         $goldenPath = Resolve-RepoPath (Join-Path $GoldenRoot $case.FileName)
@@ -326,6 +341,11 @@ foreach ($case in $goldenCases) {
         $diffPath = Join-Path $resultDir "$($case.CaseName).diff.png"
         $stdoutPath = Join-Path $resultDir "$($case.CaseName).app.stdout.log"
         $stderrPath = Join-Path $resultDir "$($case.CaseName).app.stderr.log"
+
+        if ($UpdateGoldens) {
+            [Console]::Write("  $(Format-RepoPath $goldenPath)...")
+            $pendingStatusLine = $true
+        }
 
         Remove-Item -Force -ErrorAction SilentlyContinue $actualPath, $diffPath, $stdoutPath, $stderrPath
 
@@ -410,14 +430,39 @@ foreach ($case in $goldenCases) {
 
         if ($UpdateGoldens) {
             $compareArgs += "--update"
+            $compareArgs += "--status-only"
         }
 
-        dotnet @compareArgs
-        if ($LASTEXITCODE -ne 0) {
-            throw "Golden comparison failed."
+        if ($UpdateGoldens) {
+            $compareOutput = @(dotnet @compareArgs 2>&1)
+            $compareExitCode = $LASTEXITCODE
+            if ($compareExitCode -eq 0 -and $compareOutput.Count -gt 0) {
+                $status = [string] $compareOutput[-1]
+                [Console]::WriteLine($(if ([string]::IsNullOrWhiteSpace($status)) { "" } else { " $status" }))
+                $pendingStatusLine = $false
+            }
+            else {
+                [Console]::WriteLine("FAILED")
+                $pendingStatusLine = $false
+                $compareOutput | ForEach-Object { Write-Host $_ }
+            }
+
+            if ($compareExitCode -ne 0) {
+                throw "Golden comparison failed."
+            }
+        }
+        else {
+            dotnet @compareArgs
+            if ($LASTEXITCODE -ne 0) {
+                throw "Golden comparison failed."
+            }
         }
     }
     catch {
+        if ($pendingStatusLine) {
+            [Console]::WriteLine("FAILED")
+        }
+
         $message = "$($case.CaseName): $($_.Exception.Message)"
         $failures += $message
         Write-Host "::error::$message"
