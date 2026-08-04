@@ -54,14 +54,18 @@ internal static class GoldenTestCapture
             var pixels = WindowsRuntimeBufferExtensions.ToArray(await renderer.GetPixelsAsync());
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath))!);
 
-            await using var stream = File.Create(outputPath);
-            using var image = SKImage.FromPixelCopy(
-                new SKImageInfo(renderer.PixelWidth, renderer.PixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul),
-                pixels);
-            using var data = image.Encode(SKEncodedImageFormat.Png, 100)
-                ?? throw new InvalidOperationException("Failed to encode golden PNG.");
+            await using (var stream = File.Create(outputPath))
+            {
+                using var image = SKImage.FromPixelCopy(
+                    new SKImageInfo(renderer.PixelWidth, renderer.PixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul),
+                    pixels);
+                using var data = image.Encode(SKEncodedImageFormat.Png, 100)
+                    ?? throw new InvalidOperationException("Failed to encode golden PNG.");
 
-            data.SaveTo(stream);
+                data.SaveTo(stream);
+                await stream.FlushAsync();
+            }
+
             Environment.Exit(0);
         }
         catch (Exception ex)
