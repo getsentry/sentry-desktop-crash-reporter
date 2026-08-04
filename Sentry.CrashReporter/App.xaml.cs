@@ -157,6 +157,10 @@ public partial class App : Application
         windowService.SetClosable(CanClose);
 
         Host = await builder.NavigateAsync<ShellPage>();
+        if (GoldenTestCapture.IsEnabled)
+        {
+            await GoldenTestCapture.CaptureAndExitAsync(MainWindow);
+        }
     }
 
     private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
