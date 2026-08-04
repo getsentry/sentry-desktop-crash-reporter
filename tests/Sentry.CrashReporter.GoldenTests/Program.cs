@@ -15,8 +15,11 @@ internal static class GoldenComparisonCommand
             var options = Options.Parse(args);
             if (options.Update)
             {
-                CopyGolden(options.ActualPath, options.ExpectedPath);
-                Console.WriteLine($"Updated golden: {options.ExpectedPath}");
+                var copyResult = CopyGolden(options.ActualPath, options.ExpectedPath);
+                var copyStatus = FormatCopyResult(copyResult);
+                Console.WriteLine(options.StatusOnly
+                    ? copyStatus
+                    : FormatUpdateLine(options.ExpectedPath, copyStatus));
                 return 0;
             }
 
@@ -46,15 +49,63 @@ internal static class GoldenComparisonCommand
         }
     }
 
-    private static void CopyGolden(string actualPath, string expectedPath)
+    private static CopyResult CopyGolden(string actualPath, string expectedPath)
     {
         if (!File.Exists(actualPath))
         {
             throw new FileNotFoundException("Actual screenshot was not found.", actualPath);
         }
 
+        if (File.Exists(expectedPath) && FilesEqual(actualPath, expectedPath))
+        {
+            return CopyResult.Unchanged;
+        }
+
+        var created = !File.Exists(expectedPath);
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(expectedPath))!);
         File.Copy(actualPath, expectedPath, overwrite: true);
+        return created ? CopyResult.Created : CopyResult.Changed;
+    }
+
+    private static bool FilesEqual(string leftPath, string rightPath)
+    {
+        var leftInfo = new FileInfo(leftPath);
+        var rightInfo = new FileInfo(rightPath);
+        if (leftInfo.FullName == rightInfo.FullName)
+        {
+            return true;
+        }
+
+        if (leftInfo.Length != rightInfo.Length)
+        {
+            return false;
+        }
+
+        return File.ReadAllBytes(leftPath).AsSpan().SequenceEqual(File.ReadAllBytes(rightPath));
+    }
+
+    private static string FormatPath(string path)
+    {
+        var fullPath = Path.GetFullPath(path);
+        var currentDirectory = Directory.GetCurrentDirectory();
+        var relativePath = Path.GetRelativePath(currentDirectory, fullPath);
+
+        return relativePath.StartsWith("..", StringComparison.Ordinal) ? fullPath : relativePath;
+    }
+
+    private static string FormatCopyResult(CopyResult copyResult) =>
+        copyResult switch
+        {
+            CopyResult.Unchanged => "",
+            CopyResult.Created => "CREATED",
+            CopyResult.Changed => "CHANGED",
+            _ => throw new ArgumentOutOfRangeException(nameof(copyResult), copyResult, null)
+        };
+
+    private static string FormatUpdateLine(string expectedPath, string copyStatus)
+    {
+        var line = $"  {FormatPath(expectedPath)}...";
+        return string.IsNullOrWhiteSpace(copyStatus) ? line : $"{line} {copyStatus}";
     }
 
     private static ComparisonResult Compare(Options options)
@@ -117,6 +168,7 @@ internal sealed record Options(
     string ActualPath,
     string DiffPath,
     bool Update,
+    bool StatusOnly,
     double MaxRootMeanSquareError,
     int BlurRadius)
 {
@@ -131,6 +183,7 @@ internal sealed record Options(
         string? actual = null;
         string? diff = null;
         var update = false;
+        var statusOnly = false;
         var maxRootMeanSquareError = 5.0;
         var blurRadius = 2;
 
@@ -150,6 +203,9 @@ internal sealed record Options(
                 case "--update":
                     update = true;
                     break;
+                case "--status-only":
+                    statusOnly = true;
+                    break;
                 case "--max-rmse":
                     maxRootMeanSquareError = double.Parse(RequireValue(args, ref i), CultureInfo.InvariantCulture);
                     break;
@@ -166,6 +222,7 @@ internal sealed record Options(
             actual ?? throw new ArgumentException("Missing required argument: --actual"),
             diff ?? throw new ArgumentException("Missing required argument: --diff"),
             update,
+            statusOnly,
             maxRootMeanSquareError,
             blurRadius);
     }
@@ -180,6 +237,13 @@ internal sealed record Options(
         index++;
         return args[index];
     }
+}
+
+internal enum CopyResult
+{
+    Unchanged,
+    Created,
+    Changed
 }
 
 internal readonly record struct ComparisonResult(bool Passed, double RootMeanSquareError);
