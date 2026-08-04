@@ -19,6 +19,7 @@ internal static class GoldenTestCapture
     private const string ThemeVariable = "SENTRY_CRASH_REPORTER_GOLDEN_TEST_THEME";
     private const string ViewVariable = "SENTRY_CRASH_REPORTER_GOLDEN_TEST_VIEW";
     private static readonly TimeSpan LoadTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan RenderSettleDelay = TimeSpan.FromMilliseconds(500);
 
     public static bool IsEnabled =>
         !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(OutputPathVariable));
@@ -46,7 +47,9 @@ internal static class GoldenTestCapture
 
             await WaitForUiIdleAsync(root);
             root.UpdateLayout();
+            await Task.Delay(RenderSettleDelay);
             await WaitForUiIdleAsync(root);
+            root.UpdateLayout();
 
             var renderer = new RenderTargetBitmap();
             await renderer.RenderAsync(root, App.DefaultWindowWidth, App.DefaultWindowHeight);
