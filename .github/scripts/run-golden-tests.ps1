@@ -140,6 +140,19 @@ function Get-AppExecutable {
     throw "Unable to find the published app executable in $PublishDir."
 }
 
+function Write-ProcessLog {
+    param(
+        [string] $Label,
+        [string] $Path
+    )
+
+    if ((Test-Path $Path) -and (Get-Item $Path).Length -gt 0) {
+        Write-Host "::group::$Label"
+        Get-Content $Path
+        Write-Host "::endgroup::"
+    }
+}
+
 function Resolve-Fixture {
     param(
         [string] $RequestedFixture,
@@ -303,105 +316,119 @@ if (!$NoPublish) {
 $appExecutable = Get-AppExecutable $publishDir
 
 $goldenTestProject = Resolve-RepoPath "tests/Sentry.CrashReporter.GoldenTests/Sentry.CrashReporter.GoldenTests.csproj"
+$failures = @()
 
 foreach ($case in $goldenCases) {
-    $fixturePath = Resolve-Fixture $Fixture $case.View
-    $goldenPath = Resolve-RepoPath (Join-Path $GoldenRoot $case.FileName)
-    $actualPath = Join-Path $resultDir "$($case.CaseName).actual.png"
-    $diffPath = Join-Path $resultDir "$($case.CaseName).diff.png"
-    $stdoutPath = Join-Path $resultDir "$($case.CaseName).app.stdout.log"
-    $stderrPath = Join-Path $resultDir "$($case.CaseName).app.stderr.log"
-
-    Remove-Item -Force -ErrorAction SilentlyContinue $actualPath, $diffPath, $stdoutPath, $stderrPath
-
-    $launchFile = $appExecutable
-    $launchArguments = @($fixturePath)
-
-    if (!$IsWindows -and !$IsMacOS -and [string]::IsNullOrWhiteSpace($env:DISPLAY)) {
-        $xvfb = Get-Command xvfb-run -ErrorAction SilentlyContinue
-        if ($null -ne $xvfb) {
-            $launchFile = $xvfb.Source
-            $launchArguments = @(
-                "-a",
-                "-s",
-                "-screen 0 1280x900x24 -dpi 96",
-                $appExecutable,
-                $fixturePath
-            )
-        }
-    }
-
-    $oldOutput = $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_OUTPUT
-    $oldTheme = $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_THEME
-    $oldView = $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_VIEW
-    $oldLang = $env:LANG
-    $oldCliLanguage = $env:DOTNET_CLI_UI_LANGUAGE
-
     try {
-        $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_OUTPUT = $actualPath
-        $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_THEME = Get-AppThemeName $case.Theme
-        $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_VIEW = $case.View
-        $env:LANG = "en_US.UTF-8"
-        $env:DOTNET_CLI_UI_LANGUAGE = "en"
+        $fixturePath = Resolve-Fixture $Fixture $case.View
+        $goldenPath = Resolve-RepoPath (Join-Path $GoldenRoot $case.FileName)
+        $actualPath = Join-Path $resultDir "$($case.CaseName).actual.png"
+        $diffPath = Join-Path $resultDir "$($case.CaseName).diff.png"
+        $stdoutPath = Join-Path $resultDir "$($case.CaseName).app.stdout.log"
+        $stderrPath = Join-Path $resultDir "$($case.CaseName).app.stderr.log"
 
-        $process = Start-Process `
-            -FilePath $launchFile `
-            -ArgumentList $launchArguments `
-            -WorkingDirectory $publishDir `
-            -RedirectStandardOutput $stdoutPath `
-            -RedirectStandardError $stderrPath `
-            -PassThru
+        Remove-Item -Force -ErrorAction SilentlyContinue $actualPath, $diffPath, $stdoutPath, $stderrPath
 
-        if (!$process.WaitForExit($TimeoutSeconds * 1000)) {
-            try {
-                $process.Kill($true)
+        $launchFile = $appExecutable
+        $launchArguments = @($fixturePath)
+
+        if (!$IsWindows -and !$IsMacOS -and [string]::IsNullOrWhiteSpace($env:DISPLAY)) {
+            $xvfb = Get-Command xvfb-run -ErrorAction SilentlyContinue
+            if ($null -ne $xvfb) {
+                $launchFile = $xvfb.Source
+                $launchArguments = @(
+                    "-a",
+                    "-s",
+                    """-screen 0 1280x900x24 -dpi 96""",
+                    $appExecutable,
+                    $fixturePath
+                )
             }
-            catch {
-                $process.Kill()
-            }
-
-            throw "Timed out waiting for the golden capture after $TimeoutSeconds seconds."
         }
 
-        if ($process.ExitCode -ne 0) {
-            if (Test-Path $stderrPath) {
-                Get-Content $stderrPath | Write-Error
+        $oldOutput = $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_OUTPUT
+        $oldTheme = $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_THEME
+        $oldView = $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_VIEW
+        $oldLang = $env:LANG
+        $oldCliLanguage = $env:DOTNET_CLI_UI_LANGUAGE
+
+        try {
+            $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_OUTPUT = $actualPath
+            $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_THEME = Get-AppThemeName $case.Theme
+            $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_VIEW = $case.View
+            $env:LANG = "en_US.UTF-8"
+            $env:DOTNET_CLI_UI_LANGUAGE = "en"
+
+            $process = Start-Process `
+                -FilePath $launchFile `
+                -ArgumentList $launchArguments `
+                -WorkingDirectory $publishDir `
+                -RedirectStandardOutput $stdoutPath `
+                -RedirectStandardError $stderrPath `
+                -PassThru
+
+            if (!$process.WaitForExit($TimeoutSeconds * 1000)) {
+                try {
+                    $process.Kill($true)
+                }
+                catch {
+                    $process.Kill()
+                }
+
+                throw "Timed out waiting for the golden capture after $TimeoutSeconds seconds."
             }
 
-            throw "The published app exited with code $($process.ExitCode)."
+            if ($process.ExitCode -ne 0) {
+                Write-ProcessLog "App stdout ($($case.CaseName))" $stdoutPath
+                Write-ProcessLog "App stderr ($($case.CaseName))" $stderrPath
+
+                throw "The published app exited with code $($process.ExitCode)."
+            }
+
+            if (!(Test-Path $actualPath)) {
+                throw "The published app did not create the golden screenshot: $actualPath"
+            }
+        }
+        finally {
+            $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_OUTPUT = $oldOutput
+            $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_THEME = $oldTheme
+            $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_VIEW = $oldView
+            $env:LANG = $oldLang
+            $env:DOTNET_CLI_UI_LANGUAGE = $oldCliLanguage
         }
 
-        if (!(Test-Path $actualPath)) {
-            throw "The published app did not create the golden screenshot: $actualPath"
+        $compareArgs = @(
+            "run",
+            "--project", $goldenTestProject,
+            "-c", "Release",
+            "--",
+            "compare",
+            "--expected", $goldenPath,
+            "--actual", $actualPath,
+            "--diff", $diffPath
+        )
+
+        if ($UpdateGoldens) {
+            $compareArgs += "--update"
+        }
+
+        dotnet @compareArgs
+        if ($LASTEXITCODE -ne 0) {
+            throw "Golden comparison failed."
         }
     }
-    finally {
-        $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_OUTPUT = $oldOutput
-        $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_THEME = $oldTheme
-        $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_VIEW = $oldView
-        $env:LANG = $oldLang
-        $env:DOTNET_CLI_UI_LANGUAGE = $oldCliLanguage
+    catch {
+        $message = "$($case.CaseName): $($_.Exception.Message)"
+        $failures += $message
+        Write-Host "::error::$message"
     }
+}
 
-    $compareArgs = @(
-        "run",
-        "--project", $goldenTestProject,
-        "-c", "Release",
-        "--",
-        "compare",
-        "--expected", $goldenPath,
-        "--actual", $actualPath,
-        "--diff", $diffPath
-    )
-
-    if ($UpdateGoldens) {
-        $compareArgs += "--update"
-    }
-
-    dotnet @compareArgs
-    if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
-    }
+if ($failures.Count -gt 0) {
+    Write-Host "::group::Golden failures"
+    $failures | ForEach-Object { Write-Host $_ }
+    Write-Host "::endgroup::"
+    exit 1
 }
 
 exit 0
