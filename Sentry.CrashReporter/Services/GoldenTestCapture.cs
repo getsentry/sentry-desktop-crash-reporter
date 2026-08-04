@@ -19,7 +19,6 @@ internal static class GoldenTestCapture
     private const string ThemeVariable = "SENTRY_CRASH_REPORTER_GOLDEN_TEST_THEME";
     private const string ViewVariable = "SENTRY_CRASH_REPORTER_GOLDEN_TEST_VIEW";
     private static readonly TimeSpan LoadTimeout = TimeSpan.FromSeconds(30);
-    private static readonly TimeSpan SettleDelay = TimeSpan.FromMilliseconds(500);
 
     public static bool IsEnabled =>
         !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(OutputPathVariable));
@@ -44,9 +43,10 @@ internal static class GoldenTestCapture
             ApplyTheme(root);
             var viewModel = await WaitForMainPageAsync(root);
             SelectView(viewModel);
-            await Task.Delay(SettleDelay);
 
+            await WaitForUiIdleAsync(root);
             root.UpdateLayout();
+            await WaitForUiIdleAsync(root);
 
             var renderer = new RenderTargetBitmap();
             await renderer.RenderAsync(root, App.DefaultWindowWidth, App.DefaultWindowHeight);
@@ -87,6 +87,23 @@ internal static class GoldenTestCapture
             "default" => ElementTheme.Default,
             _ => ElementTheme.Light
         };
+    }
+
+    private static async Task WaitForUiIdleAsync(FrameworkElement root)
+    {
+        await WaitForDispatcherAsync(root);
+        await WaitForDispatcherAsync(root);
+    }
+
+    private static Task WaitForDispatcherAsync(FrameworkElement root)
+    {
+        var idle = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!root.DispatcherQueue.TryEnqueue(() => idle.SetResult()))
+        {
+            throw new InvalidOperationException("Failed to wait for the UI dispatcher.");
+        }
+
+        return idle.Task;
     }
 
     private static void SelectView(MainViewModel viewModel)
