@@ -42,20 +42,86 @@ function Resolve-RuntimeIdentifier {
     throw "Unable to resolve the current .NET runtime identifier."
 }
 
+function Get-PlistStringValue {
+    param(
+        [string] $PlistPath,
+        [string] $Key
+    )
+
+    if (!(Test-Path $PlistPath)) {
+        return ""
+    }
+
+    try {
+        [xml] $plist = Get-Content -Path $PlistPath -Raw
+        $node = $plist.SelectSingleNode("/plist/dict/key[.='$Key']/following-sibling::*[1]")
+        if ($null -ne $node -and $node.Name -eq "string") {
+            return $node.InnerText
+        }
+    }
+    catch {
+        return ""
+    }
+
+    return ""
+}
+
+function Get-MacAppBundle {
+    param([string] $PublishDir)
+
+    $preferred = Join-Path $PublishDir "Sentry Crash Reporter.app"
+    if (Test-Path -Path $preferred -PathType Container) {
+        return $preferred
+    }
+
+    $bundles = @(Get-ChildItem -Path $PublishDir -Directory -Filter "*.app" -ErrorAction SilentlyContinue)
+    if ($bundles.Count -eq 1) {
+        return $bundles[0].FullName
+    }
+
+    if ($bundles.Count -gt 1) {
+        throw "Multiple .app bundles found in $PublishDir."
+    }
+
+    throw "Unable to find a published .app bundle in $PublishDir."
+}
+
 function Get-AppExecutable {
     param([string] $PublishDir)
 
     if ($IsMacOS) {
-        $appBundle = Join-Path $PublishDir "Sentry Crash Reporter.app"
+        $appBundle = Get-MacAppBundle $PublishDir
         $macOSDir = Join-Path $appBundle "Contents/MacOS"
-        $preferred = Join-Path $macOSDir "Sentry Crash Reporter"
-        if (Test-Path $preferred) {
-            return $preferred
+        if (!(Test-Path -Path $macOSDir -PathType Container)) {
+            throw "Unable to find the .app executable directory: $macOSDir"
         }
 
-        $candidate = Get-ChildItem -Path $macOSDir -File | Select-Object -First 1
-        if ($null -ne $candidate) {
-            return $candidate.FullName
+        $infoPath = Join-Path $appBundle "Contents/Info.plist"
+        $candidateNames = @(
+            Get-PlistStringValue $infoPath "CFBundleExecutable"
+            "Sentry Crash Reporter"
+            "Sentry.CrashReporter"
+            Get-PlistStringValue $infoPath "CFBundleName"
+            Get-PlistStringValue $infoPath "CFBundleDisplayName"
+        ) | Where-Object { ![string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique
+
+        foreach ($candidateName in $candidateNames) {
+            $candidate = Join-Path $macOSDir $candidateName
+            if (Test-Path -Path $candidate -PathType Leaf) {
+                return $candidate
+            }
+        }
+
+        $ignoredExtensions = @(".deps", ".dylib", ".dll", ".json", ".pdb", ".runtimeconfig")
+        $candidates = @(Get-ChildItem -Path $macOSDir -File |
+            Where-Object { $ignoredExtensions -notcontains $_.Extension })
+        if ($candidates.Count -eq 1) {
+            return $candidates[0].FullName
+        }
+
+        if ($candidates.Count -gt 1) {
+            $candidateList = ($candidates | ForEach-Object { $_.Name }) -join ", "
+            throw "Unable to determine the .app executable in $macOSDir. Candidates: $candidateList"
         }
     }
     elseif ($IsWindows) {
