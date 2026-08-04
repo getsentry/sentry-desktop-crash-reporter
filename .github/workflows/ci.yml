@@ -156,6 +156,98 @@ jobs:
           name: binlog-${{ matrix.rid }}
           path: ./build.binlog
 
+  golden_test:
+    strategy:
+      fail-fast: false
+      matrix:
+       include:
+         - os: macos-26
+           rid: osx-arm64
+         - os: ubuntu-24.04
+           rid: linux-x64
+         - os: ubuntu-24.04-arm
+           rid: linux-arm64
+         - os: windows-2025
+           rid: win-x64
+         - os: windows-11-arm
+           rid: win-arm64
+
+    name: Golden Tests (${{ matrix.rid }})
+    needs: build
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Resolve Variables
+        id: vars
+        shell: bash
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          RID: ${{ matrix.rid }}
+        run: |
+          if [[ "$REF_NAME" == release/* ]]; then
+            version=${GITHUB_REF_NAME#release/}
+          else
+            version=${GITHUB_SHA::7}
+          fi
+          echo "artifact=sentry-desktop-crash-reporter-${version}-$RID" >> "$GITHUB_OUTPUT"
+
+      - name: Check Goldens
+        id: goldens
+        shell: bash
+        run: |
+          shopt -s nullglob
+          goldens=(tests/goldens/${{ matrix.rid }}-*.png)
+          if (( ${#goldens[@]} > 0 )); then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No goldens for ${{ matrix.rid }}. Run 'make update-goldens' on that platform and commit the generated tests/goldens/${{ matrix.rid }}-*.png files."
+          fi
+
+      - name: Download Published App
+        if: ${{ steps.goldens.outputs.exists == 'true' }}
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: ${{ steps.vars.outputs.artifact }}
+          path: ./artifacts
+
+      - name: Unpack Published App
+        if: ${{ steps.goldens.outputs.exists == 'true' }}
+        shell: bash
+        run: |
+          mkdir -p ./build
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            7z x -y "./artifacts/${{ steps.vars.outputs.artifact }}.zip" -o./build
+          else
+            tar xzf "./artifacts/${{ steps.vars.outputs.artifact }}.tar.gz" -C ./build
+          fi
+
+      - name: Install Dependencies
+        if: ${{ steps.goldens.outputs.exists == 'true' }}
+        timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
+        uses: "./.github/steps/install_dependencies"
+        with:
+          target-platform: "desktop"
+
+      - name: Install Golden Test Dependencies (Linux)
+        if: ${{ runner.os == 'Linux' && steps.goldens.outputs.exists == 'true' }}
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Run Published Golden Smoke Tests
+        if: ${{ steps.goldens.outputs.exists == 'true' }}
+        shell: pwsh
+        run: .github/scripts/run-golden-tests.ps1 -NoPublish -Configuration Release -RuntimeIdentifier ${{ matrix.rid }} -PublishOutput ./build
+
+      - name: Upload Golden Test Results
+        if: ${{ always() && steps.goldens.outputs.exists == 'true' && !startsWith(github.ref_name, 'release/') }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: golden-test-results-${{ matrix.rid }}
+          path: tests/Sentry.CrashReporter.GoldenTests/TestResults/
+
   unit_test:
     name: Unit Tests
     runs-on: ubuntu-24.04

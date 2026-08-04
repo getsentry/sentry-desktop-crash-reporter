@@ -12,6 +12,9 @@ CONFIG ?=
 FRAMEWORK ?= net10.0-desktop
 RID ?= $(shell $(DOTNET) --info | awk '$$1 == "RID:" { print $$2; exit }')
 OUTPUT ?=
+VIEW ?=
+THEME ?=
+FIXTURE ?=
 
 RUNTIME_TEST_OUTPUT := tests/Sentry.CrashReporter.RuntimeTests/TestResults
 RUNTIME_TEST_HOST_DLL = tests/Sentry.CrashReporter.RuntimeTests.Host/bin/$(or $(CONFIG),Debug)/net10.0-desktop/Sentry.CrashReporter.RuntimeTests.Host.dll
@@ -23,7 +26,7 @@ $(ARGS):
 	@:
 endif
 
-.PHONY: help restore build run publish test test-runtime test-ui
+.PHONY: help restore build run publish test test-runtime test-ui test-golden update-goldens
 
 help:
 	@printf "Targets:\n"
@@ -33,17 +36,27 @@ help:
 	@printf "  make test           Run unit tests ($(or $(CONFIG),Debug))\n"
 	@printf "  make test-runtime   Build and run Uno runtime tests under xvfb ($(or $(CONFIG),Debug))\n"
 	@printf "  make test-ui        Build and run WebAssembly UI tests ($(or $(CONFIG),Debug))\n"
+	@printf "  make test-golden    Publish and compare goldens ($(or $(CONFIG),Release), $(RID))\n"
+	@printf "  make update-goldens Publish and update goldens ($(or $(CONFIG),Release), $(RID))\n"
 	@printf "\n"
 	@printf "Variables:\n"
 	@printf "  CONFIG              Debug/Release\n"
 	@printf "  RID                 win-x64/osx-arm64/linux-x64/...\n"
 	@printf "  OUTPUT              publish output path\n"
+	@printf "  VIEW                golden view name override\n"
+	@printf "  THEME               golden theme override\n"
+	@printf "  FIXTURE             golden envelope fixture override\n"
 	@printf "\n"
 	@printf "Common overrides:\n"
 	@printf "  make run -- path/to/file.envelope\n"
 	@printf "  make test -- --filter FullyQualifiedName~Submit\n"
 	@printf "  make publish RID=osx-arm64\n"
 	@printf "  make publish RID=win-x64 OUTPUT=build\n"
+	@printf "  make test-golden\n"
+	@printf "  make update-goldens\n"
+	@printf "  make update-goldens VIEW=stacktrace\n"
+	@printf "  make update-goldens THEME=dark\n"
+	@printf "  make update-goldens RID=win-x64\n"
 	@printf "  make build CONFIG=Release\n"
 
 restore:
@@ -71,3 +84,9 @@ test-ui:
 	$(DOTNET) build -c $(or $(CONFIG),Debug) -f net10.0-browserwasm -p:IsUiAutomationMappingEnabled=True $(PROJECT)
 	$(DOTNET) build -c $(or $(CONFIG),Debug) -f net10.0 $(UI_TEST_PROJECT)
 	pwsh .github/scripts/run-ui-tests.ps1 -Configuration $(or $(CONFIG),Debug)
+
+test-golden:
+	pwsh .github/scripts/run-golden-tests.ps1 -Configuration $(or $(CONFIG),Release) -RuntimeIdentifier $(RID) $(if $(VIEW),-ViewName $(VIEW)) $(if $(THEME),-ThemeName $(THEME)) $(if $(FIXTURE),-Fixture $(FIXTURE)) $(if $(OUTPUT),-PublishOutput $(OUTPUT))
+
+update-goldens:
+	pwsh .github/scripts/run-golden-tests.ps1 -UpdateGoldens -Configuration $(or $(CONFIG),Release) -RuntimeIdentifier $(RID) $(if $(VIEW),-ViewName $(VIEW)) $(if $(THEME),-ThemeName $(THEME)) $(if $(FIXTURE),-Fixture $(FIXTURE)) $(if $(OUTPUT),-PublishOutput $(OUTPUT))

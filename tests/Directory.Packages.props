@@ -4,6 +4,7 @@
     <PackageVersion Include="AwesomeAssertions" Version="9.5.0" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.5" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
+    <PackageVersion Include="Magick.NET-Q8-AnyCPU" Version="14.16.0" />
     <PackageVersion Include="Moq" Version="4.20.72" />
     <PackageVersion Include="MSTest.TestAdapter" Version="3.11.0" />
     <PackageVersion Include="MSTest.TestFramework" Version="3.11.0" />
