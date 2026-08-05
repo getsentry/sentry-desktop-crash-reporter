@@ -154,6 +154,67 @@ function Get-AppExecutable {
     throw "Unable to find the published app executable in $PublishDir."
 }
 
+$windowsAppCompatLayersPath = "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"
+$windowsGoldenDpiCompatLayer = "DPIUNAWARE"
+$windowsGoldenDpiRegistryLayer = "~ DPIUNAWARE"
+
+function Set-WindowsGoldenDpiCompatibility {
+    param([string] $ExecutablePath)
+
+    if (!$IsWindows) {
+        return $null
+    }
+
+    if (!(Test-Path $windowsAppCompatLayersPath)) {
+        New-Item -Path $windowsAppCompatLayersPath -Force | Out-Null
+    }
+
+    $oldValue = $null
+    $hadValue = $false
+    $oldProperty = Get-ItemProperty -Path $windowsAppCompatLayersPath -Name $ExecutablePath -ErrorAction SilentlyContinue
+    if ($null -ne $oldProperty) {
+        $property = $oldProperty.PSObject.Properties[$ExecutablePath]
+        if ($null -ne $property) {
+            $oldValue = [string] $property.Value
+            $hadValue = $true
+        }
+    }
+
+    New-ItemProperty `
+        -Path $windowsAppCompatLayersPath `
+        -Name $ExecutablePath `
+        -PropertyType String `
+        -Value $windowsGoldenDpiRegistryLayer `
+        -Force | Out-Null
+
+    return [pscustomobject]@{
+        Path = $windowsAppCompatLayersPath
+        Name = $ExecutablePath
+        HadValue = $hadValue
+        Value = $oldValue
+    }
+}
+
+function Restore-WindowsGoldenDpiCompatibility {
+    param([object] $State)
+
+    if ($null -eq $State) {
+        return
+    }
+
+    if ($State.HadValue) {
+        New-ItemProperty `
+            -Path $State.Path `
+            -Name $State.Name `
+            -PropertyType String `
+            -Value $State.Value `
+            -Force | Out-Null
+    }
+    else {
+        Remove-ItemProperty -Path $State.Path -Name $State.Name -ErrorAction SilentlyContinue
+    }
+}
+
 function Write-ProcessLog {
     param(
         [string] $Label,
@@ -386,6 +447,7 @@ foreach ($case in $goldenCases) {
         $oldCliLanguage = $env:DOTNET_CLI_UI_LANGUAGE
         $oldDisplayScaleOverride = $env:UNO_DISPLAY_SCALE_OVERRIDE
         $oldCompatLayer = $env:__COMPAT_LAYER
+        $windowsDpiCompatibility = $null
 
         try {
             $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_OUTPUT = $actualPath
@@ -395,13 +457,13 @@ foreach ($case in $goldenCases) {
             $env:DOTNET_CLI_UI_LANGUAGE = "en"
             $env:UNO_DISPLAY_SCALE_OVERRIDE = "1.0"
             if ($IsWindows) {
-                $dpiCompatLayer = "GDIDPISCALING DPIUNAWARE"
                 $env:__COMPAT_LAYER = if ([string]::IsNullOrWhiteSpace($oldCompatLayer)) {
-                    $dpiCompatLayer
+                    $windowsGoldenDpiCompatLayer
                 }
                 else {
-                    "$oldCompatLayer $dpiCompatLayer"
+                    "$oldCompatLayer $windowsGoldenDpiCompatLayer"
                 }
+                $windowsDpiCompatibility = Set-WindowsGoldenDpiCompatibility $appExecutable
             }
 
             $process = Start-Process `
@@ -440,6 +502,7 @@ foreach ($case in $goldenCases) {
             }
         }
         finally {
+            Restore-WindowsGoldenDpiCompatibility $windowsDpiCompatibility
             $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_OUTPUT = $oldOutput
             $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_THEME = $oldTheme
             $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_VIEW = $oldView
