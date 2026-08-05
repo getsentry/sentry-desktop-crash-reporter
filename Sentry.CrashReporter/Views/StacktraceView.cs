@@ -39,7 +39,7 @@ public class StacktraceView : ReactiveUserControl<StacktraceViewModel>
 
         this.Content(new Grid()
             .DataContext(ViewModel, (view, vm) => view
-                .RowSpacing(10)
+                .RowSpacing(8)
                 .RowDefinitions("Auto,*")
                 .Children(
                     new Grid()
