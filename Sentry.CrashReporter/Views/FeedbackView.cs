@@ -40,7 +40,7 @@ public sealed class FeedbackView : ReactiveUserControl<FeedbackViewModel>
                         new TextBox()
                             .Name(out _messageTextBox)
                             .Grid(row: 0)
-                            .Header("Message")
+                            .Header("Message!")
                             .PlaceholderText("Tell us about your issue")
                             .AutomationProperties(automationId: "messageTextBox")
                             .MaxLength(4096)
