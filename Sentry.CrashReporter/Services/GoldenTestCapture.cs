@@ -1,9 +1,11 @@
 #if __DESKTOP__
 using System.Diagnostics;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Sentry.CrashReporter;
+using Sentry.CrashReporter.Controls;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.ViewModels;
 using Sentry.CrashReporter.Views;
@@ -18,6 +20,7 @@ internal static class GoldenTestCapture
     private const string OutputPathVariable = "SENTRY_CRASH_REPORTER_GOLDEN_TEST_OUTPUT";
     private const string ThemeVariable = "SENTRY_CRASH_REPORTER_GOLDEN_TEST_THEME";
     private const string ViewVariable = "SENTRY_CRASH_REPORTER_GOLDEN_TEST_VIEW";
+    private const string TestFontFamily = "ms-appx:///Assets/Fonts/Ahem/Ahem.ttf#Ahem";
     private static readonly TimeSpan LoadTimeout = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan RenderSettleDelay = TimeSpan.FromMilliseconds(500);
 
@@ -46,6 +49,8 @@ internal static class GoldenTestCapture
             SelectView(viewModel);
 
             await WaitForUiIdleAsync(root);
+            root.UpdateLayout();
+            ApplyTestFont(root);
             root.UpdateLayout();
             await Task.Delay(RenderSettleDelay);
             await WaitForUiIdleAsync(root);
@@ -90,6 +95,40 @@ internal static class GoldenTestCapture
             "default" => ElementTheme.Default,
             _ => ElementTheme.Light
         };
+    }
+
+    private static void ApplyTestFont(DependencyObject root)
+    {
+        var fontFamily = new FontFamily(TestFontFamily);
+        foreach (var element in EnumerateVisualTree(root))
+        {
+            switch (element)
+            {
+                case FontAwesomeIcon:
+                case FontIcon:
+                    break;
+                case TextBlock textBlock:
+                    textBlock.FontFamily = fontFamily;
+                    break;
+                case Control control:
+                    control.FontFamily = fontFamily;
+                    break;
+            }
+        }
+    }
+
+    private static IEnumerable<DependencyObject> EnumerateVisualTree(DependencyObject element)
+    {
+        yield return element;
+
+        var children = VisualTreeHelper.GetChildrenCount(element);
+        for (var i = 0; i < children; i++)
+        {
+            foreach (var child in EnumerateVisualTree(VisualTreeHelper.GetChild(element, i)))
+            {
+                yield return child;
+            }
+        }
     }
 
     private static async Task WaitForUiIdleAsync(FrameworkElement root)
