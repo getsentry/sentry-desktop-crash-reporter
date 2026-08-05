@@ -10,6 +10,7 @@ using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.ViewModels;
 using Sentry.CrashReporter.Views;
 using SkiaSharp;
+using Windows.Graphics;
 using Path = System.IO.Path;
 #endif
 
@@ -21,6 +22,10 @@ internal static class GoldenTestCapture
     private const string ThemeVariable = "SENTRY_CRASH_REPORTER_GOLDEN_TEST_THEME";
     private const string ViewVariable = "SENTRY_CRASH_REPORTER_GOLDEN_TEST_VIEW";
     private const string TestFontFamily = "ms-appx:///Assets/Fonts/Ahem/Ahem.ttf#Ahem";
+#if GOLDEN_TEST
+    private const double CaptureRasterizationScale = 1.0;
+    private const double RasterizationScaleTolerance = 0.001;
+#endif
     private static readonly TimeSpan LoadTimeout = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan RenderSettleDelay = TimeSpan.FromMilliseconds(500);
 
@@ -43,7 +48,12 @@ internal static class GoldenTestCapture
                 throw new InvalidOperationException("The main window has no framework element content to capture.");
             }
 
+#if GOLDEN_TEST
+            ConfigureCaptureRoot(root);
+            ResizeCaptureWindow(window);
+#else
             window.Resize(App.DefaultWindowWidth, App.DefaultWindowHeight);
+#endif
             ApplyTheme(root);
             var viewModel = await WaitForMainPageAsync(root);
             SelectView(viewModel);
@@ -55,9 +65,18 @@ internal static class GoldenTestCapture
             await Task.Delay(RenderSettleDelay);
             await WaitForUiIdleAsync(root);
             root.UpdateLayout();
+#if GOLDEN_TEST
+            ConfigureCaptureRoot(root);
+            ResizeCaptureWindow(window);
+            root.UpdateLayout();
+            AssertCaptureRasterizationScale(root);
+#endif
 
             var renderer = new RenderTargetBitmap();
             await renderer.RenderAsync(root, App.DefaultWindowWidth, App.DefaultWindowHeight);
+#if GOLDEN_TEST
+            LogCaptureGeometry(root, renderer);
+#endif
 
             var pixels = WindowsRuntimeBufferExtensions.ToArray(await renderer.GetPixelsAsync());
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath))!);
@@ -96,6 +115,41 @@ internal static class GoldenTestCapture
             _ => ElementTheme.Light
         };
     }
+
+#if GOLDEN_TEST
+    private static void ConfigureCaptureRoot(FrameworkElement root)
+    {
+        root.Width = App.DefaultWindowWidth;
+        root.Height = App.DefaultWindowHeight;
+        root.MinWidth = App.DefaultWindowWidth;
+        root.MinHeight = App.DefaultWindowHeight;
+        root.MaxWidth = App.DefaultWindowWidth;
+        root.MaxHeight = App.DefaultWindowHeight;
+    }
+
+    private static void ResizeCaptureWindow(Window window)
+    {
+        window.AppWindow.Resize(new SizeInt32 { Width = App.DefaultWindowWidth, Height = App.DefaultWindowHeight });
+    }
+
+    private static void AssertCaptureRasterizationScale(FrameworkElement root)
+    {
+        var rasterizationScale = root.XamlRoot?.RasterizationScale ?? double.NaN;
+        if (double.IsNaN(rasterizationScale) ||
+            Math.Abs(rasterizationScale - CaptureRasterizationScale) > RasterizationScaleTolerance)
+        {
+            throw new InvalidOperationException(FormattableString.Invariant(
+                $"Golden capture requires rasterization scale 1.0, but the app reported {rasterizationScale:0.###}."));
+        }
+    }
+
+    private static void LogCaptureGeometry(FrameworkElement root, RenderTargetBitmap renderer)
+    {
+        var rasterizationScale = root.XamlRoot?.RasterizationScale ?? double.NaN;
+        Console.WriteLine(FormattableString.Invariant(
+            $"Golden capture: root={root.ActualWidth:0.###}x{root.ActualHeight:0.###}, scale={rasterizationScale:0.###}, renderer={renderer.PixelWidth}x{renderer.PixelHeight}"));
+    }
+#endif
 
     private static void ApplyTestFont(DependencyObject root)
     {

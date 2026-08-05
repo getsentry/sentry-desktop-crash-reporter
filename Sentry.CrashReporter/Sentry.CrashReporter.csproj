@@ -80,6 +80,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(GoldenTest)' == 'true' ">
+        <DefineConstants>$(DefineConstants);GOLDEN_TEST</DefineConstants>
         <UnoDefaultFont>Ahem</UnoDefaultFont>
     </PropertyGroup>
 
@@ -87,7 +88,8 @@
         <PackageFormat>app</PackageFormat>
         <!-- The .app bundle's native launcher links against libcoreclr.dylib, which is incompatible with single-file publish. -->
         <PublishSingleFile>false</PublishSingleFile>
-        <UnoMacOSCustomInfoPlist>Platforms/Desktop/Info.plist</UnoMacOSCustomInfoPlist>
+        <UnoMacOSCustomInfoPlist Condition=" '$(GoldenTest)' != 'true' ">Platforms/Desktop/Info.plist</UnoMacOSCustomInfoPlist>
+        <UnoMacOSCustomInfoPlist Condition=" '$(GoldenTest)' == 'true' ">Platforms/Desktop/Info.golden.plist</UnoMacOSCustomInfoPlist>
     </PropertyGroup>
 
     <ItemGroup>
