@@ -254,11 +254,12 @@ function Get-GoldenCaseName {
 
 function Get-GoldenFileName {
     param(
+        [string] $Rid,
         [string] $View,
         [string] $Theme
     )
 
-    return "$(Get-GoldenCaseName $View $Theme).png"
+    return "$Rid-$(Get-GoldenCaseName $View $Theme).png"
 }
 
 $rid = Resolve-RuntimeIdentifier
@@ -302,7 +303,7 @@ function Get-ManifestGoldenCases {
                 View = $view
                 Theme = Resolve-ThemeName $theme
                 CaseName = $caseName
-                FileName = Get-GoldenFileName $view $theme
+                FileName = Get-GoldenFileName $rid $view $theme
             }
         }
     }
@@ -371,7 +372,7 @@ foreach ($case in $goldenCases) {
                 $launchArguments = @(
                     "-a",
                     "-s",
-                    """-screen 0 1280x900x24 -dpi 96""",
+                    "-screen 0 1280x900x24 -dpi 96",
                     $appExecutable,
                     $fixturePath
                 )

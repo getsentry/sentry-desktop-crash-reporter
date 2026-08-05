@@ -1,4 +1,5 @@
 param(
+    [Parameter(Mandatory = $true)]
     [string] $RuntimeIdentifier,
     [string] $GoldenRoot = "tests/goldens",
     [string] $ManifestPath = "tests/goldens/views.json"
@@ -49,7 +50,7 @@ else {
 $missing = @()
 foreach ($view in $views) {
     foreach ($theme in $themes) {
-        $path = Resolve-RepoPath (Join-Path $GoldenRoot "$view-$theme.png")
+        $path = Resolve-RepoPath (Join-Path $GoldenRoot "$RuntimeIdentifier-$view-$theme.png")
         if (!(Test-Path $path)) {
             $missing += $path
         }
