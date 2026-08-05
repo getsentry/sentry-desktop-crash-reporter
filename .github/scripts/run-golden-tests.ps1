@@ -385,7 +385,6 @@ foreach ($case in $goldenCases) {
         $oldLang = $env:LANG
         $oldCliLanguage = $env:DOTNET_CLI_UI_LANGUAGE
         $oldDisplayScaleOverride = $env:UNO_DISPLAY_SCALE_OVERRIDE
-        $oldCompatLayer = $env:__COMPAT_LAYER
 
         try {
             $env:SENTRY_CRASH_REPORTER_GOLDEN_TEST_OUTPUT = $actualPath
@@ -394,13 +393,6 @@ foreach ($case in $goldenCases) {
             $env:LANG = "en_US.UTF-8"
             $env:DOTNET_CLI_UI_LANGUAGE = "en"
             $env:UNO_DISPLAY_SCALE_OVERRIDE = "1.0"
-            if ($IsWindows) {
-                $compatLayer = "DPIUNAWARE"
-                if (![string]::IsNullOrWhiteSpace($oldCompatLayer)) {
-                    $compatLayer = "$oldCompatLayer $compatLayer"
-                }
-                $env:__COMPAT_LAYER = $compatLayer
-            }
 
             $process = Start-Process `
                 -FilePath $launchFile `
@@ -444,7 +436,6 @@ foreach ($case in $goldenCases) {
             $env:LANG = $oldLang
             $env:DOTNET_CLI_UI_LANGUAGE = $oldCliLanguage
             $env:UNO_DISPLAY_SCALE_OVERRIDE = $oldDisplayScaleOverride
-            $env:__COMPAT_LAYER = $oldCompatLayer
         }
 
         $compareArgs = @(
