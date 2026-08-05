@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -50,22 +51,30 @@ internal static class GoldenTestCapture
             window.Resize(App.DefaultWindowWidth, App.DefaultWindowHeight);
 #if GOLDEN_TEST
             ConfigureCaptureRoot(root);
+            DisableLayoutRounding(root);
 #endif
             ApplyTheme(root);
             var viewModel = await WaitForMainPageAsync(root);
             SelectView(viewModel);
 
             await WaitForUiIdleAsync(root);
+#if GOLDEN_TEST
+            ConfigureCaptureRoot(root);
+            DisableLayoutRounding(root);
+#endif
             root.UpdateLayout();
             ApplyTestFont(root);
+#if GOLDEN_TEST
+            DisableLayoutRounding(root);
+#endif
             root.UpdateLayout();
             await Task.Delay(RenderSettleDelay);
             await WaitForUiIdleAsync(root);
-            root.UpdateLayout();
 #if GOLDEN_TEST
             ConfigureCaptureRoot(root);
-            root.UpdateLayout();
+            DisableLayoutRounding(root);
 #endif
+            root.UpdateLayout();
 
             var renderer = new RenderTargetBitmap();
 #if GOLDEN_TEST
@@ -132,6 +141,17 @@ internal static class GoldenTestCapture
         root.MinHeight = App.DefaultWindowHeight;
         root.MaxWidth = App.DefaultWindowWidth;
         root.MaxHeight = App.DefaultWindowHeight;
+    }
+
+    private static void DisableLayoutRounding(DependencyObject root)
+    {
+        foreach (var element in EnumerateVisualTree(root))
+        {
+            if (element is UIElement uiElement)
+            {
+                uiElement.UseLayoutRounding = false;
+            }
+        }
     }
 
     private readonly record struct CaptureGeometry(
