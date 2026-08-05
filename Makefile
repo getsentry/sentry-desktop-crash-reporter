@@ -36,8 +36,8 @@ help:
 	@printf "  make test           Run unit tests ($(or $(CONFIG),Debug))\n"
 	@printf "  make test-runtime   Build and run Uno runtime tests under xvfb ($(or $(CONFIG),Debug))\n"
 	@printf "  make test-ui        Build and run WebAssembly UI tests ($(or $(CONFIG),Debug))\n"
-	@printf "  make test-golden    Publish and compare goldens ($(or $(CONFIG),Release), $(RID))\n"
-	@printf "  make update-goldens Publish and update goldens ($(or $(CONFIG),Release), $(RID))\n"
+	@printf "  make test-golden    Publish and compare goldens ($(or $(CONFIG),Release))\n"
+	@printf "  make update-goldens Publish and update goldens ($(or $(CONFIG),Release))\n"
 	@printf "\n"
 	@printf "Variables:\n"
 	@printf "  CONFIG              Debug/Release\n"
@@ -56,7 +56,6 @@ help:
 	@printf "  make update-goldens\n"
 	@printf "  make update-goldens VIEW=stacktrace\n"
 	@printf "  make update-goldens THEME=dark\n"
-	@printf "  make update-goldens RID=win-x64\n"
 	@printf "  make build CONFIG=Release\n"
 
 restore:

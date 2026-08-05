@@ -254,12 +254,11 @@ function Get-GoldenCaseName {
 
 function Get-GoldenFileName {
     param(
-        [string] $Rid,
         [string] $View,
         [string] $Theme
     )
 
-    return "$Rid-$(Get-GoldenCaseName $View $Theme).png"
+    return "$(Get-GoldenCaseName $View $Theme).png"
 }
 
 $rid = Resolve-RuntimeIdentifier
@@ -303,7 +302,7 @@ function Get-ManifestGoldenCases {
                 View = $view
                 Theme = Resolve-ThemeName $theme
                 CaseName = $caseName
-                FileName = Get-GoldenFileName $rid $view $theme
+                FileName = Get-GoldenFileName $view $theme
             }
         }
     }
@@ -319,10 +318,23 @@ $goldenCases = Resolve-GoldenCases
 $resultDir = Resolve-RepoPath (Join-Path $ResultsRoot $rid)
 New-Item -ItemType Directory -Force -Path $resultDir | Out-Null
 
-if (!$NoPublish) {
-    $project = Resolve-RepoPath "Sentry.CrashReporter/Sentry.CrashReporter.csproj"
-    dotnet publish -c $Configuration -f $Framework -r $rid $project -o $publishDir
+$appProject = Resolve-RepoPath "Sentry.CrashReporter/Sentry.CrashReporter.csproj"
+
+function Clear-GoldenBuildOutput {
+    if ($NoPublish) {
+        return
+    }
+
+    dotnet clean -c $Configuration -f $Framework -r $rid -p:GoldenTest=true $appProject -v:quiet
     if ($LASTEXITCODE -ne 0) {
+        Write-Host "::warning::Failed to clean golden build output."
+    }
+}
+
+if (!$NoPublish) {
+    dotnet publish -c $Configuration -f $Framework -r $rid $appProject -o $publishDir -p:GoldenTest=true
+    if ($LASTEXITCODE -ne 0) {
+        Clear-GoldenBuildOutput
         exit $LASTEXITCODE
     }
 }
@@ -475,10 +487,12 @@ foreach ($case in $goldenCases) {
 }
 
 if ($failures.Count -gt 0) {
+    Clear-GoldenBuildOutput
     Write-Host "::group::Golden failures"
     $failures | ForEach-Object { Write-Host $_ }
     Write-Host "::endgroup::"
     exit 1
 }
 
+Clear-GoldenBuildOutput
 exit 0

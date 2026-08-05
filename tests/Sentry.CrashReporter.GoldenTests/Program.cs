@@ -26,7 +26,7 @@ internal static class GoldenComparisonCommand
             if (!File.Exists(options.ExpectedPath))
             {
                 Console.Error.WriteLine($"Missing golden: {options.ExpectedPath}");
-                Console.Error.WriteLine("Run `make update-goldens` on the target platform to create it.");
+                Console.Error.WriteLine("Run `make update-goldens` to create it.");
                 return 2;
             }
 

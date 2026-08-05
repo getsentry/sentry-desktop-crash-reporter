@@ -169,59 +169,16 @@ jobs:
            rid: win-x64
 
     name: Golden Tests (${{ matrix.rid }})
-    needs: build
-    if: ${{ always() && !cancelled() }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
-      - name: Resolve Variables
-        id: vars
-        shell: bash
-        env:
-          REF_NAME: ${{ github.ref_name }}
-          RID: ${{ matrix.rid }}
-        run: |
-          if [[ "$REF_NAME" == release/* ]]; then
-            version=${GITHUB_REF_NAME#release/}
-          else
-            version=${GITHUB_SHA::7}
-          fi
-          echo "artifact=sentry-desktop-crash-reporter-${version}-$RID" >> "$GITHUB_OUTPUT"
-
       - name: Check Goldens
         id: goldens
-        shell: bash
-        run: |
-          shopt -s nullglob
-          goldens=(tests/goldens/${{ matrix.rid }}-*.png)
-          if (( ${#goldens[@]} > 0 )); then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "::error::No goldens for ${{ matrix.rid }}. Run 'make update-goldens' on that platform."
-            exit 1
-          fi
-
-      - name: Download Published App
-        if: ${{ steps.goldens.outputs.exists == 'true' }}
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-        with:
-          name: ${{ steps.vars.outputs.artifact }}
-          path: ./artifacts
-
-      - name: Unpack Published App
-        if: ${{ steps.goldens.outputs.exists == 'true' }}
-        shell: bash
-        run: |
-          mkdir -p ./build
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            7z x -y "./artifacts/${{ steps.vars.outputs.artifact }}.zip" -o./build
-          else
-            tar xzf "./artifacts/${{ steps.vars.outputs.artifact }}.tar.gz" -C ./build
-          fi
+        shell: pwsh
+        run: .github/scripts/check-golden-baselines.ps1 -RuntimeIdentifier ${{ matrix.rid }}
 
       - name: Install Dependencies
         if: ${{ steps.goldens.outputs.exists == 'true' }}
@@ -234,11 +191,11 @@ jobs:
         if: ${{ runner.os == 'Linux' && steps.goldens.outputs.exists == 'true' }}
         run: sudo apt-get update && sudo apt-get install -y xvfb
 
-      - name: Run Published Golden Smoke Tests
+      - name: Run Golden Tests
         id: run_goldens
         if: ${{ steps.goldens.outputs.exists == 'true' }}
         shell: pwsh
-        run: .github/scripts/run-golden-tests.ps1 -NoPublish -Configuration Release -RuntimeIdentifier ${{ matrix.rid }} -PublishOutput ./build
+        run: .github/scripts/run-golden-tests.ps1 -Configuration Release -RuntimeIdentifier ${{ matrix.rid }}
 
       - name: Check Golden Results
         if: ${{ failure() && steps.run_goldens.outcome == 'failure' }}
@@ -249,9 +206,9 @@ jobs:
             echo
             echo "Inspect the uploaded \`golden-test-results-${{ matrix.rid }}\` artifact for \`.actual.png\`, \`.diff.png\`, and app logs under \`tests/Sentry.CrashReporter.GoldenTests/TestResults/${{ matrix.rid }}/\`."
             echo
-            echo "If the rendering change is intended, run \`make update-goldens\` on ${{ matrix.rid }} and commit the updated \`tests/goldens/${{ matrix.rid }}-<view>-<theme>.png\` files."
+            echo "If the rendering change is intended, run \`make update-goldens\` and commit the updated \`tests/goldens/<view>-<theme>.png\` files."
           } >> "$GITHUB_STEP_SUMMARY"
-          echo "::error::Golden tests failed for ${{ matrix.rid }}. Inspect artifact golden-test-results-${{ matrix.rid }}; update intended changes with 'make update-goldens' on ${{ matrix.rid }}."
+          echo "::error::Golden tests failed for ${{ matrix.rid }}. Inspect artifact golden-test-results-${{ matrix.rid }}; update intended changes with 'make update-goldens'."
 
       - name: Upload Golden Test Results
         if: ${{ always() && steps.goldens.outputs.exists == 'true' && (!startsWith(github.ref_name, 'release/') || steps.run_goldens.outcome == 'failure') }}
