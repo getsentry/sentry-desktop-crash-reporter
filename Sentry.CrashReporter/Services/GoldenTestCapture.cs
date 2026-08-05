@@ -1,7 +1,6 @@
 #if __DESKTOP__
 using System.Diagnostics;
 using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -24,7 +23,8 @@ internal static class GoldenTestCapture
     private const string ViewVariable = "SENTRY_CRASH_REPORTER_GOLDEN_TEST_VIEW";
     private const string TestFontFamily = "ms-appx:///Assets/Fonts/Ahem/Ahem.ttf#Ahem";
 #if GOLDEN_TEST
-    private const int BytesPerPixel = 4;
+    private const double CaptureRasterizationScale = 1.0;
+    private const double RasterizationScaleTolerance = 0.001;
 #endif
     private static readonly TimeSpan LoadTimeout = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan RenderSettleDelay = TimeSpan.FromMilliseconds(500);
@@ -51,7 +51,6 @@ internal static class GoldenTestCapture
             window.Resize(App.DefaultWindowWidth, App.DefaultWindowHeight);
 #if GOLDEN_TEST
             ConfigureCaptureRoot(root);
-            DisableLayoutRounding(root);
 #endif
             ApplyTheme(root);
             var viewModel = await WaitForMainPageAsync(root);
@@ -60,42 +59,27 @@ internal static class GoldenTestCapture
             await WaitForUiIdleAsync(root);
 #if GOLDEN_TEST
             ConfigureCaptureRoot(root);
-            DisableLayoutRounding(root);
 #endif
             root.UpdateLayout();
             ApplyTestFont(root);
-#if GOLDEN_TEST
-            DisableLayoutRounding(root);
-#endif
             root.UpdateLayout();
             await Task.Delay(RenderSettleDelay);
             await WaitForUiIdleAsync(root);
 #if GOLDEN_TEST
             ConfigureCaptureRoot(root);
-            DisableLayoutRounding(root);
 #endif
             root.UpdateLayout();
 
             var renderer = new RenderTargetBitmap();
 #if GOLDEN_TEST
-            var capture = GetCaptureGeometry(root);
-            using var transform = ApplyCaptureTransform(root, capture.RasterizationScale);
-            root.UpdateLayout();
-            await renderer.RenderAsync(root, capture.RenderWidth, capture.RenderHeight);
-            LogCaptureGeometry(root, renderer, capture);
-
-            var pixels = CropCapturePixels(
-                WindowsRuntimeBufferExtensions.ToArray(await renderer.GetPixelsAsync()),
-                renderer.PixelWidth,
-                renderer.PixelHeight,
-                capture.OutputWidth,
-                capture.OutputHeight);
-            var imageInfo = new SKImageInfo(capture.OutputWidth, capture.OutputHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
-#else
+            AssertCaptureRasterizationScale(root);
+#endif
             await renderer.RenderAsync(root, App.DefaultWindowWidth, App.DefaultWindowHeight);
+#if GOLDEN_TEST
+            LogCaptureGeometry(root, renderer);
+#endif
             var pixels = WindowsRuntimeBufferExtensions.ToArray(await renderer.GetPixelsAsync());
             var imageInfo = new SKImageInfo(renderer.PixelWidth, renderer.PixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
-#endif
 
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath))!);
 
@@ -143,97 +127,22 @@ internal static class GoldenTestCapture
         root.MaxHeight = App.DefaultWindowHeight;
     }
 
-    private static void DisableLayoutRounding(DependencyObject root)
-    {
-        foreach (var element in EnumerateVisualTree(root))
-        {
-            if (element is UIElement uiElement)
-            {
-                uiElement.UseLayoutRounding = false;
-            }
-        }
-    }
-
-    private readonly record struct CaptureGeometry(
-        double RasterizationScale,
-        int RenderWidth,
-        int RenderHeight,
-        int OutputWidth,
-        int OutputHeight);
-
-    private static CaptureGeometry GetCaptureGeometry(FrameworkElement root)
+    private static void AssertCaptureRasterizationScale(FrameworkElement root)
     {
         var rasterizationScale = root.XamlRoot?.RasterizationScale ?? 1.0;
-        if (double.IsNaN(rasterizationScale) || rasterizationScale <= 0)
+        if (double.IsNaN(rasterizationScale) ||
+            Math.Abs(rasterizationScale - CaptureRasterizationScale) > RasterizationScaleTolerance)
         {
             throw new InvalidOperationException(FormattableString.Invariant(
-                $"Golden capture requires a valid rasterization scale, but the app reported {rasterizationScale:0.###}."));
+                $"Golden capture requires rasterization scale 1.0, but the app reported {rasterizationScale:0.###}."));
         }
-
-        return new CaptureGeometry(
-            rasterizationScale,
-            (int)(App.DefaultWindowWidth * rasterizationScale),
-            (int)(App.DefaultWindowHeight * rasterizationScale),
-            App.DefaultWindowWidth,
-            App.DefaultWindowHeight);
     }
 
-    private static IDisposable ApplyCaptureTransform(FrameworkElement root, double rasterizationScale)
+    private static void LogCaptureGeometry(FrameworkElement root, RenderTargetBitmap renderer)
     {
-        if (Math.Abs(rasterizationScale - 1.0) < double.Epsilon)
-        {
-            return Disposable.Create(() => { });
-        }
-
-        var previousTransform = root.RenderTransform;
-        var previousOrigin = root.RenderTransformOrigin;
-        root.RenderTransformOrigin = new Point(0, 0);
-        root.RenderTransform = new ScaleTransform
-        {
-            ScaleX = 1.0 / rasterizationScale,
-            ScaleY = 1.0 / rasterizationScale
-        };
-
-        return Disposable.Create(() =>
-        {
-            root.RenderTransform = previousTransform;
-            root.RenderTransformOrigin = previousOrigin;
-        });
-    }
-
-    private static byte[] CropCapturePixels(
-        byte[] pixels,
-        int sourceWidth,
-        int sourceHeight,
-        int outputWidth,
-        int outputHeight)
-    {
-        if (sourceWidth == outputWidth && sourceHeight == outputHeight)
-        {
-            return pixels;
-        }
-
-        if (sourceWidth < outputWidth || sourceHeight < outputHeight)
-        {
-            throw new InvalidOperationException(
-                $"Golden capture rendered {sourceWidth}x{sourceHeight}, which is smaller than the {outputWidth}x{outputHeight} output.");
-        }
-
-        var cropped = new byte[outputWidth * outputHeight * BytesPerPixel];
-        var sourceStride = sourceWidth * BytesPerPixel;
-        var outputStride = outputWidth * BytesPerPixel;
-        for (var y = 0; y < outputHeight; y++)
-        {
-            Buffer.BlockCopy(pixels, y * sourceStride, cropped, y * outputStride, outputStride);
-        }
-
-        return cropped;
-    }
-
-    private static void LogCaptureGeometry(FrameworkElement root, RenderTargetBitmap renderer, CaptureGeometry capture)
-    {
+        var rasterizationScale = root.XamlRoot?.RasterizationScale ?? double.NaN;
         Console.WriteLine(FormattableString.Invariant(
-            $"Golden capture: root={root.ActualWidth:0.###}x{root.ActualHeight:0.###}, scale={capture.RasterizationScale:0.###}, render={renderer.PixelWidth}x{renderer.PixelHeight}, output={capture.OutputWidth}x{capture.OutputHeight}"));
+            $"Golden capture: root={root.ActualWidth:0.###}x{root.ActualHeight:0.###}, scale={rasterizationScale:0.###}, renderer={renderer.PixelWidth}x{renderer.PixelHeight}"));
     }
 #endif
 
