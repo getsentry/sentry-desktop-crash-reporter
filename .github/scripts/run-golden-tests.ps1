@@ -372,7 +372,7 @@ foreach ($case in $goldenCases) {
                 $launchArguments = @(
                     "-a",
                     "-s",
-                    "-screen 0 1280x900x24 -dpi 96",
+                    """-screen 0 1280x900x24 -dpi 96""",
                     $appExecutable,
                     $fixturePath
                 )
