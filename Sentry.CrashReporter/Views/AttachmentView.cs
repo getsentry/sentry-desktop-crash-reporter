@@ -37,9 +37,7 @@ public class AttachmentView : ReactiveUserControl<AttachmentViewModel>
                             .OnRemove(a => ViewModel?.Remove(a)),
                         new Button()
                             .Name("addButton")
-                            .Content(new FontAwesomeIcon(FA.Plus)
-                                .FontSize(12)
-                                .Foreground(ThemeResource.Get<Brush>("SystemFillColorCriticalBrush")))
+                            .Content(new FontAwesomeIcon(FA.Plus).FontSize(12))
                             .Command(x => x.Binding(() => vm.AddCommand))
                             .HorizontalAlignment(HorizontalAlignment.Right)
                             .VerticalAlignment(VerticalAlignment.Top)
