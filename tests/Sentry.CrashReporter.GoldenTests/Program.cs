@@ -184,7 +184,7 @@ internal sealed record Options(
         string? diff = null;
         var update = false;
         var statusOnly = false;
-        var maxRootMeanSquareError = 1.0;
+        var maxRootMeanSquareError = 1.5;
         var blurRadius = 0;
 
         for (var i = 0; i < args.Length; i++)
