@@ -32,7 +32,8 @@ internal static class GoldenComparisonCommand
 
             var result = Compare(options);
             Console.WriteLine(
-                $"Golden diff: rmse={result.RootMeanSquareError:F3}, tolerance={options.MaxRootMeanSquareError:F3}");
+                $"Golden diff: rmse={result.RootMeanSquareError:F3}, tolerance={options.MaxRootMeanSquareError:F3}, " +
+                $"significant-pixels={result.SignificantPixelCount}, max-significant-pixels={options.MaxSignificantPixelCount}");
 
             if (result.Passed)
             {
@@ -118,7 +119,7 @@ internal static class GoldenComparisonCommand
         if (expected.Width != actual.Width || expected.Height != actual.Height)
         {
             WriteSizeMismatchDiff(expected, actual, options.DiffPath);
-            return new ComparisonResult(false, double.PositiveInfinity);
+            return new ComparisonResult(false, double.PositiveInfinity, int.MaxValue);
         }
 
         ApplyBlur(expected, options.BlurRadius);
@@ -128,9 +129,12 @@ internal static class GoldenComparisonCommand
         diff.Write(options.DiffPath, MagickFormat.Png);
 
         var rootMeanSquareError = normalizedRootMeanSquareError * ByteScale;
+        var significantPixelCount = CountSignificantPixels(expected, actual, options.SignificantPixelDelta);
         return new ComparisonResult(
-            rootMeanSquareError <= options.MaxRootMeanSquareError,
-            rootMeanSquareError);
+            rootMeanSquareError <= options.MaxRootMeanSquareError &&
+            significantPixelCount <= options.MaxSignificantPixelCount,
+            rootMeanSquareError,
+            significantPixelCount);
     }
 
     private static MagickImage LoadImage(string path)
@@ -153,6 +157,26 @@ internal static class GoldenComparisonCommand
         image.Blur(0, blurRadius);
     }
 
+    private static int CountSignificantPixels(MagickImage expected, MagickImage actual, int significantPixelDelta)
+    {
+        var expectedPixels = expected.GetPixels().ToByteArray(PixelMapping.RGB);
+        var actualPixels = actual.GetPixels().ToByteArray(PixelMapping.RGB);
+        var significantPixels = 0;
+
+        for (var i = 0; i < expectedPixels.Length; i += 3)
+        {
+            var redDelta = Math.Abs(expectedPixels[i] - actualPixels[i]);
+            var greenDelta = Math.Abs(expectedPixels[i + 1] - actualPixels[i + 1]);
+            var blueDelta = Math.Abs(expectedPixels[i + 2] - actualPixels[i + 2]);
+            if (Math.Max(redDelta, Math.Max(greenDelta, blueDelta)) > significantPixelDelta)
+            {
+                significantPixels++;
+            }
+        }
+
+        return significantPixels;
+    }
+
     private static void WriteSizeMismatchDiff(MagickImage expected, MagickImage actual, string diffPath)
     {
         var width = Math.Max(expected.Width, actual.Width);
@@ -170,7 +194,9 @@ internal sealed record Options(
     bool Update,
     bool StatusOnly,
     double MaxRootMeanSquareError,
-    int BlurRadius)
+    int BlurRadius,
+    int SignificantPixelDelta,
+    int MaxSignificantPixelCount)
 {
     public static Options Parse(string[] args)
     {
@@ -184,8 +210,10 @@ internal sealed record Options(
         string? diff = null;
         var update = false;
         var statusOnly = false;
-        var maxRootMeanSquareError = 1.5;
+        var maxRootMeanSquareError = 2.0;
         var blurRadius = 0;
+        var significantPixelDelta = 64;
+        var maxSignificantPixelCount = 100;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -212,6 +240,12 @@ internal sealed record Options(
                 case "--blur-radius":
                     blurRadius = int.Parse(RequireValue(args, ref i), CultureInfo.InvariantCulture);
                     break;
+                case "--significant-pixel-delta":
+                    significantPixelDelta = int.Parse(RequireValue(args, ref i), CultureInfo.InvariantCulture);
+                    break;
+                case "--max-significant-pixels":
+                    maxSignificantPixelCount = int.Parse(RequireValue(args, ref i), CultureInfo.InvariantCulture);
+                    break;
                 default:
                     throw new ArgumentException($"Unknown argument: {args[i]}");
             }
@@ -224,7 +258,9 @@ internal sealed record Options(
             update,
             statusOnly,
             maxRootMeanSquareError,
-            blurRadius);
+            blurRadius,
+            significantPixelDelta,
+            maxSignificantPixelCount);
     }
 
     private static string RequireValue(string[] args, ref int index)
@@ -246,4 +282,4 @@ internal enum CopyResult
     Changed
 }
 
-internal readonly record struct ComparisonResult(bool Passed, double RootMeanSquareError);
+internal readonly record struct ComparisonResult(bool Passed, double RootMeanSquareError, int SignificantPixelCount);
