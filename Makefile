@@ -37,7 +37,6 @@ help:
 	@printf "  make test-runtime   Build and run Uno runtime tests under xvfb ($(or $(CONFIG),Debug))\n"
 	@printf "  make test-ui        Build and run WebAssembly UI tests ($(or $(CONFIG),Debug))\n"
 	@printf "  make test-golden    Publish and compare goldens ($(or $(CONFIG),Release), $(RID))\n"
-	@printf "  make update-goldens Publish and update goldens ($(or $(CONFIG),Release), $(RID))\n"
 	@printf "\n"
 	@printf "Variables:\n"
 	@printf "  CONFIG              Debug/Release\n"
@@ -53,11 +52,10 @@ help:
 	@printf "  make publish RID=osx-arm64\n"
 	@printf "  make publish RID=win-x64 OUTPUT=build\n"
 	@printf "  make test-golden\n"
-	@printf "  make update-goldens\n"
-	@printf "  make update-goldens VIEW=stacktrace\n"
-	@printf "  make update-goldens THEME=dark\n"
-	@printf "  make update-goldens RID=win-x64\n"
 	@printf "  make build CONFIG=Release\n"
+	@printf "\n"
+	@printf "Maintenance:\n"
+	@printf "  make update-goldens Update goldens locally; prefer the update-goldens PR label\n"
 
 restore:
 	$(DOTNET) restore $(SOLUTION)
