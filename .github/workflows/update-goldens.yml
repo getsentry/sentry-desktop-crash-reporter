@@ -44,8 +44,16 @@ jobs:
           - os: windows-2025
             rid: win-x64
     steps:
+      - name: Get auth token
+        id: token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.SENTRY_RELEASE_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.SENTRY_RELEASE_BOT_PRIVATE_KEY }}
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          token: ${{ steps.token.outputs.token }}
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
