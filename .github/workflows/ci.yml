@@ -206,9 +206,9 @@ jobs:
             echo
             echo "Inspect the uploaded \`golden-test-results-${{ matrix.rid }}\` artifact for \`.actual.png\`, \`.diff.png\`, and app logs under \`tests/Sentry.CrashReporter.GoldenTests/TestResults/${{ matrix.rid }}/\`."
             echo
-            echo "If the rendering change is intended, run \`make update-goldens\` on ${{ matrix.rid }} and commit the updated \`tests/goldens/${{ matrix.rid }}-<view>-<theme>.png\` files."
+            echo "If the rendering change is intended, add the \`update-goldens\` label to this PR to regenerate baselines in CI."
           } >> "$GITHUB_STEP_SUMMARY"
-          echo "::error::Golden tests failed for ${{ matrix.rid }}. Inspect artifact golden-test-results-${{ matrix.rid }}; update intended changes with 'make update-goldens' on ${{ matrix.rid }}."
+          echo "::error::Golden tests failed for ${{ matrix.rid }}. Inspect artifact golden-test-results-${{ matrix.rid }}; update intended changes with the update-goldens label."
 
       - name: Upload Golden Test Results
         if: ${{ always() && steps.goldens.outputs.exists == 'true' && (!startsWith(github.ref_name, 'release/') || steps.run_goldens.outcome == 'failure') }}
