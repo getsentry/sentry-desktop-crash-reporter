@@ -15,4 +15,4 @@ make update-goldens THEME=dark
 
 For same-repository PRs, add the `update-goldens` label to regenerate baselines in CI. Fork PRs are skipped because CI cannot push updated baselines to the fork branch.
 
-Local golden captures require rasterization scale `1.0`; `make update-goldens` fails instead of updating baselines if the app reports a fractional scale. Golden comparisons use Magick.NET RMSE.
+Local golden captures require rasterization scale `1.0`; `make update-goldens` fails instead of updating baselines if the app reports a fractional scale. Golden comparisons use Magick.NET RMSE plus a cap on high-delta pixels.
