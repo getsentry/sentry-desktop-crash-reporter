@@ -59,7 +59,7 @@ foreach ($view in $views) {
 
 if ($missing.Count -gt 0) {
     Write-StepOutput "exists" "false"
-    Write-Host "::error::Missing goldens for $RuntimeIdentifier. Run 'make update-goldens'."
+    Write-Host "::error::Missing goldens for $RuntimeIdentifier. Add the 'update-goldens' label or run 'make update-goldens'."
     exit 1
 }
 

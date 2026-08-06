@@ -1,0 +1,105 @@
+name: Update Goldens
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+env:
+  STEP_TIMEOUT_MINUTES: 60
+  UPDATE_GOLDENS_LABEL: update-goldens
+
+jobs:
+  skip_fork:
+    name: Skip Fork
+    if: ${{ github.event.label.name == 'update-goldens' && github.event.pull_request.head.repo.full_name != github.repository }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Report skipped update
+        run: |
+          echo "::notice::update-goldens is skipped for forked PRs because CI cannot push golden baselines to the fork branch."
+          {
+            echo "## update-goldens skipped"
+            echo
+            echo "This PR comes from a fork, so CI cannot push updated golden baselines to the PR branch."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  update_goldens:
+    name: Update Goldens (${{ matrix.rid }})
+    if: ${{ github.event.label.name == 'update-goldens' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - os: macos-26
+            rid: osx-arm64
+          - os: ubuntu-24.04
+            rid: linux-x64
+          - os: windows-2025
+            rid: win-x64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Install Dependencies
+        timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
+        uses: "./.github/steps/install_dependencies"
+        with:
+          target-platform: "desktop"
+
+      - name: Install Golden Test Dependencies (Linux)
+        if: ${{ runner.os == 'Linux' }}
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Update Goldens
+        timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
+        shell: pwsh
+        run: .github/scripts/run-golden-tests.ps1 -UpdateGoldens -Configuration Release -RuntimeIdentifier ${{ matrix.rid }}
+
+      - name: Upload Golden Test Results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: update-golden-results-${{ matrix.rid }}
+          path: tests/Sentry.CrashReporter.GoldenTests/TestResults/
+
+      - name: Commit updated goldens
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          RID: ${{ matrix.rid }}
+        run: |
+          git add -- "tests/goldens/${RID}-"*.png
+          if git diff --cached --quiet; then
+            echo "::notice::No golden changes for ${RID}."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "test(goldens): update ${RID} baselines"
+          git pull --rebase --autostash origin "${HEAD_REF}"
+          git push origin "HEAD:${HEAD_REF}"
+
+  remove_label:
+    name: Remove Label
+    needs: update_goldens
+    if: ${{ github.event.label.name == 'update-goldens' && github.event.pull_request.head.repo.full_name == github.repository && needs.update_goldens.result == 'success' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Remove update-goldens label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr edit "$PR_NUMBER" --remove-label "$UPDATE_GOLDENS_LABEL"
