@@ -1,6 +1,7 @@
 using Sentry.CrashReporter.Controls;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.ViewModels;
+using Microsoft.UI.Xaml.Media;
 
 namespace Sentry.CrashReporter.Views;
 
@@ -70,7 +71,11 @@ public sealed class EnvelopeView : ReactivePage<EnvelopeViewModel>
                         .VerticalAlignment(VerticalAlignment.Top)
                         .HorizontalAlignment(HorizontalAlignment.Right)
                         .Margin(4, 2)
-                        .Content(new FontAwesomeIcon(FA.ArrowUpRightFromSquare).FontSize(12))
+                        .Content(new FontAwesomeIcon(FA.ArrowUpRightFromSquare)
+                        {
+                            RenderTransform = new ScaleTransform { ScaleX = -1 },
+                            RenderTransformOrigin = new Windows.Foundation.Point(0.5, 0.5)
+                        }.FontSize(12))
                         .Background(Colors.Transparent)
                         .BorderBrush(Colors.Transparent)
                         .Resources(r => r.Add("ButtonBackgroundPointerOver", new SolidColorBrush(Colors.Transparent))
