@@ -9,7 +9,6 @@ permissions:
 
 env:
   STEP_TIMEOUT_MINUTES: 60
-  UPDATE_GOLDENS_LABEL: update-goldens
 
 jobs:
   skip_fork:
@@ -46,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -72,53 +71,9 @@ jobs:
           name: update-golden-results-${{ matrix.rid }}
           path: tests/Sentry.CrashReporter.GoldenTests/TestResults/
 
-      - name: Check for golden changes
-        id: changes
-        shell: bash
-        env:
-          RID: ${{ matrix.rid }}
-        run: |
-          git add -- "tests/goldens/${RID}-"*.png
-          if git diff --cached --quiet; then
-            echo "::notice::No golden changes for ${RID}."
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Get auth token
-        id: token
-        if: ${{ steps.changes.outputs.changed == 'true' }}
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+      - name: Upload Updated Goldens
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          client-id: ${{ vars.SENTRY_RELEASE_BOT_CLIENT_ID }}
-          private-key: ${{ secrets.SENTRY_RELEASE_BOT_PRIVATE_KEY }}
-
-      - name: Commit updated goldens
-        if: ${{ steps.changes.outputs.changed == 'true' }}
-        shell: bash
-        env:
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          RID: ${{ matrix.rid }}
-          GH_APP_TOKEN: ${{ steps.token.outputs.token }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "test(goldens): update ${RID} baselines"
-          git pull --rebase --autostash "https://x-access-token:${GH_APP_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "${HEAD_REF}"
-          git push "https://x-access-token:${GH_APP_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${HEAD_REF}"
-
-  remove_label:
-    name: Remove Label
-    needs: update_goldens
-    if: ${{ github.event.label.name == 'update-goldens' && github.event.pull_request.head.repo.full_name == github.repository && needs.update_goldens.result == 'success' }}
-    runs-on: ubuntu-24.04
-    permissions:
-      pull-requests: write
-    steps:
-      - name: Remove update-goldens label
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: gh pr edit "$PR_NUMBER" --remove-label "$UPDATE_GOLDENS_LABEL"
+          name: updated-goldens-${{ matrix.rid }}
+          path: tests/goldens/${{ matrix.rid }}-*.png
+          if-no-files-found: error
