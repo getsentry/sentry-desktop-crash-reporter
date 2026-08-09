@@ -1,3 +1,4 @@
+#if GOLDEN_TEST
 #if __DESKTOP__
 using System.Diagnostics;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -22,10 +23,8 @@ internal static class GoldenTestCapture
     private const string ThemeVariable = "SENTRY_CRASH_REPORTER_GOLDEN_TEST_THEME";
     private const string ViewVariable = "SENTRY_CRASH_REPORTER_GOLDEN_TEST_VIEW";
     private const string TestFontFamily = "ms-appx:///Assets/Fonts/Ahem/Ahem.ttf#Ahem";
-#if GOLDEN_TEST
     private const double CaptureRasterizationScale = 1.0;
     private const double RasterizationScaleTolerance = 0.001;
-#endif
     private static readonly TimeSpan LoadTimeout = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan RenderSettleDelay = TimeSpan.FromMilliseconds(500);
 
@@ -49,35 +48,25 @@ internal static class GoldenTestCapture
             }
 
             window.Resize(App.DefaultWindowWidth, App.DefaultWindowHeight);
-#if GOLDEN_TEST
             ConfigureCaptureRoot(root);
-#endif
             ApplyTheme(root);
             var viewModel = await WaitForMainPageAsync(root);
             SelectView(viewModel);
 
             await WaitForUiIdleAsync(root);
-#if GOLDEN_TEST
             ConfigureCaptureRoot(root);
-#endif
             root.UpdateLayout();
             ApplyTestFont(root);
             root.UpdateLayout();
             await Task.Delay(RenderSettleDelay);
             await WaitForUiIdleAsync(root);
-#if GOLDEN_TEST
             ConfigureCaptureRoot(root);
-#endif
             root.UpdateLayout();
 
             var renderer = new RenderTargetBitmap();
-#if GOLDEN_TEST
             AssertCaptureRasterizationScale(root);
-#endif
             await renderer.RenderAsync(root, App.DefaultWindowWidth, App.DefaultWindowHeight);
-#if GOLDEN_TEST
             LogCaptureGeometry(root, renderer);
-#endif
             var pixels = WindowsRuntimeBufferExtensions.ToArray(await renderer.GetPixelsAsync());
             var imageInfo = new SKImageInfo(renderer.PixelWidth, renderer.PixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
 
@@ -116,7 +105,6 @@ internal static class GoldenTestCapture
         };
     }
 
-#if GOLDEN_TEST
     private static void ConfigureCaptureRoot(FrameworkElement root)
     {
         root.Width = App.DefaultWindowWidth;
@@ -144,8 +132,6 @@ internal static class GoldenTestCapture
         Console.WriteLine(FormattableString.Invariant(
             $"Golden capture: root={root.ActualWidth:0.###}x{root.ActualHeight:0.###}, scale={rasterizationScale:0.###}, renderer={renderer.PixelWidth}x{renderer.PixelHeight}"));
     }
-#endif
-
     private static void ApplyTestFont(DependencyObject root)
     {
         var fontFamily = new FontFamily(TestFontFamily);
@@ -272,3 +258,4 @@ internal static class GoldenTestCapture
     }
 #endif
 }
+#endif
