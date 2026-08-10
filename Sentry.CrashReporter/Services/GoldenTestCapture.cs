@@ -26,6 +26,7 @@ internal static class GoldenTestCapture
     private const double CaptureRasterizationScale = 1.0;
     private const double RasterizationScaleTolerance = 0.001;
     private static readonly TimeSpan LoadTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan RenderSettleDelay = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan RenderTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan RenderRetryDelay = TimeSpan.FromMilliseconds(100);
 
@@ -59,6 +60,7 @@ internal static class GoldenTestCapture
             root.UpdateLayout();
             ApplyTestFont(root);
             root.UpdateLayout();
+            await Task.Delay(RenderSettleDelay);
 
             var (renderer, pixels) = await CaptureNonEmptyFrameAsync(root);
             LogCaptureGeometry(root, renderer);
@@ -76,12 +78,12 @@ internal static class GoldenTestCapture
                 await stream.FlushAsync();
             }
 
-            Environment.Exit(0);
+            Exit(0);
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine(ex);
-            Environment.Exit(2);
+            Exit(2);
         }
 #else
         await Task.CompletedTask;
@@ -89,6 +91,12 @@ internal static class GoldenTestCapture
     }
 
 #if __DESKTOP__
+    private static void Exit(int exitCode)
+    {
+        Environment.ExitCode = exitCode;
+        App.Services.GetRequiredService<IWindowService>().Close();
+    }
+
     private static void ApplyTheme(FrameworkElement root)
     {
         root.RequestedTheme = Environment.GetEnvironmentVariable(ThemeVariable)?.ToLowerInvariant() switch

@@ -159,8 +159,10 @@ internal static class GoldenComparisonCommand
 
     private static int CountSignificantPixels(MagickImage expected, MagickImage actual, int significantPixelDelta)
     {
-        var expectedPixels = expected.GetPixels().ToByteArray(PixelMapping.RGB);
-        var actualPixels = actual.GetPixels().ToByteArray(PixelMapping.RGB);
+        var expectedPixels = expected.GetPixels().ToByteArray(PixelMapping.RGB)
+            ?? throw new InvalidOperationException("Failed to read expected image pixels.");
+        var actualPixels = actual.GetPixels().ToByteArray(PixelMapping.RGB)
+            ?? throw new InvalidOperationException("Failed to read actual image pixels.");
         var significantPixels = 0;
 
         for (var i = 0; i < expectedPixels.Length; i += 3)
