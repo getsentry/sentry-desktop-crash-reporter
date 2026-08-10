@@ -31,11 +31,6 @@ public sealed class FeedbackView : ReactiveUserControl<FeedbackViewModel>
                 .DisposeWith(d);
         });
 
-        var messageHeader = "Message";
-#if GOLDEN_TEST
-        messageHeader = "Message!";
-#endif
-
         this.Content(new ScrollViewer()
             .DataContext(ViewModel, (view, vm) => view
                 .Content(new Grid()
@@ -45,7 +40,7 @@ public sealed class FeedbackView : ReactiveUserControl<FeedbackViewModel>
                         new TextBox()
                             .Name(out _messageTextBox)
                             .Grid(row: 0)
-                            .Header(messageHeader)
+                            .Header("Message")
                             .PlaceholderText("Tell us about your issue")
                             .AutomationProperties(automationId: "messageTextBox")
                             .MaxLength(4096)

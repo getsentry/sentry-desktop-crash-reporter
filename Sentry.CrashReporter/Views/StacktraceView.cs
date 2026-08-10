@@ -37,14 +37,9 @@ public class StacktraceView : ReactiveUserControl<StacktraceViewModel>
             new DataAction("Copy", VirtualKey.C, frameGrid.CopySelection),
             new DataAction("Select All", VirtualKey.A, frameGrid.DoSelectAll));
 
-        var rowSpacing = 8;
-#if GOLDEN_TEST
-        rowSpacing = 10;
-#endif
-
         this.Content(new Grid()
             .DataContext(ViewModel, (view, vm) => view
-                .RowSpacing(rowSpacing)
+                .RowSpacing(8)
                 .RowDefinitions("Auto,*")
                 .Children(
                     new Grid()

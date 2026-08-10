@@ -27,11 +27,6 @@ public class AttachmentView : ReactiveUserControl<AttachmentViewModel>
                 .DisposeWith(d);
         });
 
-        var addIcon = new FontAwesomeIcon(FA.Plus).FontSize(12);
-#if GOLDEN_TEST
-        addIcon.Foreground(ThemeResource.Get<Brush>("SystemFillColorCriticalBrush"));
-#endif
-
         this.Content(new UserControl()
             .DataContext(ViewModel, (view, vm) => view
                 .Content(new Grid()
@@ -42,7 +37,7 @@ public class AttachmentView : ReactiveUserControl<AttachmentViewModel>
                             .OnRemove(a => ViewModel?.Remove(a)),
                         new Button()
                             .Name("addButton")
-                            .Content(addIcon)
+                            .Content(new FontAwesomeIcon(FA.Plus).FontSize(12))
                             .Command(x => x.Binding(() => vm.AddCommand))
                             .HorizontalAlignment(HorizontalAlignment.Right)
                             .VerticalAlignment(VerticalAlignment.Top)
