@@ -26,7 +26,8 @@ internal static class GoldenTestCapture
     private const double CaptureRasterizationScale = 1.0;
     private const double RasterizationScaleTolerance = 0.001;
     private static readonly TimeSpan LoadTimeout = TimeSpan.FromSeconds(30);
-    private static readonly TimeSpan RenderSettleDelay = TimeSpan.FromMilliseconds(500);
+    private static readonly TimeSpan RenderTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan RenderRetryDelay = TimeSpan.FromMilliseconds(100);
 
     public static bool IsEnabled =>
         !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(OutputPathVariable));
@@ -58,16 +59,9 @@ internal static class GoldenTestCapture
             root.UpdateLayout();
             ApplyTestFont(root);
             root.UpdateLayout();
-            await Task.Delay(RenderSettleDelay);
-            await WaitForUiIdleAsync(root);
-            ConfigureCaptureRoot(root);
-            root.UpdateLayout();
 
-            var renderer = new RenderTargetBitmap();
-            AssertCaptureRasterizationScale(root);
-            await renderer.RenderAsync(root, App.DefaultWindowWidth, App.DefaultWindowHeight);
+            var (renderer, pixels) = await CaptureNonEmptyFrameAsync(root);
             LogCaptureGeometry(root, renderer);
-            var pixels = WindowsRuntimeBufferExtensions.ToArray(await renderer.GetPixelsAsync());
             var imageInfo = new SKImageInfo(renderer.PixelWidth, renderer.PixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
 
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath))!);
@@ -132,6 +126,58 @@ internal static class GoldenTestCapture
         Console.WriteLine(FormattableString.Invariant(
             $"Golden capture: root={root.ActualWidth:0.###}x{root.ActualHeight:0.###}, scale={rasterizationScale:0.###}, renderer={renderer.PixelWidth}x{renderer.PixelHeight}"));
     }
+
+    private static async Task<(RenderTargetBitmap Renderer, byte[] Pixels)> CaptureNonEmptyFrameAsync(
+        FrameworkElement root)
+    {
+        var elapsed = Stopwatch.StartNew();
+        var attempts = 0;
+
+        while (elapsed.Elapsed < RenderTimeout)
+        {
+            attempts++;
+            await WaitForUiIdleAsync(root);
+            ConfigureCaptureRoot(root);
+            root.UpdateLayout();
+            AssertCaptureRasterizationScale(root);
+
+            var renderer = new RenderTargetBitmap();
+            await renderer.RenderAsync(root, App.DefaultWindowWidth, App.DefaultWindowHeight);
+            var pixels = WindowsRuntimeBufferExtensions.ToArray(await renderer.GetPixelsAsync());
+            if (HasVisibleContent(renderer, pixels))
+            {
+                return (renderer, pixels);
+            }
+
+            await Task.Delay(RenderRetryDelay);
+        }
+
+        throw new TimeoutException(
+            $"Golden capture remained empty after {attempts} attempts over {RenderTimeout.TotalSeconds:0} seconds.");
+    }
+
+    private static bool HasVisibleContent(RenderTargetBitmap renderer, byte[] pixels)
+    {
+        var expectedLength = checked(renderer.PixelWidth * renderer.PixelHeight * 4);
+        if (expectedLength == 0 || pixels.Length != expectedLength)
+        {
+            return false;
+        }
+
+        for (var i = 4; i < pixels.Length; i += 4)
+        {
+            if (pixels[i] != pixels[0] ||
+                pixels[i + 1] != pixels[1] ||
+                pixels[i + 2] != pixels[2] ||
+                pixels[i + 3] != pixels[3])
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static void ApplyTestFont(DependencyObject root)
     {
         var fontFamily = new FontFamily(TestFontFamily);
