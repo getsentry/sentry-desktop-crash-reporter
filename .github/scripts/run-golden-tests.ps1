@@ -411,20 +411,16 @@ foreach ($case in $goldenCases) {
                 throw "Timed out waiting for the golden capture after $TimeoutSeconds seconds."
             }
 
-            $actualExists = Test-Path $actualPath
-            if ($process.ExitCode -ne 0 -and !$actualExists) {
+            if ($process.ExitCode -ne 0) {
                 Write-ProcessLog "App stdout ($($case.CaseName))" $stdoutPath
                 Write-ProcessLog "App stderr ($($case.CaseName))" $stderrPath
 
                 throw "The published app exited with code $($process.ExitCode)."
             }
 
+            $actualExists = Test-Path $actualPath
             if (!$actualExists) {
                 throw "The published app did not create the golden screenshot: $actualPath"
-            }
-
-            if ($process.ExitCode -ne 0) {
-                Write-Host "::warning::$($case.CaseName): The published app exited with code $($process.ExitCode) after writing the golden screenshot."
             }
         }
         finally {
