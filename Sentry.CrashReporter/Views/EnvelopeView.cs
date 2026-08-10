@@ -1,6 +1,3 @@
-#if GOLDEN_TEST
-using Microsoft.UI.Xaml.Media;
-#endif
 using Sentry.CrashReporter.Controls;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.ViewModels;
@@ -27,12 +24,6 @@ public sealed class EnvelopeView : ReactivePage<EnvelopeViewModel>
                 .BindTo(ViewModel, vm => vm.Envelope)
                 .DisposeWith(d);
         });
-
-        var openIcon = new FontAwesomeIcon(FA.ArrowUpRightFromSquare).FontSize(12);
-#if GOLDEN_TEST
-        openIcon.RenderTransform = new ScaleTransform { ScaleX = -1 };
-        openIcon.RenderTransformOrigin = new Windows.Foundation.Point(0.5, 0.5);
-#endif
 
         this.Background(ThemeResource.Get<Brush>("ApplicationPageBackgroundThemeBrush"))
             .Content(new Grid()
@@ -79,7 +70,7 @@ public sealed class EnvelopeView : ReactivePage<EnvelopeViewModel>
                         .VerticalAlignment(VerticalAlignment.Top)
                         .HorizontalAlignment(HorizontalAlignment.Right)
                         .Margin(4, 2)
-                        .Content(openIcon)
+                        .Content(new FontAwesomeIcon(FA.ArrowUpRightFromSquare).FontSize(12))
                         .Background(Colors.Transparent)
                         .BorderBrush(Colors.Transparent)
                         .Resources(r => r.Add("ButtonBackgroundPointerOver", new SolidColorBrush(Colors.Transparent))
