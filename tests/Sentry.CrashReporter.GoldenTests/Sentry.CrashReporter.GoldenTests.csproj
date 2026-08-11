@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Remove="App/GoldenTestCapture.cs" />
         <PackageReference Include="Magick.NET-Q8-AnyCPU" />
     </ItemGroup>
 </Project>
