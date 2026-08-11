@@ -20,9 +20,11 @@ jobs:
         run: |
           echo "::notice::update-goldens is skipped for forked PRs because CI cannot push golden baselines to the fork branch."
           {
-            echo "## update-goldens skipped"
+            echo "## \`update-goldens\` skipped"
             echo
             echo "This PR comes from a fork, so CI cannot push updated golden baselines to the PR branch."
+            echo
+            echo "Remove the label and use \`make update-goldens\` as a local fallback for each affected RID."
           } >> "$GITHUB_STEP_SUMMARY"
 
   update_goldens:
@@ -70,6 +72,19 @@ jobs:
         with:
           name: update-golden-results-${{ matrix.rid }}
           path: tests/Sentry.CrashReporter.GoldenTests/TestResults/
+
+      - name: Report update failure
+        if: ${{ failure() }}
+        shell: bash
+        env:
+          RID: ${{ matrix.rid }}
+        run: |
+          {
+            echo "## Golden update failure: ${RID}"
+            echo
+            echo "Inspect the \`update-golden-results-${RID}\` artifact. A follow-up workflow removes the \`update-goldens\` label after this run finishes; add it again after fixing the failure."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::Golden update failed for ${RID}. Inspect artifact update-golden-results-${RID}; fix the failure and re-add the update-goldens label."
 
       - name: Upload Updated Goldens
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

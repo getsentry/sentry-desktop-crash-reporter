@@ -55,7 +55,8 @@ help:
 	@printf "  make build CONFIG=Release\n"
 	@printf "\n"
 	@printf "Maintenance:\n"
-	@printf "  make update-goldens Update goldens locally; prefer the update-goldens PR label\n"
+	@printf "  make update-goldens Update the current RID locally\n"
+	@printf "                      Prefer CI via the update-goldens PR label for all RIDs\n"
 
 restore:
 	$(DOTNET) restore $(SOLUTION)
