@@ -59,7 +59,7 @@ foreach ($view in $views) {
 
 if ($missing.Count -gt 0) {
     Write-StepOutput "exists" "false"
-    Write-Host "::error::Missing goldens for $RuntimeIdentifier. Add the 'update-goldens' label to regenerate baselines in CI."
+    Write-Host "::error::Missing goldens for $RuntimeIdentifier. Add the update-goldens label on a same-repository PR; fork PRs must generate them locally with make update-goldens."
     exit 1
 }
 

@@ -26,7 +26,9 @@ internal static class GoldenComparisonCommand
             if (!File.Exists(options.ExpectedPath))
             {
                 Console.Error.WriteLine($"Missing golden: {options.ExpectedPath}");
-                Console.Error.WriteLine("Add the `update-goldens` label to regenerate baselines in CI.");
+                Console.Error.WriteLine(
+                    "For a same-repository PR, prefer regenerating all baselines in CI with the update-goldens label; " +
+                    "use make update-goldens to update a specific RID locally.");
                 return 2;
             }
 
