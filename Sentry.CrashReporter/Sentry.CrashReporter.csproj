@@ -100,12 +100,6 @@
         <TrimmerRootAssembly Include="Sentry.CrashReporter" />
     </ItemGroup>
 
-    <ItemGroup Condition=" '$(GoldenTest)' == 'true' ">
-        <Compile Include="..\tests\Sentry.CrashReporter.GoldenTests\App\GoldenTestCapture.cs">
-            <Link>Services\GoldenTestCapture.cs</Link>
-        </Compile>
-    </ItemGroup>
-
     <ItemGroup>
         <Content Include="Assets\AppLogo.png" />
         <Content Include="Assets\AppLogo.scale-200.png" />
