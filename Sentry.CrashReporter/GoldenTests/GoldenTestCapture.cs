@@ -1,3 +1,4 @@
+#if GOLDEN_TEST
 #if __DESKTOP__
 using System.Diagnostics;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -311,3 +312,4 @@ internal static class GoldenTestCapture
     }
 #endif
 }
+#endif
