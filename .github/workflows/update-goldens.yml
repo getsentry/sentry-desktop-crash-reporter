@@ -1,0 +1,94 @@
+name: Update Goldens
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+env:
+  STEP_TIMEOUT_MINUTES: 60
+
+jobs:
+  skip_fork:
+    name: Skip Fork
+    if: ${{ github.event.label.name == 'update-goldens' && github.event.pull_request.head.repo.full_name != github.repository }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Report skipped update
+        run: |
+          echo "::notice::update-goldens is skipped for forked PRs because CI cannot push golden baselines to the fork branch."
+          {
+            echo "## \`update-goldens\` skipped"
+            echo
+            echo "This PR comes from a fork, so CI cannot push updated golden baselines to the PR branch."
+            echo
+            echo "Remove the label and use \`make update-goldens\` as a local fallback for each affected RID."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  update_goldens:
+    name: Update Goldens (${{ matrix.rid }})
+    if: ${{ github.event.label.name == 'update-goldens' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - os: macos-26
+            rid: osx-arm64
+          - os: ubuntu-24.04
+            rid: linux-x64
+          - os: windows-2025
+            rid: win-x64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install Dependencies
+        timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
+        uses: "./.github/steps/install_dependencies"
+        with:
+          target-platform: "desktop"
+
+      - name: Install Golden Test Dependencies (Linux)
+        if: ${{ runner.os == 'Linux' }}
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Update Goldens
+        timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
+        shell: pwsh
+        run: .github/scripts/run-golden-tests.ps1 -UpdateGoldens -Configuration Release -RuntimeIdentifier ${{ matrix.rid }}
+
+      - name: Upload Golden Test Results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: update-golden-results-${{ matrix.rid }}
+          path: tests/Sentry.CrashReporter.GoldenTests/TestResults/
+
+      - name: Report update failure
+        if: ${{ failure() }}
+        shell: bash
+        env:
+          RID: ${{ matrix.rid }}
+        run: |
+          {
+            echo "## Golden update failure: ${RID}"
+            echo
+            echo "Inspect the \`update-golden-results-${RID}\` artifact. A follow-up workflow removes the \`update-goldens\` label after this run finishes; add it again after fixing the failure."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::Golden update failed for ${RID}. Inspect artifact update-golden-results-${RID}; fix the failure and re-add the update-goldens label."
+
+      - name: Upload Updated Goldens
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: updated-goldens-${{ matrix.rid }}
+          path: tests/goldens/${{ matrix.rid }}-*.png
+          if-no-files-found: error
