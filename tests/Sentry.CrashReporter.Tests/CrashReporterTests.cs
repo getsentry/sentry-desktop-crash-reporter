@@ -294,7 +294,7 @@ public class CrashReporterTests
         try
         {
             // Act
-            var ex = Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
+            var ex = await Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
 
             // Assert
             ex?.Message.Should().Be("upload failed");
@@ -327,7 +327,7 @@ public class CrashReporterTests
         try
         {
             // Act
-            var ex = Assert.ThrowsAsync<OperationCanceledException>(() =>
+            var ex = await Assert.ThrowsAsync<OperationCanceledException>(() =>
                 reporter.SubmitAsync(envelope, cancellationToken: cancellation.Token));
 
             // Assert
@@ -358,8 +358,8 @@ public class CrashReporterTests
         try
         {
             // Act
-            var firstException = Assert.ThrowsAsync<InvalidOperationException>(() => reporter.SubmitAsync(envelope));
-            var secondException = Assert.ThrowsAsync<InvalidOperationException>(() => reporter.SubmitAsync(envelope));
+            var firstException = await Assert.ThrowsAsync<InvalidOperationException>(() => reporter.SubmitAsync(envelope));
+            var secondException = await Assert.ThrowsAsync<InvalidOperationException>(() => reporter.SubmitAsync(envelope));
 
             // Assert
             firstException?.Message.Should().Be("send failed");
@@ -399,7 +399,7 @@ public class CrashReporterTests
         try
         {
             // Act
-            var ex = Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
+            var ex = await Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
             await reporter.SubmitAsync(envelope);
 
             // Assert
@@ -436,7 +436,7 @@ public class CrashReporterTests
         try
         {
             // Act
-            var ex = Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
+            var ex = await Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
             await reporter.SubmitAsync(envelope);
 
             // Assert
@@ -682,7 +682,7 @@ public class CrashReporterTests
         try
         {
             // Act
-            var ex = Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
+            var ex = await Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
             await reporter.CacheAsync(envelope);
 
             // Assert
@@ -755,7 +755,7 @@ public class CrashReporterTests
 
         // Act
         var envelope = await reporter.LoadAsync();
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => reporter.SubmitAsync(envelope!));
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => reporter.SubmitAsync(envelope!));
 
         // Assert
         Assert.That(ex?.Message, Does.Match(@"\bDSN\b"));

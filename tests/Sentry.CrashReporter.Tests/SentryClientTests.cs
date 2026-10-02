@@ -68,7 +68,7 @@ public class SentryClientTests
             })
             .ThrowsAsync(new HttpRequestException("Network error"));
 
-        var exception = Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
 
         Assert.That(exception!.Message, Is.EqualTo("Network error"));
         Assert.That(requestContents, Has.Count.EqualTo(4)); // 1 initial + 3 retries
@@ -101,7 +101,7 @@ public class SentryClientTests
                 Content = new StringContent("Internal Server Error")
             });
 
-        Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
+        await Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
 
         Assert.That(requestContents, Has.Count.EqualTo(4)); // 1 initial + 3 retries
         foreach (var requestContent in requestContents)
@@ -133,7 +133,7 @@ public class SentryClientTests
                 Content = new StringContent("Bad Gateway")
             });
 
-        Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
+        await Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
         Assert.That(requestContents, Has.Count.EqualTo(4)); // 1 initial + 3 retries
         foreach (var requestContent in requestContents)
         {
@@ -164,7 +164,7 @@ public class SentryClientTests
                 Content = new StringContent("Request Timeout")
             });
 
-        Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
+        await Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
 
         Assert.That(requestContents, Has.Count.EqualTo(4)); // 1 initial + 3 retries
         foreach (var requestContent in requestContents)
@@ -192,7 +192,7 @@ public class SentryClientTests
             })
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.BadRequest });
 
-        Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
+        await Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
 
         Assert.That(requestContents, Has.Count.EqualTo(1)); // No retries for client errors
         Assert.That(requestContents[0].RemoveBlankLines(), Is.EqualTo(expectedContent.RemoveBlankLines()));
@@ -241,7 +241,7 @@ public class SentryClientTests
             })
             .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.NotFound });
 
-        Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
+        await Assert.ThrowsAsync<HttpRequestException>(() => _client.SubmitEnvelopeAsync(dsn, envelope));
 
         Assert.That(requestContents, Has.Count.EqualTo(1)); // No retries for client errors
         Assert.That(requestContents[0].RemoveBlankLines(), Is.EqualTo(expectedContent.RemoveBlankLines()));
