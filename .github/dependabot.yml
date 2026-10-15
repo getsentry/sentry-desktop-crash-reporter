@@ -19,6 +19,10 @@ updates:
     - "/tests/Sentry.CrashReporter.RuntimeTests"
   schedule:
     interval: weekly
+  # Avoid PR closures caused by incorrect NuGet CPM dependency discovery:
+  # - https://github.com/dependabot/dependabot-core/issues/16259
+  # - https://github.com/dependabot/dependabot-core/issues/15699
+  rebase-strategy: disabled
   allow:
     # Dependabot's NuGet updater follows test ProjectReferences into the app.
     # Keep test grouping limited to packages owned by tests/Directory.Packages.props.
