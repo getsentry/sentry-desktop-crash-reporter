@@ -745,6 +745,175 @@ public class CrashReporterTests
     }
 
     [Test]
+    public async Task SubmitAsync_WithGpuCrash_SubmitsCrashAndGpuCrashEnvelopes()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        var submittedEnvelopes = new List<Envelope>();
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
+            .Callback<string, Envelope, IProgress<double>?, CancellationToken>((_, e, _, _) => submittedEnvelopes.Add(e));
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        reporter.UpdateFeedback(new Feedback("John Doe", "john.doe@example.com", "It crashed!"));
+        var envelope = CreateGpuCrashEnvelope();
+
+        // Act
+        await reporter.SubmitAsync(envelope);
+
+        // Assert
+        submittedEnvelopes.Should().HaveCount(3);
+        var (crash, gpuCrash, feedback) = (submittedEnvelopes[0], submittedEnvelopes[1], submittedEnvelopes[2]);
+        crash.TryGetEventId().Should().Be(envelope.TryGetEventId());
+        crash.Items.Should().HaveCount(3);
+        gpuCrash.TryGetEventId().Should().NotBe(envelope.TryGetEventId());
+        gpuCrash.Items.Should().HaveCount(3);
+        feedback.Items.Single().TryParseAsJson()!.TryGetString("contexts.feedback.associated_event_id")
+            .Should().Be(envelope.TryGetEventId()!.Replace("-", ""));
+        envelope.Items.Should().HaveCount(5);
+    }
+
+    [Test]
+    public async Task SubmitAsync_WithGpuCrash_WhenCrashSubmitFails_CachesUnsplitCrashEnvelope()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("upload failed"));
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var envelope = CreateGpuCrashEnvelope(cacheDir);
+
+        try
+        {
+            // Act
+            await Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
+
+            // Assert
+            client.Verify(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()),
+                Times.Once);
+            Directory.GetFiles(cacheDir, "*.envelope").Should().ContainSingle();
+            await using var file = File.OpenRead(Path.Combine(cacheDir, "c993afb6-b4ac-48a6-b61b-2558e601d65d.envelope"));
+            var cachedEnvelope = await Envelope.DeserializeAsync(file);
+            cachedEnvelope.Items.Select(i => i.TryGetHeader("filename"))
+                .Should().Equal(new string?[] { null, "game.log", "crash.nv-gpudmp", "shader.nvdbg" });
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task SubmitAsync_WithGpuCrash_WhenGpuCrashSubmitFails_CachesGpuCrashEnvelopeAndRetriesOnlyIt()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        var submittedEnvelopes = new List<Envelope>();
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
+            .Returns<string, Envelope, IProgress<double>?, CancellationToken>((_, e, _, _) =>
+            {
+                submittedEnvelopes.Add(e);
+                return submittedEnvelopes.Count == 2
+                    ? Task.FromException(new HttpRequestException("upload failed"))
+                    : Task.CompletedTask;
+            });
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var envelope = CreateGpuCrashEnvelope(cacheDir);
+
+        try
+        {
+            // Act
+            var ex = await Assert.ThrowsAsync<HttpRequestException>(() => reporter.SubmitAsync(envelope));
+            var gpuCrashEventId = submittedEnvelopes[1].TryGetEventId();
+            var cachedGpuCrashPath = Path.Combine(cacheDir, $"{gpuCrashEventId}.envelope");
+            var cachedAfterFailure = File.Exists(cachedGpuCrashPath);
+            await reporter.SubmitAsync(envelope);
+
+            // Assert
+            ex?.Message.Should().Be("upload failed");
+            cachedAfterFailure.Should().BeTrue();
+            submittedEnvelopes.Should().HaveCount(3);
+            submittedEnvelopes[2].Should().BeSameAs(submittedEnvelopes[1]);
+            File.Exists(cachedGpuCrashPath).Should().BeFalse();
+        }
+        finally
+        {
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task SubmitAsync_WithGpuCrash_KeepsSourceEnvelopeUntilGpuCrashIsSubmitted()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        var tempDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var sourcePath = Path.Combine(tempDir, "source.envelope");
+        var sourceExists = new List<bool>();
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
+            .Callback<string, Envelope, IProgress<double>?, CancellationToken>((_, _, _, _) => sourceExists.Add(File.Exists(sourcePath)));
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        var envelope = CreateGpuCrashEnvelope();
+        await WriteSourceEnvelopeAsync(envelope, sourcePath);
+
+        try
+        {
+            // Act
+            await reporter.SubmitAsync(envelope);
+
+            // Assert
+            sourceExists.Should().Equal(true, true);
+            File.Exists(sourcePath).Should().BeFalse();
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task SubmitAsync_WithGpuCrash_ReportsProgressAcrossBothEnvelopes()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
+            .Callback<string, Envelope, IProgress<double>?, CancellationToken>((_, _, p, _) =>
+            {
+                p?.Report(0);
+                p?.Report(0.5);
+                p?.Report(1);
+            });
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        var envelope = CreateGpuCrashEnvelope();
+        var progress = new ListProgress();
+
+        // Act
+        await reporter.SubmitAsync(envelope, progress);
+
+        // Assert
+        progress.Values.Should().HaveCount(6);
+        progress.Values.Should().BeInAscendingOrder();
+        progress.Values[0].Should().Be(0);
+        progress.Values[2].Should().BeGreaterThan(0).And.BeLessThan(1);
+        progress.Values[5].Should().BeApproximately(1, 1e-9);
+    }
+
+    private sealed class ListProgress : IProgress<double>
+    {
+        public List<double> Values { get; } = [];
+        public void Report(double value) => Values.Add(value);
+    }
+
+    [Test]
     [TestCase("data/empty_headers_eof.envelope")]
     public async Task SubmitAsync_NoDsn_Throws(string filePath)
     {
@@ -762,15 +931,18 @@ public class CrashReporterTests
     }
 
     private static Envelope CreateCrashEnvelope(
-        string cacheDir,
+        string? cacheDir,
         byte[] minidump,
         string? eventId = "c993afb6b4ac48a6b61b2558e601d65d")
     {
         var header = new JsonObject
         {
-            ["dsn"] = "https://e12d836b15bb49d7bbf99e64295d995b:@sentry.io/42",
-            ["cache_dir"] = cacheDir
+            ["dsn"] = "https://e12d836b15bb49d7bbf99e64295d995b:@sentry.io/42"
         };
+        if (cacheDir is not null)
+        {
+            header["cache_dir"] = cacheDir;
+        }
         if (eventId is not null)
         {
             header["event_id"] = eventId;
@@ -792,6 +964,15 @@ public class CrashReporterTests
                     },
                     minidump)
             ]);
+    }
+
+    private static Envelope CreateGpuCrashEnvelope(string? cacheDir = null)
+    {
+        var envelope = CreateCrashEnvelope(cacheDir, [0x01, 0x02]);
+        envelope.AddItem(EnvelopeItem.CreateAttachment("game.log", [0x03]));
+        envelope.AddItem(EnvelopeItem.CreateAttachment("crash.nv-gpudmp", [0x04, 0x05, 0x06]));
+        envelope.AddItem(EnvelopeItem.CreateAttachment("shader.nvdbg", [0x07]));
+        return envelope;
     }
 
     private static Envelope CreateCrashEnvelopeWithoutMinidump(string? cacheDir = null)

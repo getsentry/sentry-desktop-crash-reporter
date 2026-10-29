@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -8,6 +9,7 @@ namespace Sentry.CrashReporter.Models;
 public record EnvelopeException(string? Type, string? Value);
 public record FormattedEnvelopeItem(string Header, string Payload);
 public record FormattedEnvelope(string Header, List<FormattedEnvelopeItem> Items);
+public record GpuCrashSplit(Envelope Crash, Envelope GpuCrash);
 public record Attachment(string Filename, byte[] Data)
 {
     public EnvelopeItem? Source { get; init; }
@@ -196,6 +198,82 @@ public sealed class Envelope
             })
             .Where(a => !string.IsNullOrEmpty(a.Filename))
             .ToList();
+    }
+
+    public GpuCrashSplit? TrySplitGpuCrash()
+    {
+        var gpuItems = Items
+            .Select(item => (Item: item, Type: TryGetGpuCrashAttachmentType(item)))
+            .Where(i => i.Type is not null)
+            .ToList();
+        if (gpuItems.All(i => i.Type != "event.nv_gpudmp") ||
+            Items.All(i => i.TryGetHeader("attachment_type") != "event.minidump") ||
+            TryGetEvent() is not { } eventItem ||
+            eventItem.TryParseAsJson() is not { } payload)
+        {
+            return null;
+        }
+
+        var eventId = DeriveGpuCrashEventId(TryGetEventId() ?? payload.TryGetString("event_id"));
+        payload["event_id"] = eventId;
+        payload.Remove("exception");
+        payload.Remove("threads");
+        payload.Remove("debug_meta");
+        var payloadBytes = Encoding.UTF8.GetBytes(payload.ToJsonString());
+
+        var eventHeader = eventItem.Header.DeepClone().AsObject();
+        if (eventHeader.ContainsKey("length"))
+        {
+            eventHeader["length"] = payloadBytes.Length;
+        }
+
+        var header = Header.DeepClone().AsObject();
+        header["event_id"] = eventId;
+
+        var gpuCrashItems = gpuItems.Select(i =>
+        {
+            var itemHeader = i.Item.Header.DeepClone().AsObject();
+            itemHeader["attachment_type"] = i.Type;
+            return new EnvelopeItem(itemHeader, i.Item.Payload);
+        });
+
+        return new GpuCrashSplit(
+            new Envelope(Header, Items.Except(gpuItems.Select(i => i.Item))),
+            new Envelope(header, gpuCrashItems.Prepend(new EnvelopeItem(eventHeader, payloadBytes))));
+    }
+
+    // derived from the crash event ID so that resubmitting the same crash is deduplicated
+    private static string DeriveGpuCrashEventId(string? crashEventId)
+    {
+        if (!Guid.TryParse(crashEventId, out var crashGuid))
+        {
+            return Guid.NewGuid().ToString("D");
+        }
+
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes($"gpu_crash:{crashGuid:N}"));
+        return new Guid(hash.AsSpan(0, 16)).ToString("D");
+    }
+
+    private static string? TryGetGpuCrashAttachmentType(EnvelopeItem item)
+    {
+        if (item.TryGetType() != "attachment")
+        {
+            return null;
+        }
+
+        var attachmentType = item.TryGetHeader("attachment_type");
+        if (attachmentType is "event.nv_gpudmp" or "event.nv_shader_debug")
+        {
+            return attachmentType;
+        }
+
+        // Crashpad does not preserve attachment types
+        return System.IO.Path.GetExtension(item.TryGetHeader("filename"))?.ToLowerInvariant() switch
+        {
+            ".nv-gpudmp" => "event.nv_gpudmp",
+            ".nvdbg" => "event.nv_shader_debug",
+            _ => null
+        };
     }
 
     public EnvelopeException? TryGetException()
