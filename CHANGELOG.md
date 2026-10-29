@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.4
+
+### Features
+
+- feat: Split GPU crash dumps into a separate event by @tustanivsky in [#306](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/306)
+
+### Dependencies
+
+#### Deps
+
+- chore(deps): Bump coverlet.console from 10.0.1 to 10.1.0 by @dependabot in [#286](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/286)
+- chore(deps): Bump Uno.Sdk from 6.6.29 to 6.6.42 by @dependabot in [#261](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/261)
+- chore(deps): Bump ReactiveUI.SourceGenerators from 3.1.0 to 3.2.0 by @dependabot in [#260](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/260)
+- chore(deps): Bump Uno.Sdk from 6.5.36 to 6.6.29 by @dependabot in [#252](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/252)
+
 ## 0.3.3
 
 ### Features
