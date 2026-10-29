@@ -198,6 +198,74 @@ public sealed class Envelope
             .ToList();
     }
 
+    /// <summary>
+    ///     Splits GPU crash dumps off a crash into a separate GPU crash envelope, the same way
+    ///     Relay does for minidump uploads. The original envelope is left unchanged.
+    /// </summary>
+    public (Envelope Crash, Envelope GpuCrash)? TrySplitGpuCrash()
+    {
+        var gpuItems = Items
+            .Select(item => (Item: item, Type: TryGetGpuCrashAttachmentType(item)))
+            .Where(i => i.Type is not null)
+            .ToList();
+        if (gpuItems.Count == 0 ||
+            Items.All(i => i.TryGetHeader("attachment_type") != "event.minidump") ||
+            TryGetEvent() is not { } eventItem ||
+            eventItem.TryParseAsJson() is not { } payload)
+        {
+            return null;
+        }
+
+        var eventId = Guid.NewGuid().ToString("D");
+        payload["event_id"] = eventId;
+        payload.Remove("exception");
+        payload.Remove("threads");
+        payload.Remove("debug_meta");
+        var payloadBytes = Encoding.UTF8.GetBytes(payload.ToJsonString());
+
+        var eventHeader = eventItem.Header.DeepClone().AsObject();
+        if (eventHeader.ContainsKey("length"))
+        {
+            eventHeader["length"] = payloadBytes.Length;
+        }
+
+        var header = Header.DeepClone().AsObject();
+        header["event_id"] = eventId;
+
+        var gpuCrashItems = gpuItems.Select(i =>
+        {
+            var itemHeader = i.Item.Header.DeepClone().AsObject();
+            itemHeader["attachment_type"] = i.Type;
+            return new EnvelopeItem(itemHeader, i.Item.Payload);
+        });
+
+        var crash = new Envelope(Header, Items.Except(gpuItems.Select(i => i.Item)));
+        var gpuCrash = new Envelope(header, gpuCrashItems.Prepend(new EnvelopeItem(eventHeader, payloadBytes)));
+        return (crash, gpuCrash);
+    }
+
+    private static string? TryGetGpuCrashAttachmentType(EnvelopeItem item)
+    {
+        if (item.TryGetType() != "attachment")
+        {
+            return null;
+        }
+
+        var attachmentType = item.TryGetHeader("attachment_type");
+        if (attachmentType is "event.nv_gpudmp" or "event.nv_shader_debug")
+        {
+            return attachmentType;
+        }
+
+        // Crashpad does not preserve attachment types
+        return System.IO.Path.GetExtension(item.TryGetHeader("filename"))?.ToLowerInvariant() switch
+        {
+            ".nv-gpudmp" => "event.nv_gpudmp",
+            ".nvdbg" => "event.nv_shader_debug",
+            _ => null
+        };
+    }
+
     public EnvelopeException? TryGetException()
     {
         var payload = TryGetEvent()?.TryParseAsJson();

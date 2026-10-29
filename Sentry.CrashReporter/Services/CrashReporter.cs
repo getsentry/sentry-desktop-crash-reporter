@@ -27,6 +27,7 @@ public class CrashReporter(
     private readonly AppConfig _config = config ?? App.Services.GetRequiredService<AppConfig>();
     private Envelope? _submittingEnvelope;
     private readonly HashSet<Envelope> _submittedEnvelopes = [];
+    private Envelope? _pendingGpuCrashEnvelope;
     private Feedback? _feedback = ResolveFeedback();
 
     public Feedback? Feedback => _feedback;
@@ -50,26 +51,25 @@ public class CrashReporter(
         var dsn = envelope.TryGetDsn()
                   ?? throw new InvalidOperationException("Envelope does not contain a valid DSN.");
 
-        _submittingEnvelope = envelope;
-        try
+        var submitted = _submittedEnvelopes.Contains(envelope);
+        var split = submitted ? null : envelope.TrySplitGpuCrash();
+        var crash = submitted ? null : split?.Crash ?? envelope;
+        var gpuCrash = split?.GpuCrash ?? _pendingGpuCrashEnvelope;
+
+        var crashSize = GetSize(crash);
+        var totalSize = crashSize + GetSize(gpuCrash);
+        var crashShare = totalSize > 0 ? (double)crashSize / totalSize : 1;
+
+        if (crash is not null)
         {
-            await _client.SubmitEnvelopeAsync(dsn, envelope, progress, cancellationToken);
-            var cachedEnvelopePath = await CacheAsync(envelope, EffectiveCacheKeep, cancellationToken);
-            _submittedEnvelopes.Add(envelope);
-            DeleteEnvelope(envelope, cachedEnvelopePath);
+            await SubmitEnvelopeAsync(dsn, envelope, crash, ScaleProgress(progress, 0, crashShare), cancellationToken);
+            _pendingGpuCrashEnvelope = split?.GpuCrash;
         }
-        catch (Exception)
+
+        if (_pendingGpuCrashEnvelope is { } pending)
         {
-            _submittingEnvelope = null;
-            await CacheAsync(envelope, CancellationToken.None);
-            throw;
-        }
-        finally
-        {
-            if (ReferenceEquals(_submittingEnvelope, envelope))
-            {
-                _submittingEnvelope = null;
-            }
+            await SubmitEnvelopeAsync(dsn, pending, pending, ScaleProgress(progress, crashShare, 1 - crashShare), cancellationToken);
+            _pendingGpuCrashEnvelope = null;
         }
 
         if (!string.IsNullOrEmpty(_feedback?.Message))
@@ -93,6 +93,47 @@ public class CrashReporter(
             );
             await _client.SubmitEnvelopeAsync(dsn, feedback, null, cancellationToken);
         }
+    }
+
+    private async Task SubmitEnvelopeAsync(
+        string dsn,
+        Envelope envelope,
+        Envelope payload,
+        IProgress<double>? progress,
+        CancellationToken cancellationToken)
+    {
+        _submittingEnvelope = envelope;
+        try
+        {
+            await _client.SubmitEnvelopeAsync(dsn, payload, progress, cancellationToken);
+            var cachedEnvelopePath = await CacheAsync(payload, EffectiveCacheKeep, cancellationToken);
+            _submittedEnvelopes.Add(envelope);
+            DeleteEnvelope(envelope, cachedEnvelopePath);
+        }
+        catch (Exception)
+        {
+            _submittingEnvelope = null;
+            await CacheAsync(envelope, CancellationToken.None);
+            throw;
+        }
+        finally
+        {
+            if (ReferenceEquals(_submittingEnvelope, envelope))
+            {
+                _submittingEnvelope = null;
+            }
+        }
+    }
+
+    private static long GetSize(Envelope? envelope) =>
+        envelope?.Items.Sum(item => (long)item.Payload.Length) ?? 0;
+
+    private static IProgress<double>? ScaleProgress(IProgress<double>? progress, double offset, double scale) =>
+        progress is null ? null : new ScaledProgress(progress, offset, scale);
+
+    private sealed class ScaledProgress(IProgress<double> progress, double offset, double scale) : IProgress<double>
+    {
+        public void Report(double value) => progress.Report(offset + value * scale);
     }
 
     public void UpdateFeedback(Feedback? feedback)

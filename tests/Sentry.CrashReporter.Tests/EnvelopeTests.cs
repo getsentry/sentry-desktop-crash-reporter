@@ -306,4 +306,105 @@ public class EnvelopeTests
                 .ToArray()
         );
     }
+
+    [Test]
+    [TestCase("event.nv_gpudmp", "event.nv_shader_debug")]
+    [TestCase("event.attachment", "event.attachment")]
+    [TestCase(null, null)]
+    public void TrySplitGpuCrash_MovesGpuDumpsToSeparateEnvelope(string? gpuDumpType, string? shaderDebugType)
+    {
+        var envelope = CreateGpuCrashEnvelope(gpuDumpType, shaderDebugType);
+
+        var split = envelope.TrySplitGpuCrash();
+
+        split.Should().NotBeNull();
+        var (crash, gpuCrash) = split!.Value;
+
+        envelope.Items.Should().HaveCount(5);
+        crash.Header.Should().BeSameAs(envelope.Header);
+        crash.Items.Select(i => i.TryGetHeader("filename")).Should().Equal(new string?[] { null, "minidump.dmp", "game.log" });
+
+        gpuCrash.TryGetDsn().Should().Be(envelope.TryGetDsn());
+        gpuCrash.Header["trace"]!["trace_id"]!.GetValue<string>().Should().Be("4c79f60c11214eb38604f4ae0781bfb2");
+        gpuCrash.TryGetEventId().Should().NotBeNullOrEmpty().And.NotBe(envelope.TryGetEventId());
+        gpuCrash.Items.Select(i => i.TryGetType()).Should().Equal("event", "attachment", "attachment");
+        gpuCrash.Items.Skip(1).Select(i => i.TryGetHeader("attachment_type"))
+            .Should().Equal("event.nv_gpudmp", "event.nv_shader_debug");
+
+        var payload = gpuCrash.TryGetEvent()!.TryParseAsJson()!;
+        payload.TryGetString("event_id").Should().Be(gpuCrash.TryGetEventId());
+        payload.TryGetString("level").Should().Be("fatal");
+        payload.TryGetString("tags.CrashType").Should().Be("GPUCrash");
+        payload.ContainsKey("exception").Should().BeFalse();
+        payload.ContainsKey("threads").Should().BeFalse();
+        payload.ContainsKey("debug_meta").Should().BeFalse();
+
+        envelope.TryGetEvent()!.TryParseAsJson()!.ContainsKey("exception").Should().BeTrue();
+        envelope.Items[3].TryGetHeader("attachment_type").Should().Be(gpuDumpType);
+    }
+
+    [Test]
+    public void TrySplitGpuCrash_WithoutGpuDumps_ReturnsNull()
+    {
+        var envelope = CreateGpuCrashEnvelope("event.nv_gpudmp", "event.nv_shader_debug");
+        envelope.RemoveItem(envelope.Items[4]);
+        envelope.RemoveItem(envelope.Items[3]);
+
+        envelope.TrySplitGpuCrash().Should().BeNull();
+    }
+
+    [Test]
+    public void TrySplitGpuCrash_WithoutMinidump_ReturnsNull()
+    {
+        var envelope = CreateGpuCrashEnvelope("event.nv_gpudmp", "event.nv_shader_debug");
+        envelope.RemoveItem(envelope.Items[1]);
+
+        envelope.TrySplitGpuCrash().Should().BeNull();
+    }
+
+    [Test]
+    public void TrySplitGpuCrash_GpuCrashEnvelope_ReturnsNull()
+    {
+        var envelope = CreateGpuCrashEnvelope("event.nv_gpudmp", "event.nv_shader_debug");
+
+        envelope.TrySplitGpuCrash()!.Value.GpuCrash.TrySplitGpuCrash().Should().BeNull();
+    }
+
+    internal static Envelope CreateGpuCrashEnvelope(string? gpuDumpType, string? shaderDebugType)
+    {
+        var header = new JsonObject
+        {
+            ["dsn"] = "https://e12d836b15bb49d7bbf99e64295d995b:@sentry.io/42",
+            ["event_id"] = "c993afb6-b4ac-48a6-b61b-2558e601d65d",
+            ["trace"] = new JsonObject { ["trace_id"] = "4c79f60c11214eb38604f4ae0781bfb2" }
+        };
+        var payload = new JsonObject
+        {
+            ["event_id"] = "c993afb6-b4ac-48a6-b61b-2558e601d65d",
+            ["level"] = "fatal",
+            ["tags"] = new JsonObject { ["CrashType"] = "GPUCrash" },
+            ["exception"] = new JsonObject { ["values"] = new JsonArray() },
+            ["threads"] = new JsonObject { ["values"] = new JsonArray() },
+            ["debug_meta"] = new JsonObject { ["images"] = new JsonArray() }
+        };
+
+        return new Envelope(header,
+        [
+            new EnvelopeItem(new JsonObject { ["type"] = "event" }, Encoding.UTF8.GetBytes(payload.ToJsonString())),
+            CreateAttachment("minidump.dmp", "event.minidump", [0x01, 0x02]),
+            CreateAttachment("game.log", null, [0x03]),
+            CreateAttachment("crash.nv-gpudmp", gpuDumpType, [0x04, 0x05, 0x06]),
+            CreateAttachment("shader.nvdbg", shaderDebugType, [0x07])
+        ]);
+    }
+
+    private static EnvelopeItem CreateAttachment(string filename, string? attachmentType, byte[] data)
+    {
+        var item = EnvelopeItem.CreateAttachment(filename, data);
+        if (attachmentType is not null)
+        {
+            item.Header["attachment_type"] = attachmentType;
+        }
+        return item;
+    }
 }
