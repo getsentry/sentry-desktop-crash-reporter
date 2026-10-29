@@ -53,7 +53,7 @@ public class CrashReporter(
 
         Envelope? crash = null;
         GpuCrashSplit? split = null;
-        if (!_submittedEnvelopes.Contains(envelope))
+        if (_pendingGpuCrashEnvelope is null)
         {
             split = envelope.TrySplitGpuCrash();
             crash = split?.Crash ?? envelope;
