@@ -27,6 +27,7 @@ public class CrashReporter(
     private readonly AppConfig _config = config ?? App.Services.GetRequiredService<AppConfig>();
     private Envelope? _submittingEnvelope;
     private readonly HashSet<Envelope> _submittedEnvelopes = [];
+    // the reporter submits a single crash per process
     private Envelope? _pendingGpuCrashEnvelope;
     private Feedback? _feedback = ResolveFeedback();
 
@@ -51,9 +52,17 @@ public class CrashReporter(
         var dsn = envelope.TryGetDsn()
                   ?? throw new InvalidOperationException("Envelope does not contain a valid DSN.");
 
-        var submitted = _submittedEnvelopes.Contains(envelope);
-        var split = submitted ? null : envelope.TrySplitGpuCrash();
-        var crash = submitted ? null : split?.Crash ?? envelope;
+        Envelope? crash = null;
+        GpuCrashSplit? split = null;
+        if (!_submittedEnvelopes.Contains(envelope))
+        {
+            split = envelope.TrySplitGpuCrash();
+            crash = split?.Crash ?? envelope;
+            if (split is not null)
+            {
+                this.Log().LogInformation($"Split GPU crash dumps into envelope {split.GpuCrash.TryGetEventId()}.");
+            }
+        }
         var gpuCrash = split?.GpuCrash ?? _pendingGpuCrashEnvelope;
 
         var crashSize = GetSize(crash);
@@ -93,47 +102,6 @@ public class CrashReporter(
             );
             await _client.SubmitEnvelopeAsync(dsn, feedback, null, cancellationToken);
         }
-    }
-
-    private async Task SubmitEnvelopeAsync(
-        string dsn,
-        Envelope envelope,
-        Envelope payload,
-        IProgress<double>? progress,
-        CancellationToken cancellationToken)
-    {
-        _submittingEnvelope = envelope;
-        try
-        {
-            await _client.SubmitEnvelopeAsync(dsn, payload, progress, cancellationToken);
-            var cachedEnvelopePath = await CacheAsync(payload, EffectiveCacheKeep, cancellationToken);
-            _submittedEnvelopes.Add(envelope);
-            DeleteEnvelope(envelope, cachedEnvelopePath);
-        }
-        catch (Exception)
-        {
-            _submittingEnvelope = null;
-            await CacheAsync(envelope, CancellationToken.None);
-            throw;
-        }
-        finally
-        {
-            if (ReferenceEquals(_submittingEnvelope, envelope))
-            {
-                _submittingEnvelope = null;
-            }
-        }
-    }
-
-    private static long GetSize(Envelope? envelope) =>
-        envelope?.Items.Sum(item => (long)item.Payload.Length) ?? 0;
-
-    private static IProgress<double>? ScaleProgress(IProgress<double>? progress, double offset, double scale) =>
-        progress is null ? null : new ScaledProgress(progress, offset, scale);
-
-    private sealed class ScaledProgress(IProgress<double> progress, double offset, double scale) : IProgress<double>
-    {
-        public void Report(double value) => progress.Report(offset + value * scale);
     }
 
     public void UpdateFeedback(Feedback? feedback)
@@ -236,6 +204,42 @@ public class CrashReporter(
             return null;
         }
     }
+
+    private async Task SubmitEnvelopeAsync(
+        string dsn,
+        Envelope envelope,
+        Envelope payload,
+        IProgress<double>? progress,
+        CancellationToken cancellationToken)
+    {
+        _submittingEnvelope = envelope;
+        try
+        {
+            await _client.SubmitEnvelopeAsync(dsn, payload, progress, cancellationToken);
+            var cachedEnvelopePath = await CacheAsync(payload, EffectiveCacheKeep, cancellationToken);
+            _submittedEnvelopes.Add(envelope);
+            DeleteEnvelope(envelope, cachedEnvelopePath);
+        }
+        catch (Exception)
+        {
+            _submittingEnvelope = null;
+            await CacheAsync(envelope, CancellationToken.None);
+            throw;
+        }
+        finally
+        {
+            if (ReferenceEquals(_submittingEnvelope, envelope))
+            {
+                _submittingEnvelope = null;
+            }
+        }
+    }
+
+    private static long GetSize(Envelope? envelope) =>
+        envelope?.Items.Sum(item => (long)item.Payload.Length) ?? 0;
+
+    private static IProgress<double>? ScaleProgress(IProgress<double>? progress, double offset, double scale) =>
+        progress is null ? null : new ScaledProgress(progress, offset, scale);
 
     private static List<EnvelopeItem> GetMinidumps(Envelope envelope) =>
         envelope.Items
@@ -450,5 +454,10 @@ public class CrashReporter(
         }
 
         return new Feedback(name, email, message ?? string.Empty);
+    }
+
+    private sealed class ScaledProgress(IProgress<double> progress, double offset, double scale) : IProgress<double>
+    {
+        public void Report(double value) => progress.Report(offset + value * scale);
     }
 }

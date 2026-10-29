@@ -754,7 +754,7 @@ public class CrashReporterTests
             .Callback<string, Envelope, IProgress<double>?, CancellationToken>((_, e, _, _) => submittedEnvelopes.Add(e));
         var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
         reporter.UpdateFeedback(new Feedback("John Doe", "john.doe@example.com", "It crashed!"));
-        var envelope = EnvelopeTests.CreateGpuCrashEnvelope("event.nv_gpudmp", "event.nv_shader_debug");
+        var envelope = CreateGpuCrashEnvelope();
 
         // Act
         await reporter.SubmitAsync(envelope);
@@ -780,8 +780,7 @@ public class CrashReporterTests
             .ThrowsAsync(new HttpRequestException("upload failed"));
         var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
         var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
-        var envelope = EnvelopeTests.CreateGpuCrashEnvelope("event.nv_gpudmp", "event.nv_shader_debug");
-        envelope.Header["cache_dir"] = cacheDir;
+        var envelope = CreateGpuCrashEnvelope(cacheDir);
 
         try
         {
@@ -822,8 +821,7 @@ public class CrashReporterTests
             });
         var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
         var cacheDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
-        var envelope = EnvelopeTests.CreateGpuCrashEnvelope("event.nv_gpudmp", "event.nv_shader_debug");
-        envelope.Header["cache_dir"] = cacheDir;
+        var envelope = CreateGpuCrashEnvelope(cacheDir);
 
         try
         {
@@ -863,7 +861,7 @@ public class CrashReporterTests
                 p?.Report(1);
             });
         var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
-        var envelope = EnvelopeTests.CreateGpuCrashEnvelope("event.nv_gpudmp", "event.nv_shader_debug");
+        var envelope = CreateGpuCrashEnvelope();
         var progress = new ListProgress();
 
         // Act
@@ -901,15 +899,18 @@ public class CrashReporterTests
     }
 
     private static Envelope CreateCrashEnvelope(
-        string cacheDir,
+        string? cacheDir,
         byte[] minidump,
         string? eventId = "c993afb6b4ac48a6b61b2558e601d65d")
     {
         var header = new JsonObject
         {
-            ["dsn"] = "https://e12d836b15bb49d7bbf99e64295d995b:@sentry.io/42",
-            ["cache_dir"] = cacheDir
+            ["dsn"] = "https://e12d836b15bb49d7bbf99e64295d995b:@sentry.io/42"
         };
+        if (cacheDir is not null)
+        {
+            header["cache_dir"] = cacheDir;
+        }
         if (eventId is not null)
         {
             header["event_id"] = eventId;
@@ -931,6 +932,15 @@ public class CrashReporterTests
                     },
                     minidump)
             ]);
+    }
+
+    private static Envelope CreateGpuCrashEnvelope(string? cacheDir = null)
+    {
+        var envelope = CreateCrashEnvelope(cacheDir, [0x01, 0x02]);
+        envelope.AddItem(EnvelopeItem.CreateAttachment("game.log", [0x03]));
+        envelope.AddItem(EnvelopeItem.CreateAttachment("crash.nv-gpudmp", [0x04, 0x05, 0x06]));
+        envelope.AddItem(EnvelopeItem.CreateAttachment("shader.nvdbg", [0x07]));
+        return envelope;
     }
 
     private static Envelope CreateCrashEnvelopeWithoutMinidump(string? cacheDir = null)

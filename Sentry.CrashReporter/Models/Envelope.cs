@@ -8,6 +8,7 @@ namespace Sentry.CrashReporter.Models;
 public record EnvelopeException(string? Type, string? Value);
 public record FormattedEnvelopeItem(string Header, string Payload);
 public record FormattedEnvelope(string Header, List<FormattedEnvelopeItem> Items);
+public record GpuCrashSplit(Envelope Crash, Envelope GpuCrash);
 public record Attachment(string Filename, byte[] Data)
 {
     public EnvelopeItem? Source { get; init; }
@@ -202,7 +203,7 @@ public sealed class Envelope
     ///     Splits GPU crash dumps off a crash into a separate GPU crash envelope, the same way
     ///     Relay does for minidump uploads. The original envelope is left unchanged.
     /// </summary>
-    public (Envelope Crash, Envelope GpuCrash)? TrySplitGpuCrash()
+    public GpuCrashSplit? TrySplitGpuCrash()
     {
         var gpuItems = Items
             .Select(item => (Item: item, Type: TryGetGpuCrashAttachmentType(item)))
@@ -239,9 +240,9 @@ public sealed class Envelope
             return new EnvelopeItem(itemHeader, i.Item.Payload);
         });
 
-        var crash = new Envelope(Header, Items.Except(gpuItems.Select(i => i.Item)));
-        var gpuCrash = new Envelope(header, gpuCrashItems.Prepend(new EnvelopeItem(eventHeader, payloadBytes)));
-        return (crash, gpuCrash);
+        return new GpuCrashSplit(
+            new Envelope(Header, Items.Except(gpuItems.Select(i => i.Item))),
+            new Envelope(header, gpuCrashItems.Prepend(new EnvelopeItem(eventHeader, payloadBytes))));
     }
 
     private static string? TryGetGpuCrashAttachmentType(EnvelopeItem item)

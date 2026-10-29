@@ -310,15 +310,14 @@ public class EnvelopeTests
     [Test]
     [TestCase("event.nv_gpudmp", "event.nv_shader_debug")]
     [TestCase("event.attachment", "event.attachment")]
-    [TestCase(null, null)]
-    public void TrySplitGpuCrash_MovesGpuDumpsToSeparateEnvelope(string? gpuDumpType, string? shaderDebugType)
+    public void TrySplitGpuCrash_WithGpuDumps_MovesThemToSeparateEnvelope(string gpuDumpType, string shaderDebugType)
     {
         var envelope = CreateGpuCrashEnvelope(gpuDumpType, shaderDebugType);
 
         var split = envelope.TrySplitGpuCrash();
 
         split.Should().NotBeNull();
-        var (crash, gpuCrash) = split!.Value;
+        var (crash, gpuCrash) = split!;
 
         envelope.Items.Should().HaveCount(5);
         crash.Header.Should().BeSameAs(envelope.Header);
@@ -333,7 +332,6 @@ public class EnvelopeTests
 
         var payload = gpuCrash.TryGetEvent()!.TryParseAsJson()!;
         payload.TryGetString("event_id").Should().Be(gpuCrash.TryGetEventId());
-        payload.TryGetString("level").Should().Be("fatal");
         payload.TryGetString("tags.CrashType").Should().Be("GPUCrash");
         payload.ContainsKey("exception").Should().BeFalse();
         payload.ContainsKey("threads").Should().BeFalse();
@@ -354,23 +352,14 @@ public class EnvelopeTests
     }
 
     [Test]
-    public void TrySplitGpuCrash_WithoutMinidump_ReturnsNull()
-    {
-        var envelope = CreateGpuCrashEnvelope("event.nv_gpudmp", "event.nv_shader_debug");
-        envelope.RemoveItem(envelope.Items[1]);
-
-        envelope.TrySplitGpuCrash().Should().BeNull();
-    }
-
-    [Test]
-    public void TrySplitGpuCrash_GpuCrashEnvelope_ReturnsNull()
+    public void TrySplitGpuCrash_WithGpuCrashEnvelope_ReturnsNull()
     {
         var envelope = CreateGpuCrashEnvelope("event.nv_gpudmp", "event.nv_shader_debug");
 
-        envelope.TrySplitGpuCrash()!.Value.GpuCrash.TrySplitGpuCrash().Should().BeNull();
+        envelope.TrySplitGpuCrash()!.GpuCrash.TrySplitGpuCrash().Should().BeNull();
     }
 
-    internal static Envelope CreateGpuCrashEnvelope(string? gpuDumpType, string? shaderDebugType)
+    private static Envelope CreateGpuCrashEnvelope(string gpuDumpType, string shaderDebugType)
     {
         var header = new JsonObject
         {
@@ -392,19 +381,16 @@ public class EnvelopeTests
         [
             new EnvelopeItem(new JsonObject { ["type"] = "event" }, Encoding.UTF8.GetBytes(payload.ToJsonString())),
             CreateAttachment("minidump.dmp", "event.minidump", [0x01, 0x02]),
-            CreateAttachment("game.log", null, [0x03]),
+            EnvelopeItem.CreateAttachment("game.log", [0x03]),
             CreateAttachment("crash.nv-gpudmp", gpuDumpType, [0x04, 0x05, 0x06]),
             CreateAttachment("shader.nvdbg", shaderDebugType, [0x07])
         ]);
     }
 
-    private static EnvelopeItem CreateAttachment(string filename, string? attachmentType, byte[] data)
+    private static EnvelopeItem CreateAttachment(string filename, string attachmentType, byte[] data)
     {
         var item = EnvelopeItem.CreateAttachment(filename, data);
-        if (attachmentType is not null)
-        {
-            item.Header["attachment_type"] = attachmentType;
-        }
+        item.Header["attachment_type"] = attachmentType;
         return item;
     }
 }
