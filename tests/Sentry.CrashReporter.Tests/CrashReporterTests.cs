@@ -849,6 +849,38 @@ public class CrashReporterTests
     }
 
     [Test]
+    public async Task SubmitAsync_WithGpuCrash_KeepsSourceEnvelopeUntilGpuCrashIsSubmitted()
+    {
+        // Arrange
+        var client = new Mock<ISentryClient>();
+        var tempDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Guid.NewGuid().ToString("N"));
+        var sourcePath = Path.Combine(tempDir, "source.envelope");
+        var sourceExists = new List<bool>();
+        client.Setup(c => c.SubmitEnvelopeAsync(It.IsAny<string>(), It.IsAny<Envelope>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
+            .Callback<string, Envelope, IProgress<double>?, CancellationToken>((_, _, _, _) => sourceExists.Add(File.Exists(sourcePath)));
+        var reporter = new Services.CrashReporter(new Mock<IStorageFile>().Object, client.Object);
+        var envelope = CreateGpuCrashEnvelope();
+        await WriteSourceEnvelopeAsync(envelope, sourcePath);
+
+        try
+        {
+            // Act
+            await reporter.SubmitAsync(envelope);
+
+            // Assert
+            sourceExists.Should().Equal(true, true);
+            File.Exists(sourcePath).Should().BeFalse();
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, true);
+            }
+        }
+    }
+
+    [Test]
     public async Task SubmitAsync_WithGpuCrash_ReportsProgressAcrossBothEnvelopes()
     {
         // Arrange

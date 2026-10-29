@@ -68,16 +68,30 @@ public class CrashReporter(
         var totalSize = crashSize + GetSize(gpuCrash);
         var crashShare = totalSize > 0 ? (double)crashSize / totalSize : 1;
 
+        string? cachedEnvelopePath = null;
         if (crash is not null)
         {
-            await SubmitEnvelopeAsync(dsn, envelope, crash, ScaleProgress(progress, 0, crashShare), cancellationToken);
+            cachedEnvelopePath = await SubmitEnvelopeAsync(dsn, envelope, crash,
+                ScaleProgress(progress, 0, crashShare), deleteEnvelope: split is null, cancellationToken);
             _pendingGpuCrashEnvelope = split?.GpuCrash;
         }
 
         if (_pendingGpuCrashEnvelope is { } pending)
         {
-            await SubmitEnvelopeAsync(dsn, pending, pending, ScaleProgress(progress, crashShare, 1 - crashShare), cancellationToken);
-            _pendingGpuCrashEnvelope = null;
+            try
+            {
+                await SubmitEnvelopeAsync(dsn, pending, pending,
+                    ScaleProgress(progress, crashShare, 1 - crashShare), deleteEnvelope: true, cancellationToken);
+                _pendingGpuCrashEnvelope = null;
+            }
+            finally
+            {
+                // the GPU crash dumps are either submitted or cached by now
+                if (split is not null)
+                {
+                    DeleteEnvelope(envelope, cachedEnvelopePath);
+                }
+            }
         }
 
         if (!string.IsNullOrEmpty(_feedback?.Message))
@@ -112,6 +126,10 @@ public class CrashReporter(
     {
         try
         {
+            if (_pendingGpuCrashEnvelope is { } pending && ReferenceEquals(_submittingEnvelope, pending))
+            {
+                return;
+            }
             if (_submittedEnvelopes.Contains(envelope))
             {
                 DeleteEnvelope(envelope);
@@ -204,11 +222,12 @@ public class CrashReporter(
         }
     }
 
-    private async Task SubmitEnvelopeAsync(
+    private async Task<string?> SubmitEnvelopeAsync(
         string dsn,
         Envelope envelope,
         Envelope payload,
         IProgress<double>? progress,
+        bool deleteEnvelope,
         CancellationToken cancellationToken)
     {
         _submittingEnvelope = envelope;
@@ -217,7 +236,11 @@ public class CrashReporter(
             await _client.SubmitEnvelopeAsync(dsn, payload, progress, cancellationToken);
             var cachedEnvelopePath = await CacheAsync(payload, EffectiveCacheKeep, cancellationToken);
             _submittedEnvelopes.Add(envelope);
-            DeleteEnvelope(envelope, cachedEnvelopePath);
+            if (deleteEnvelope)
+            {
+                DeleteEnvelope(envelope, cachedEnvelopePath);
+            }
+            return cachedEnvelopePath;
         }
         catch (Exception)
         {
