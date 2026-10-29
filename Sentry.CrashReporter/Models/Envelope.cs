@@ -199,10 +199,6 @@ public sealed class Envelope
             .ToList();
     }
 
-    /// <summary>
-    ///     Splits GPU crash dumps off a crash into a separate GPU crash envelope, the same way
-    ///     Relay does for minidump uploads. The original envelope is left unchanged.
-    /// </summary>
     public GpuCrashSplit? TrySplitGpuCrash()
     {
         var gpuItems = Items

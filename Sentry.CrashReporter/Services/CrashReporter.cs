@@ -27,7 +27,6 @@ public class CrashReporter(
     private readonly AppConfig _config = config ?? App.Services.GetRequiredService<AppConfig>();
     private Envelope? _submittingEnvelope;
     private readonly HashSet<Envelope> _submittedEnvelopes = [];
-    // the reporter submits a single crash per process
     private Envelope? _pendingGpuCrashEnvelope;
     private Feedback? _feedback = ResolveFeedback();
 
