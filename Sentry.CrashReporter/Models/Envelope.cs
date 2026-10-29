@@ -206,7 +206,7 @@ public sealed class Envelope
             .Select(item => (Item: item, Type: TryGetGpuCrashAttachmentType(item)))
             .Where(i => i.Type is not null)
             .ToList();
-        if (gpuItems.Count == 0 ||
+        if (gpuItems.All(i => i.Type != "event.nv_gpudmp") ||
             Items.All(i => i.TryGetHeader("attachment_type") != "event.minidump") ||
             TryGetEvent() is not { } eventItem ||
             eventItem.TryParseAsJson() is not { } payload)

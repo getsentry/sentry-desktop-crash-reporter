@@ -342,10 +342,9 @@ public class EnvelopeTests
     }
 
     [Test]
-    public void TrySplitGpuCrash_WithoutGpuDumps_ReturnsNull()
+    public void TrySplitGpuCrash_WithoutGpuDump_ReturnsNull()
     {
         var envelope = CreateGpuCrashEnvelope("event.nv_gpudmp", "event.nv_shader_debug");
-        envelope.RemoveItem(envelope.Items[4]);
         envelope.RemoveItem(envelope.Items[3]);
 
         envelope.TrySplitGpuCrash().Should().BeNull();
