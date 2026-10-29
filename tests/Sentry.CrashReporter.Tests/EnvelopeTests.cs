@@ -352,6 +352,18 @@ public class EnvelopeTests
     }
 
     [Test]
+    public void TrySplitGpuCrash_WithSameCrash_DerivesSameGpuCrashEventId()
+    {
+        var envelope = CreateGpuCrashEnvelope("event.nv_gpudmp", "event.nv_shader_debug");
+        var first = envelope.TrySplitGpuCrash()!.GpuCrash.TryGetEventId();
+
+        envelope.Header["event_id"] = "c993afb6b4ac48a6b61b2558e601d65d";
+        var second = envelope.TrySplitGpuCrash()!.GpuCrash.TryGetEventId();
+
+        second.Should().Be(first);
+    }
+
+    [Test]
     public void TrySplitGpuCrash_WithGpuCrashEnvelope_ReturnsNull()
     {
         var envelope = CreateGpuCrashEnvelope("event.nv_gpudmp", "event.nv_shader_debug");

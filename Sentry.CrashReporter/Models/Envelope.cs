@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -213,7 +214,7 @@ public sealed class Envelope
             return null;
         }
 
-        var eventId = Guid.NewGuid().ToString("D");
+        var eventId = DeriveGpuCrashEventId(TryGetEventId() ?? payload.TryGetString("event_id"));
         payload["event_id"] = eventId;
         payload.Remove("exception");
         payload.Remove("threads");
@@ -239,6 +240,18 @@ public sealed class Envelope
         return new GpuCrashSplit(
             new Envelope(Header, Items.Except(gpuItems.Select(i => i.Item))),
             new Envelope(header, gpuCrashItems.Prepend(new EnvelopeItem(eventHeader, payloadBytes))));
+    }
+
+    // derived from the crash event ID so that resubmitting the same crash is deduplicated
+    private static string DeriveGpuCrashEventId(string? crashEventId)
+    {
+        if (!Guid.TryParse(crashEventId, out var crashGuid))
+        {
+            return Guid.NewGuid().ToString("D");
+        }
+
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes($"gpu_crash:{crashGuid:N}"));
+        return new Guid(hash.AsSpan(0, 16)).ToString("D");
     }
 
     private static string? TryGetGpuCrashAttachmentType(EnvelopeItem item)
