@@ -176,6 +176,23 @@ public class AppConfigTests
     }
 
     [Test]
+    public void Load_Views_ReturnsValue()
+    {
+        var dir = WriteConfig("""
+        {
+          "AppConfig": {
+            "Views": ["stacktrace", "feedback"]
+          }
+        }
+        """);
+
+        var result = AppConfig.Load(dir);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Views, Is.EqualTo(new[] { "stacktrace", "feedback" }));
+    }
+
+    [Test]
     public void Load_EmptyCancelButtonText_ReturnsEmptyString()
     {
         var dir = WriteConfig("""

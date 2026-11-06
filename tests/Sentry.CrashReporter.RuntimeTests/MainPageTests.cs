@@ -251,6 +251,83 @@ public class MainPageTests : RuntimeTestBase
     }
 
     [TestMethod]
+    public async Task MainPage_Views()
+    {
+        // Arrange
+        await using var file = OpenTestFile("data/crashpad.envelope");
+        var envelope = await Envelope.FromFileStreamAsync(file);
+        var config = new AppConfig { Views = ["stacktrace", "feedback"] };
+        var mockRuntime = MockRuntime(envelope, config);
+        var viewModel = new MainViewModel(mockRuntime.Reporter.Object);
+
+        // Act
+        var page = new MainPage { DataContext = viewModel };
+        await LoadTestContent(page);
+
+        // Assert
+        var views = MainPage.GetViews(config);
+        Assert.AreEqual("stacktrace", views[0].Region);
+        Assert.AreEqual("feedback", views[1].Region);
+        var segmented = page.FindFirstDescendant<Segmented>();
+        Assert.IsNotNull(segmented);
+        Assert.AreEqual(views.Length, segmented.Items.Count);
+        for (var i = 0; i < views.Length; i++)
+        {
+            var region = views[i].Region;
+            var item = segmented.Items[i] as SegmentedItem;
+            Assert.IsNotNull(item);
+            Assert.AreEqual(views[i].ToolTip, ToolTipService.GetToolTip(item) as string, region);
+            var expected = region is "stacktrace" or "feedback" ? Visibility.Visible : Visibility.Collapsed;
+            Assert.AreEqual(expected, item.Visibility, region);
+        }
+        Assert.AreEqual(0, viewModel.SelectedIndex);
+        Assert.AreEqual(0, segmented.SelectedIndex);
+        var view = page.FindFirstDescendant<StacktraceView>();
+        Assert.IsNotNull(view);
+        Assert.AreEqual(Visibility.Visible, view.Visibility);
+        Assert.IsTrue(view.KeyboardAccelerators.Count > 0);
+        Assert.IsTrue(view.KeyboardAccelerators.All(a => a.IsEnabled));
+    }
+
+    [TestMethod]
+    public async Task MainPage_Views_Fallback()
+    {
+        // Arrange
+        var envelope = new Envelope(new JsonObject(), [
+            new EnvelopeItem(new JsonObject { ["type"] = "event" },
+                System.Text.Encoding.UTF8.GetBytes(new JsonObject
+                {
+                    ["tags"] = new JsonObject { ["tag_key"] = "tag_value" },
+                }.ToJsonString()))
+        ]);
+        var config = new AppConfig { Views = ["stacktrace"] };
+        var mockRuntime = MockRuntime(envelope, config);
+        var viewModel = new MainViewModel(mockRuntime.Reporter.Object);
+
+        // Act
+        var page = new MainPage { DataContext = viewModel };
+        await LoadTestContent(page);
+
+        // Assert
+        var views = MainPage.GetViews(config);
+        var segmented = page.FindFirstDescendant<Segmented>();
+        Assert.IsNotNull(segmented);
+        for (var i = 0; i < views.Length; i++)
+        {
+            var region = views[i].Region;
+            var item = segmented.Items[i] as SegmentedItem;
+            Assert.IsNotNull(item);
+            var expected = region is "feedback" ? Visibility.Visible : Visibility.Collapsed;
+            Assert.AreEqual(expected, item.Visibility, region);
+        }
+        Assert.AreEqual("feedback", views[viewModel.SelectedIndex].Region);
+        var view = page.FindFirstDescendant<StacktraceView>();
+        Assert.IsNotNull(view);
+        Assert.AreEqual(Visibility.Collapsed, view.Visibility);
+        Assert.IsTrue(view.KeyboardAccelerators.All(a => !a.IsEnabled));
+    }
+
+    [TestMethod]
     public async Task MainPage_Stacktrace()
     {
         // Arrange
