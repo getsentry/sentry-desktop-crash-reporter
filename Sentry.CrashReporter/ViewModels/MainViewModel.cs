@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.Services;
+using Sentry.CrashReporter.Views;
 
 namespace Sentry.CrashReporter.ViewModels;
 
@@ -22,10 +23,12 @@ public partial class MainViewModel : ReactiveObject, ILoadable
 
     public event EventHandler? IsExecutingChanged;
 
-    public MainViewModel(ICrashReporter? reporter = null, IWindowService? windowService = null)
+    public MainViewModel(ICrashReporter? reporter = null, IWindowService? windowService = null,
+        AppConfig? config = null)
     {
         reporter ??= App.Services.GetRequiredService<ICrashReporter>();
         windowService ??= App.Services.GetRequiredService<IWindowService>();
+        config ??= App.Services.GetRequiredService<AppConfig>();
         windowService.Closing += async () =>
         {
             if (Envelope is not null)
@@ -81,6 +84,12 @@ public partial class MainViewModel : ReactiveObject, ILoadable
             })
             .ToProperty(this, x => x.HasStacktrace);
 
+        // Select the initial view once the properties that decide view availability settle
+        this.WhenAnyValue(x => x.Tags, x => x.Contexts, x => x.Extra, x => x.Sdk, x => x.User,
+                x => x.Attachments, x => x.HasStacktrace)
+            .Where(_ => Envelope is not null)
+            .Subscribe(_ => SelectInitialView(config));
+
         IsExecuting = true;
 
         Observable.FromAsync(() => reporter.LoadAsync())
@@ -97,5 +106,15 @@ public partial class MainViewModel : ReactiveObject, ILoadable
                     Error = ex;
                     IsExecuting = false;
                 });
+    }
+
+    // The first view with data, in the configured order
+    private void SelectInitialView(AppConfig config)
+    {
+        var views = MainPage.GetViews(config);
+        SelectedIndex = Enumerable.Range(0, views.Length)
+            .Where(i => views[i].IsAvailable(this))
+            .DefaultIfEmpty(SelectedIndex)
+            .First();
     }
 }

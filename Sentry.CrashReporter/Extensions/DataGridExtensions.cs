@@ -77,12 +77,16 @@ public static class DataGridExtensions
         acceleratorOwner.KeyboardAccelerators.Add(escAccel);
         accelerators.Add(escAccel);
 
-        acceleratorOwner.RegisterPropertyChangedCallback(UIElement.VisibilityProperty, (_, _) =>
+        void UpdateAccelerators()
         {
             var enabled = acceleratorOwner.Visibility == Visibility.Visible;
             foreach (var accel in accelerators)
                 accel.IsEnabled = enabled;
-        });
+        }
+
+        acceleratorOwner.RegisterPropertyChangedCallback(UIElement.VisibilityProperty, (_, _) => UpdateAccelerators());
+        // The callback only fires on changes, so an owner that is visible from the start needs an initial update
+        UpdateAccelerators();
     }
 
     private static string? FormatRowToolTip(object item) => item switch
