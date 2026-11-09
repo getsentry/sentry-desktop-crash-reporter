@@ -84,10 +84,10 @@ public partial class MainViewModel : ReactiveObject, ILoadable
             })
             .ToProperty(this, x => x.HasStacktrace);
 
-        // Select the initial view once the properties that decide view availability settle
+        // Select the initial view from the properties that decide view availability. This also runs
+        // without an envelope, so a configured view without data is never selected.
         this.WhenAnyValue(x => x.Tags, x => x.Contexts, x => x.Extra, x => x.Sdk, x => x.User,
                 x => x.Attachments, x => x.HasStacktrace)
-            .Where(_ => Envelope is not null)
             .Subscribe(_ => SelectInitialView(config));
 
         IsExecuting = true;

@@ -135,7 +135,7 @@ settings into the sentry-native database directory.
 | `CancelButton` | Cancel button label. Set to empty string to hide the button. |
 | `SubmitButton` | Submit button label. |
 | `CacheKeep` | Initial cache mode when the user has not selected one. Supported values: `None`, `Offline`, `Always`. Defaults to `Offline`. |
-| `Views` | Views to show, in tab order. Supported values: `feedback`, `tags`, `contexts`, `extra`, `sdk`, `user`, `attachments`, `stacktrace`, `envelope`. The first listed view that has data is selected at startup. Unknown names are ignored. Shows all views in the default order when omitted. |
+| `Views` | Views to show, in tab order. Supported values: `feedback`, `tags`, `contexts`, `extra`, `sdk`, `user`, `attachments`, `stacktrace`, `envelope`. The first listed view that has data is selected at startup. If none of the listed views has data, the feedback view is shown, even when it is not listed. Unknown names are ignored. Shows all views in the default order when omitted. |
 | `LogoLight` | Path to a custom logo image for light theme (relative to the binary or absolute). |
 | `LogoDark` | Path to a custom logo image for dark theme (relative to the binary or absolute). |
 | `SystemAccentColor` | Primary brand color (`#RRGGBB` or `#AARRGGBB`). |

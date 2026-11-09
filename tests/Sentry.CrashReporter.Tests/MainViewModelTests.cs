@@ -223,6 +223,27 @@ public class MainViewModelTests
         Assert.That(viewModel.HasStacktrace, Is.EqualTo(hasStacktrace));
         Assert.That(MainPage.GetViews(config)[viewModel.SelectedIndex].Region, Is.EqualTo(expected));
     }
+
+    [TestCase(null, "feedback")]
+    [TestCase(new[] { "stacktrace", "feedback" }, "feedback")]
+    [TestCase(new[] { "stacktrace", "envelope" }, "envelope")]
+    [TestCase(new[] { "stacktrace" }, "feedback")]
+    public void MainViewModel_InitialView_NoEnvelope(string[]? views, string expected)
+    {
+        // Arrange
+        var mockReporter = new Mock<ICrashReporter>();
+        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult<Envelope?>(null));
+
+        var config = new AppConfig { Views = views };
+
+        // Act
+        var viewModel = new MainViewModel(mockReporter.Object, new FakeWindowService(), config);
+
+        // Assert
+        Assert.That(viewModel.Envelope, Is.Null);
+        Assert.That(MainPage.GetViews(config)[viewModel.SelectedIndex].Region, Is.EqualTo(expected));
+    }
 }
 
 internal class FakeWindowService : IWindowService
