@@ -1,7 +1,18 @@
+using Microsoft.Extensions.DependencyInjection;
+using Sentry.CrashReporter.Views;
+
 namespace Sentry.CrashReporter.Tests;
 
 public class MainViewModelTests
 {
+    [SetUp]
+    public void SetUp()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(new AppConfig());
+        App.Services = services.BuildServiceProvider();
+    }
+
     [Test]
     public void MainViewModel_Defaults()
     {
@@ -177,6 +188,61 @@ public class MainViewModelTests
         // Assert
         Assert.That(viewModel.Envelope, Is.EqualTo(envelope));
         mockReporter.Verify(r => r.CacheAsync(envelope, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestCase(null, true, "feedback")]
+    [TestCase(new string[0], true, "feedback")]
+    [TestCase(new[] { "stacktrace", "feedback" }, true, "stacktrace")]
+    [TestCase(new[] { "stacktrace", "feedback" }, false, "feedback")]
+    [TestCase(new[] { "StackTrace" }, true, "stacktrace")]
+    [TestCase(new[] { "unknown", "tags" }, false, "tags")]
+    [TestCase(new[] { "stacktrace", "envelope" }, false, "envelope")]
+    [TestCase(new[] { "stacktrace" }, false, "feedback")]
+    [TestCase(new[] { "unknown" }, true, "feedback")]
+    public void MainViewModel_InitialView(string[]? views, bool hasStacktrace, string expected)
+    {
+        // Arrange
+        var payload = new JsonObject { ["tags"] = new JsonObject { ["tag_key"] = "tag_value" } };
+        if (hasStacktrace)
+        {
+            payload["threads"] = new JsonObject { ["values"] = new JsonArray(new JsonObject()) };
+        }
+        var envelope = new Envelope(new JsonObject(), [
+            new EnvelopeItem(new JsonObject { ["type"] = "event" }, Encoding.UTF8.GetBytes(payload.ToJsonString()))
+        ]);
+        var mockReporter = new Mock<ICrashReporter>();
+        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult<Envelope?>(envelope));
+
+        var config = new AppConfig { Views = views };
+
+        // Act
+        var viewModel = new MainViewModel(mockReporter.Object, new FakeWindowService(), config);
+
+        // Assert
+        Assert.That(viewModel.HasStacktrace, Is.EqualTo(hasStacktrace));
+        Assert.That(MainPage.GetViews(config)[viewModel.SelectedIndex].Region, Is.EqualTo(expected));
+    }
+
+    [TestCase(null, "feedback")]
+    [TestCase(new[] { "stacktrace", "feedback" }, "feedback")]
+    [TestCase(new[] { "stacktrace", "envelope" }, "envelope")]
+    [TestCase(new[] { "stacktrace" }, "feedback")]
+    public void MainViewModel_InitialView_NoEnvelope(string[]? views, string expected)
+    {
+        // Arrange
+        var mockReporter = new Mock<ICrashReporter>();
+        mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult<Envelope?>(null));
+
+        var config = new AppConfig { Views = views };
+
+        // Act
+        var viewModel = new MainViewModel(mockReporter.Object, new FakeWindowService(), config);
+
+        // Assert
+        Assert.That(viewModel.Envelope, Is.Null);
+        Assert.That(MainPage.GetViews(config)[viewModel.SelectedIndex].Region, Is.EqualTo(expected));
     }
 }
 

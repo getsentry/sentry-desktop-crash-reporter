@@ -34,9 +34,9 @@ public class RuntimeTestBase
     protected static FileStream OpenTestFile(string path) =>
         File.OpenRead(Path.Combine(AppContext.BaseDirectory, path));
 
-    protected static MockRuntime MockRuntime(Envelope? envelope = null)
+    protected static MockRuntime MockRuntime(Envelope? envelope = null, AppConfig? appConfig = null)
     {
-        var appConfig = new AppConfig();
+        appConfig ??= new AppConfig();
         var mockReporter = new Mock<ICrashReporter>();
         mockReporter.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.FromResult(envelope));
