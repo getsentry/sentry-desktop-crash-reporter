@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.5
+
+### Features
+
+- feat: Configurable views by @nicko996 and @claude in [#309](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/309)
+
 ## 0.3.4
 
 ### Features
