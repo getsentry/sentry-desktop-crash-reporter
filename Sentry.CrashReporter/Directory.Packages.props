@@ -7,7 +7,7 @@
     -->
   <ItemGroup>
     <PackageVersion Include="CommunityToolkit.WinUI.Controls.Segmented" Version="8.2.251219" />
-    <PackageVersion Include="CommunityToolkit.WinUI.Converters" Version="8.2.250402" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Converters" Version="8.2.251219" />
     <PackageVersion Include="KaitaiStruct.Runtime.CSharp" Version="0.11.0" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="11.0.0" />
     <PackageVersion Include="Symbolic.NET" Version="0.1.0" />
