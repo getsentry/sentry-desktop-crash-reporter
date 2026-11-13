@@ -1,0 +1,35 @@
+{
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "views": {
+    "feedback": {
+      "fixture": "tests/data/inproc.envelope"
+    },
+    "tags": {
+      "fixture": "tests/data/inproc.envelope"
+    },
+    "contexts": {
+      "fixture": "tests/data/inproc.envelope"
+    },
+    "extra": {
+      "fixture": "tests/data/stacktrace.envelope"
+    },
+    "sdk": {
+      "fixture": "tests/data/inproc.envelope"
+    },
+    "user": {
+      "fixture": "tests/data/inproc.envelope"
+    },
+    "attachments": {
+      "fixture": "tests/data/two_items.envelope"
+    },
+    "stacktrace": {
+      "fixture": "tests/data/stacktrace.envelope"
+    },
+    "envelope": {
+      "fixture": "tests/data/inproc.envelope"
+    }
+  }
+}

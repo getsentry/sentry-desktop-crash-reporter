@@ -243,7 +243,7 @@ public class StacktraceViewModelTests
         Assert.That(viewModel.Threads![0].ThreadId, Is.EqualTo("1000"));
         Assert.That(viewModel.Threads[0].Crashed, Is.True);
         Assert.That(viewModel.Threads[0].Frames, Has.Count.EqualTo(7));
-        Assert.That(viewModel.Threads[0].Frames[0].Image, Is.Empty);
+        Assert.That(viewModel.Threads[0].Frames[0].Image, Is.EqualTo("my-game"));
         Assert.That(viewModel.Threads[0].Frames[0].Address, Is.EqualTo("0x400500"));
         Assert.That(viewModel.Threads[0].Frames[0].Symbol, Is.EqualTo("crash_here"));
         Assert.That(viewModel.SelectedThreadIndex, Is.EqualTo(0));

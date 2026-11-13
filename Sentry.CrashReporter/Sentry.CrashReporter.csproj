@@ -79,11 +79,17 @@
         <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(GoldenTest)' == 'true' ">
+        <DefineConstants>$(DefineConstants);GOLDEN_TEST</DefineConstants>
+        <UnoDefaultFont>Ahem</UnoDefaultFont>
+    </PropertyGroup>
+
     <PropertyGroup Condition=" $(RuntimeIdentifier.StartsWith('osx-')) ">
         <PackageFormat>app</PackageFormat>
         <!-- The .app bundle's native launcher links against libcoreclr.dylib, which is incompatible with single-file publish. -->
         <PublishSingleFile>false</PublishSingleFile>
-        <UnoMacOSCustomInfoPlist>Platforms/Desktop/Info.plist</UnoMacOSCustomInfoPlist>
+        <UnoMacOSCustomInfoPlist Condition=" '$(GoldenTest)' != 'true' ">Platforms/Desktop/Info.plist</UnoMacOSCustomInfoPlist>
+        <UnoMacOSCustomInfoPlist Condition=" '$(GoldenTest)' == 'true' ">Platforms/Desktop/Info.golden.plist</UnoMacOSCustomInfoPlist>
     </PropertyGroup>
 
     <ItemGroup>
@@ -103,6 +109,16 @@
         <Content Include="Assets\AppLogo.light.scale-200.png" />
         <Content Include="Assets\Fonts\SourceCodePro\SourceCodePro-Regular.ttf">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\tests\Sentry.CrashReporter.GoldenTests\Assets\Fonts\Ahem\Ahem.ttf" Condition=" '$(GoldenTest)' == 'true' ">
+            <Link>Assets\Fonts\Ahem\Ahem.ttf</Link>
+            <TargetPath>Assets\Fonts\Ahem\Ahem.ttf</TargetPath>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+        <Content Include="..\tests\Sentry.CrashReporter.GoldenTests\Assets\Fonts\Ahem\LICENSE.txt" Condition=" '$(GoldenTest)' == 'true' ">
+            <Link>Assets\Fonts\Ahem\LICENSE.txt</Link>
+            <TargetPath>Assets\Fonts\Ahem\LICENSE.txt</TargetPath>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </Content>
         <Content Include="Assets\Fonts\FontAwesome\Font Awesome 7 Brands-Regular-400.otf">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -156,6 +156,67 @@ jobs:
           name: binlog-${{ matrix.rid }}
           path: ./build.binlog
 
+  golden_test:
+    strategy:
+      fail-fast: false
+      matrix:
+       include:
+         - os: macos-26
+           rid: osx-arm64
+         - os: ubuntu-24.04
+           rid: linux-x64
+         - os: windows-2025
+           rid: win-x64
+
+    name: Golden Tests (${{ matrix.rid }})
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Check Goldens
+        id: goldens
+        shell: pwsh
+        run: .github/scripts/check-golden-baselines.ps1 -RuntimeIdentifier ${{ matrix.rid }}
+
+      - name: Install Dependencies
+        if: ${{ steps.goldens.outputs.exists == 'true' }}
+        timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
+        uses: "./.github/steps/install_dependencies"
+        with:
+          target-platform: "desktop"
+
+      - name: Install Golden Test Dependencies (Linux)
+        if: ${{ runner.os == 'Linux' && steps.goldens.outputs.exists == 'true' }}
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Run Golden Tests
+        id: run_goldens
+        if: ${{ steps.goldens.outputs.exists == 'true' }}
+        shell: pwsh
+        run: .github/scripts/run-golden-tests.ps1 -Configuration Release -RuntimeIdentifier ${{ matrix.rid }}
+
+      - name: Check Golden Results
+        if: ${{ failure() && steps.run_goldens.outcome == 'failure' }}
+        shell: bash
+        run: |
+          {
+            echo "## Golden test failure: ${{ matrix.rid }}"
+            echo
+            echo "Inspect the uploaded \`golden-test-results-${{ matrix.rid }}\` artifact for \`.actual.png\`, \`.diff.png\`, and app logs under \`tests/Sentry.CrashReporter.GoldenTests/TestResults/${{ matrix.rid }}/\`."
+            echo
+            echo "For an intended rendering change in a same-repository PR, add the \`update-goldens\` label to regenerate all supported baselines in CI. Alternatively, use \`make update-goldens\` to update a specific RID locally."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::Golden tests failed for ${{ matrix.rid }}. Inspect artifact golden-test-results-${{ matrix.rid }}; add the update-goldens label on a same-repository PR to regenerate baselines."
+
+      - name: Upload Golden Test Results
+        if: ${{ always() && steps.goldens.outputs.exists == 'true' && (!startsWith(github.ref_name, 'release/') || steps.run_goldens.outcome == 'failure') }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: golden-test-results-${{ matrix.rid }}
+          path: tests/Sentry.CrashReporter.GoldenTests/TestResults/
+
   unit_test:
     name: Unit Tests
     runs-on: ubuntu-24.04
