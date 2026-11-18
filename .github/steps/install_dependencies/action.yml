@@ -22,7 +22,10 @@ runs:
     - name: Setup .NET ${{ inputs.dotnet-version }}
       uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
       with:
-        dotnet-version: '${{ inputs.dotnet-version }}'
+        # .NET 10 for sentry-desktop-crash-reporter vs. .NET 11 for uno-check
+        dotnet-version: |
+          ${{ inputs.dotnet-version }}
+          11.0.x
 
     # Run Uno.Check
     - name: Install ${{ inputs.target-platform }} Workloads
