@@ -212,7 +212,7 @@ jobs:
 
       - name: Upload Golden Test Results
         if: ${{ always() && steps.goldens.outputs.exists == 'true' && (!startsWith(github.ref_name, 'release/') || steps.run_goldens.outcome == 'failure') }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: golden-test-results-${{ matrix.rid }}
           path: tests/Sentry.CrashReporter.GoldenTests/TestResults/
