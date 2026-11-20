@@ -19,10 +19,10 @@ public partial class StacktraceViewModel : ReactiveObject
 {
     [Reactive] private Envelope? _envelope;
     [Reactive] private int _selectedThreadIndex;
-    [ObservableAsProperty] private List<StacktraceThreadItem>? _threads;
-    [ObservableAsProperty] private StacktraceThreadItem? _selectedThread;
-    [ObservableAsProperty] private List<StacktraceFrameItem>? _frames;
-    [ObservableAsProperty] private bool _hasMultipleThreads;
+    [ObservableAsProperty] public partial List<StacktraceThreadItem>? Threads { get; }
+    [ObservableAsProperty] public partial StacktraceThreadItem? SelectedThread { get; }
+    [ObservableAsProperty] public partial List<StacktraceFrameItem>? Frames { get; }
+    [ObservableAsProperty] public partial bool HasMultipleThreads { get; }
     private readonly ISymbolDemangler _demangler;
 
     public ReactiveCommand<Unit, Unit> PreviousThread { get; }
@@ -64,10 +64,11 @@ public partial class StacktraceViewModel : ReactiveObject
                 SelectedThreadIndex = crashedIndex >= 0 ? crashedIndex : 0;
             });
 
-        _selectedThreadHelper = this.WhenAnyValue(x => x.Threads, x => x.SelectedThreadIndex)
-            .Select(((List<StacktraceThreadItem>? threads, int index) t) =>
-                t.threads is { Count: > 0 } && t.index >= 0 && t.index < t.threads.Count
-                    ? t.threads[t.index]
+        _selectedThreadHelper = this.WhenAnyValue(
+                x => x.Threads,
+                x => x.SelectedThreadIndex,
+                (threads, index) => threads is { Count: > 0 } && index >= 0 && index < threads.Count
+                    ? threads[index]
                     : null)
             .ToProperty(this, x => x.SelectedThread);
 
@@ -83,9 +84,10 @@ public partial class StacktraceViewModel : ReactiveObject
             .Select(i => i > 0);
         PreviousThread = ReactiveCommand.Create(() => { SelectedThreadIndex--; }, canGoPrevious);
 
-        var canGoNext = this.WhenAnyValue(x => x.Threads, x => x.SelectedThreadIndex)
-            .Select(((List<StacktraceThreadItem>? threads, int index) t) =>
-                t.threads is not null && t.index < t.threads.Count - 1);
+        var canGoNext = this.WhenAnyValue(
+            x => x.Threads,
+            x => x.SelectedThreadIndex,
+            (threads, index) => threads is not null && index < threads.Count - 1);
         NextThread = ReactiveCommand.Create(() => { SelectedThreadIndex++; }, canGoNext);
     }
 

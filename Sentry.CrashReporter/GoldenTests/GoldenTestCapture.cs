@@ -33,6 +33,14 @@ internal static class GoldenTestCapture
     public static bool IsEnabled =>
         !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(OutputPathVariable));
 
+    public static ApplicationTheme? Theme =>
+        Environment.GetEnvironmentVariable(ThemeVariable)?.ToLowerInvariant() switch
+        {
+            "dark" => ApplicationTheme.Dark,
+            "default" => null,
+            _ => ApplicationTheme.Light
+        };
+
     public static async Task CaptureAndExitAsync(Window window)
     {
 #if __DESKTOP__
@@ -51,7 +59,6 @@ internal static class GoldenTestCapture
 
             window.Resize(App.DefaultWindowWidth, App.DefaultWindowHeight);
             ConfigureCaptureRoot(root);
-            ApplyTheme(root);
             var viewModel = await WaitForMainPageAsync(root);
             SelectView(viewModel);
 
@@ -95,16 +102,6 @@ internal static class GoldenTestCapture
     {
         Environment.ExitCode = exitCode;
         App.Services.GetRequiredService<IWindowService>().Close();
-    }
-
-    private static void ApplyTheme(FrameworkElement root)
-    {
-        root.RequestedTheme = Environment.GetEnvironmentVariable(ThemeVariable)?.ToLowerInvariant() switch
-        {
-            "dark" => ElementTheme.Dark,
-            "default" => ElementTheme.Default,
-            _ => ElementTheme.Light
-        };
     }
 
     private static void ConfigureCaptureRoot(FrameworkElement root)

@@ -6,14 +6,13 @@
       See https://aka.platform.uno/using-uno-sdk#implicit-packages for more information regarding the Implicit Packages.
     -->
   <ItemGroup>
-    <PackageVersion Include="CommunityToolkit.WinUI.Controls.Segmented" Version="8.2.251219" />
-    <PackageVersion Include="CommunityToolkit.WinUI.Converters" Version="8.2.251219" />
+    <PackageVersion Include="CommunityToolkit.Common" Version="8.2.1" />
     <PackageVersion Include="KaitaiStruct.Runtime.CSharp" Version="0.11.0" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="11.0.0" />
     <PackageVersion Include="Symbolic.NET" Version="0.1.1" />
     <PackageVersion Include="GitInfo" Version="3.6.1" />
-    <PackageVersion Include="ReactiveUI.SourceGenerators" Version="3.2.0" />
-    <PackageVersion Include="ReactiveUI.Uno.WinUI" Version="20.0.36" />
-    <PackageVersion Include="Uno.CommunityToolkit.WinUI.UI.Controls.DataGrid" Version="7.1.204" />
+    <PackageVersion Include="ReactiveUI.SourceGenerators" Version="6.0.0" />
+    <PackageVersion Include="ReactiveUI.Uno.Reactive" Version="27.0.0" />
+    <PackageVersion Include="Uno.CommunityToolkit.WinUI.UI.Controls.DataGrid" Version="7.2.0" />
   </ItemGroup>
 </Project>

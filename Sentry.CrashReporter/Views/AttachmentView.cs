@@ -120,7 +120,7 @@ internal class AttachmentGrid : DataGrid
         {
             Header = "Filename",
             Width = new DataGridLength(1, DataGridLengthUnitType.Star),
-            CellTemplate = new DataTemplate(() =>
+            CellTemplate = DataTemplateHelpers.DataTemplate(() =>
                 new TextBlock()
                     .WithSourceCodePro()
                     .Margin(new Thickness(8, 0))
@@ -133,7 +133,7 @@ internal class AttachmentGrid : DataGrid
             Header = "Size",
             MinWidth = 120,
             Width = DataGridLength.Auto,
-            CellTemplate = new DataTemplate(() =>
+            CellTemplate = DataTemplateHelpers.DataTemplate(() =>
                 new TextBlock()
                     .WithSourceCodePro()
                     .Margin(new Thickness(8, 0))

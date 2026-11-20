@@ -7,19 +7,19 @@ namespace Sentry.CrashReporter.ViewModels;
 public partial class HeaderViewModel : ReactiveObject
 {
     [Reactive] private Envelope? _envelope;
-    [ObservableAsProperty] private EnvelopeItem? _event;
-    [ObservableAsProperty] private JsonObject? _payload;
-    [ObservableAsProperty] private string? _eventId = string.Empty;
-    [ObservableAsProperty] private DateTime? _timestamp;
-    [ObservableAsProperty] private string? _platform = string.Empty;
-    [ObservableAsProperty] private string? _level = string.Empty;
-    [ObservableAsProperty] private JsonObject? _os;
-    [ObservableAsProperty] private string? _osName = string.Empty;
-    [ObservableAsProperty] private string? _osVersion = string.Empty;
-    [ObservableAsProperty] private string? _osPretty = string.Empty;
-    [ObservableAsProperty] private string? _release = string.Empty;
-    [ObservableAsProperty] private string? _environment = string.Empty;
-    [ObservableAsProperty] private EnvelopeException? _exception;
+    [ObservableAsProperty] public partial EnvelopeItem? Event { get; }
+    [ObservableAsProperty] public partial JsonObject? Payload { get; }
+    [ObservableAsProperty] public partial string? EventId { get; }
+    [ObservableAsProperty] public partial DateTime? Timestamp { get; }
+    [ObservableAsProperty] public partial string? Platform { get; }
+    [ObservableAsProperty] public partial string? Level { get; }
+    [ObservableAsProperty] public partial JsonObject? Os { get; }
+    [ObservableAsProperty] public partial string? OsName { get; }
+    [ObservableAsProperty] public partial string? OsVersion { get; }
+    [ObservableAsProperty] public partial string? OsPretty { get; }
+    [ObservableAsProperty] public partial string? Release { get; }
+    [ObservableAsProperty] public partial string? Environment { get; }
+    [ObservableAsProperty] public partial EnvelopeException? Exception { get; }
 
     public static string AppVersion { get; } = FormatVersion();
 
