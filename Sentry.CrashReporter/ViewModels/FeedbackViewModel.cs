@@ -5,10 +5,10 @@ namespace Sentry.CrashReporter.ViewModels;
 public partial class FeedbackViewModel : ReactiveObject
 {
     [Reactive] private Envelope? _envelope;
-    [ObservableAsProperty] private string? _dsn;
-    [ObservableAsProperty] private string? _eventId;
-    [ObservableAsProperty] private bool _isAvailable;
-    [ObservableAsProperty] private bool _isEnabled;
+    [ObservableAsProperty] public partial string? Dsn { get; }
+    [ObservableAsProperty] public partial string? EventId { get; }
+    [ObservableAsProperty] public partial bool IsAvailable { get; }
+    [ObservableAsProperty] public partial bool IsEnabled { get; }
     [Reactive] private string _message = string.Empty;
     [Reactive] private string? _email;
     [Reactive] private string? _name;

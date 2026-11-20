@@ -1,3 +1,6 @@
+using ReactiveUI.Builder;
+using ReactiveUI.Reactive.Builder;
+
 namespace Sentry.CrashReporter.RuntimeTests.Host;
 
 internal sealed partial class ShellPage : Page;
@@ -47,6 +50,10 @@ public partial class App : Application
                     );
                 })
             );
+
+        RxAppBuilder.CreateReactiveUIBuilder()
+            .WithUno(builder.Window)
+            .BuildApp();
 
         await builder.NavigateAsync<ShellPage>();
 

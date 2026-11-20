@@ -1,5 +1,3 @@
-using CommunityToolkit.WinUI;
-
 namespace Sentry.CrashReporter.RuntimeTests;
 
 [TestClass]
@@ -28,10 +26,10 @@ public class JsonGridTests : RuntimeTestBase
         await LoadTestContent(grid);
 
         // Assert
-        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "key"));
-        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "value"));
-        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "another_key"));
-        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "123"));
+        Assert.IsNotNull(grid.FindFirstDescendant<TextBlock>(tb => tb.Text == "key"));
+        Assert.IsNotNull(grid.FindFirstDescendant<TextBlock>(tb => tb.Text == "value"));
+        Assert.IsNotNull(grid.FindFirstDescendant<TextBlock>(tb => tb.Text == "another_key"));
+        Assert.IsNotNull(grid.FindFirstDescendant<TextBlock>(tb => tb.Text == "123"));
     }
 
     [TestMethod]
@@ -45,8 +43,8 @@ public class JsonGridTests : RuntimeTestBase
         await LoadTestContent(grid);
 
         // Assert
-        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "key"));
-        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == string.Empty));
+        Assert.IsNotNull(grid.FindFirstDescendant<TextBlock>(tb => tb.Text == "key"));
+        Assert.IsNotNull(grid.FindFirstDescendant<TextBlock>(tb => tb.Text == string.Empty));
     }
 
     [TestMethod]
@@ -62,8 +60,8 @@ public class JsonGridTests : RuntimeTestBase
         await UnitTestsUIContentHelper.WaitForIdle();
 
         // Assert
-        Assert.IsNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "key"));
-        Assert.IsNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "value"));
+        Assert.IsNull(grid.FindFirstDescendant<TextBlock>(tb => tb.Text == "key"));
+        Assert.IsNull(grid.FindFirstDescendant<TextBlock>(tb => tb.Text == "value"));
     }
 
     [TestMethod]
@@ -78,10 +76,10 @@ public class JsonGridTests : RuntimeTestBase
 
         // Assert
         Assert.AreSame(json!, grid.Data);
-        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "key"));
-        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "value"));
-        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "another_key"));
-        Assert.IsNotNull(grid.FindDescendant<TextBlock>(tb => tb.Text == "123"));
+        Assert.IsNotNull(grid.FindFirstDescendant<TextBlock>(tb => tb.Text == "key"));
+        Assert.IsNotNull(grid.FindFirstDescendant<TextBlock>(tb => tb.Text == "value"));
+        Assert.IsNotNull(grid.FindFirstDescendant<TextBlock>(tb => tb.Text == "another_key"));
+        Assert.IsNotNull(grid.FindFirstDescendant<TextBlock>(tb => tb.Text == "123"));
     }
 
     [TestMethod]

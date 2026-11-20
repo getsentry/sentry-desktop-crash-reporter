@@ -10,6 +10,7 @@ global using Microsoft.UI.Xaml.Controls;
 global using Microsoft.VisualStudio.TestTools.UnitTesting;
 global using Moq;
 global using ReactiveUI;
+global using ReactiveUI.Reactive;
 global using Sentry.CrashReporter.Controls;
 global using Sentry.CrashReporter.Models;
 global using Sentry.CrashReporter.Services;

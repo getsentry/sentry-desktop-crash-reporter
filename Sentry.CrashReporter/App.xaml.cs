@@ -2,6 +2,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
+using ReactiveUI.Builder;
+using ReactiveUI.Reactive.Builder;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.Services;
 using Path = System.IO.Path;
@@ -145,6 +147,10 @@ public partial class App : Application
                 .UseNavigation(RegisterRoutes)
             );
         MainWindow = builder.Window;
+
+        RxAppBuilder.CreateReactiveUIBuilder()
+            .WithUno(MainWindow)
+            .BuildApp();
 
         Services.GetRequiredService<AppConfig>().Apply(Resources);
 

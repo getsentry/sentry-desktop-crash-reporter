@@ -1,4 +1,3 @@
-using CommunityToolkit.WinUI.Converters;
 using Sentry.CrashReporter.Controls;
 using Sentry.CrashReporter.Converters;
 using Sentry.CrashReporter.Extensions;
@@ -134,7 +133,7 @@ public sealed class MainPage : Page
             .NavigationCacheMode(NavigationCacheMode.Required)
             .Background(ThemeResource.Get<Brush>("ApplicationPageBackgroundThemeBrush"))
             .Content(new Grid()
-                .Children(new Control()
+                .Children(new ContentControl()
                         .IsHitTestVisible(false)
                         .KeyboardAccelerators(GetKeyboardAccelerators()),
                     new LoadingView()
