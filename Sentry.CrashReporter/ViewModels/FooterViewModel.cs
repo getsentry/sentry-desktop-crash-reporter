@@ -25,7 +25,7 @@ public partial class FooterViewModel : ReactiveObject
     [ObservableAsProperty] public partial string? EventId { get; }
     [ObservableAsProperty] public partial string? ShortEventId { get; }
     [ObservableAsProperty] public partial string? StatusText { get; }
-    [ObservableAsProperty] private string[] _statusIcons = [];
+    [ObservableAsProperty] public partial string[] StatusIcons { get; }
     [ObservableAsProperty] public partial string? CacheDirectory { get; }
     [ObservableAsProperty] public partial bool CanCache { get; }
     [Reactive] private CacheKeep _cacheKeep;

@@ -1,6 +1,6 @@
-using CommunityToolkit.WinUI.Converters;
 using CommunityToolkit.Mvvm.Input;
 using Sentry.CrashReporter.Controls;
+using Sentry.CrashReporter.Converters;
 using Sentry.CrashReporter.Extensions;
 using Sentry.CrashReporter.Services;
 using Sentry.CrashReporter.ViewModels;

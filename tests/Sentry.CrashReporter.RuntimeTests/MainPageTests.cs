@@ -1,4 +1,3 @@
-using CommunityToolkit.WinUI.Controls;
 using Sentry.CrashReporter.ViewModels;
 
 namespace Sentry.CrashReporter.RuntimeTests;

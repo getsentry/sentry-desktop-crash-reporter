@@ -1,4 +1,3 @@
-using CommunityToolkit.WinUI.Converters;
 using Sentry.CrashReporter.Controls;
 using Sentry.CrashReporter.Converters;
 using Sentry.CrashReporter.Extensions;

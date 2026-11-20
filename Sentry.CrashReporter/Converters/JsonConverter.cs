@@ -1,5 +1,4 @@
 using System.Text.Json.Nodes;
-using CommunityToolkit.WinUI.Converters;
 
 namespace Sentry.CrashReporter.Converters;
 
