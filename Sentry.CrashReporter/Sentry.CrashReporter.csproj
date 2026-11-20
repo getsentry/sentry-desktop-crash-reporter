@@ -100,6 +100,15 @@
         <TrimmerRootAssembly Include="Sentry.CrashReporter" />
     </ItemGroup>
 
+    <!-- TODO: remove when trimming no longer hangs on WebView2 and DirectN (https://github.com/unoplatform/uno/issues/24618) -->
+    <Target Name="ExcludeWebView2FromTrimming" AfterTargets="_ComputeAssembliesToPostprocessOnPublish">
+        <ItemGroup>
+            <ResolvedFileToPublish Condition="'%(Filename)' == 'WebView2' or '%(Filename)' == 'DirectN' or '%(Filename)' == 'DirectN.Extensions'">
+                <PostprocessAssembly>false</PostprocessAssembly>
+            </ResolvedFileToPublish>
+        </ItemGroup>
+    </Target>
+
     <ItemGroup>
         <Content Include="Assets\AppLogo.png" />
         <Content Include="Assets\AppLogo.scale-200.png" />
