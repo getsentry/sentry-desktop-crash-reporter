@@ -1,6 +1,6 @@
 namespace Sentry.CrashReporter.Controls;
 
-// temporary stand-ins for CommunityToolkit.WinUI.Controls.Segmented until it supports Uno 7
+// TODO: remove when CommunityToolkit.WinUI.Controls.Segmented supports Uno 7 (https://github.com/CommunityToolkit/Windows/pull/880)
 
 public partial class Segmented : ListView
 {

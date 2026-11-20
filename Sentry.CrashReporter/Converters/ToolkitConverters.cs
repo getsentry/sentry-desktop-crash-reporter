@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace Sentry.CrashReporter.Converters;
 
-// temporary stand-ins for CommunityToolkit.WinUI.Converters until it supports Uno 7
+// TODO: remove when CommunityToolkit.WinUI.Converters supports Uno 7 (https://github.com/CommunityToolkit/Windows/pull/880)
 
 public partial class EmptyObjectToObjectConverter : IValueConverter
 {
