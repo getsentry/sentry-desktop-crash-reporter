@@ -3,7 +3,6 @@ using ReactiveUI.Reactive.Builder;
 
 namespace Sentry.CrashReporter.RuntimeTests.Host;
 
-internal sealed partial class ShellPage : Page;
 internal sealed partial class UnitTestsPage : Page
 {
     public UnitTestsPage()
@@ -37,16 +36,10 @@ public partial class App : Application
                 .UseNavigation((views, routes) =>
                 {
                     views.Register(
-                        new ViewMap<ShellPage>(),
                         new ViewMap<UnitTestsPage>()
                     );
                     routes.Register(
-                        new RouteMap("", View: views.FindByView<ShellPage>(),
-                            Nested:
-                            [
-                                new RouteMap("Test", View: views.FindByView<UnitTestsPage>(), IsDefault: true),
-                            ]
-                        )
+                        new RouteMap("Test", View: views.FindByView<UnitTestsPage>(), IsDefault: true)
                     );
                 })
             );
@@ -55,7 +48,9 @@ public partial class App : Application
             .WithUno(builder.Window)
             .BuildApp();
 
-        await builder.NavigateAsync<ShellPage>();
+        await builder.Window.InitializeNavigationAsync(
+            () => Task.FromResult(builder.Build()),
+            initialRoute: "Test");
 
         builder.Window.Activate();
     }

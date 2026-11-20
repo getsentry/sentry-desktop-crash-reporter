@@ -167,7 +167,9 @@ public partial class App : Application
         windowService.Register(MainWindow);
         windowService.SetClosable(CanClose);
 
-        Host = await builder.NavigateAsync<ShellPage>();
+        Host = await MainWindow.InitializeNavigationAsync(
+            () => Task.FromResult(builder.Build()),
+            initialRoute: "Main");
 #if GOLDEN_TEST
         if (GoldenTestCapture.IsEnabled)
         {
@@ -179,16 +181,10 @@ public partial class App : Application
     private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
     {
         views.Register(
-            new ViewMap<ShellPage>(),
             new ViewMap<MainPage, MainViewModel>()
         );
         routes.Register(
-            new RouteMap("", View: views.FindByView<ShellPage>(),
-                Nested:
-                [
-                    new ("Main", View: views.FindByView<MainPage>(), IsDefault: true),
-                ]
-            )
+            new RouteMap("Main", View: views.FindByView<MainPage>(), IsDefault: true)
         );
     }
 }
