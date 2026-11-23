@@ -22,7 +22,13 @@ internal class Program
 
         var host = UnoPlatformHostBuilder.Create()
             .App(() => new App())
+#if GOLDEN_TEST
+            // TODO: remove when Uno's X11 host stops rendering before the process exits. Mesa's llvmpipe
+            // otherwise tears down under the X11 render thread at exit and crashes cold golden runs.
+            .UseX11(x11 => x11.ForceRenderingBackend(X11RenderingBackend.Software))
+#else
             .UseX11()
+#endif
             .UseLinuxFrameBuffer()
             .UseMacOS()
             .UseWin32()
