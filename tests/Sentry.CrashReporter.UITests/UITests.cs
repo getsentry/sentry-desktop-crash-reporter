@@ -14,9 +14,8 @@ public class UITests : TestBase
     public async Task Submit_EventOnly()
     {
         // Arrange
-        App.WaitForElement(q => q.All().Class("MainPage"));
-        App.WaitForElement(q => q.All().Class("FeedbackView"));
-        App.WaitForElement(q => q.All().Class("FooterView"));
+        App.WaitForElement(App.Marked("messageTextBox"));
+        App.WaitForElement(App.Marked("submitButton"));
 
         using var server = WireMockServer.Start(new WireMockServerSettings
         {
@@ -52,9 +51,8 @@ public class UITests : TestBase
     public async Task Submit_EventWithFeedback()
     {
         // Arrange
-        App.WaitForElement(q => q.All().Class("MainPage"));
-        App.WaitForElement(q => q.All().Class("FeedbackView"));
-        App.WaitForElement(q => q.All().Class("FooterView"));
+        App.WaitForElement(App.Marked("messageTextBox"));
+        App.WaitForElement(App.Marked("submitButton"));
 
         using var server = WireMockServer.Start(new WireMockServerSettings
         {
@@ -101,9 +99,8 @@ public class UITests : TestBase
     public async Task Submit_Error()
     {
         // Arrange
-        App.WaitForElement(q => q.All().Class("MainPage"));
-        App.WaitForElement(q => q.All().Class("FeedbackView"));
-        App.WaitForElement(q => q.All().Class("FooterView"));
+        App.WaitForElement(App.Marked("messageTextBox"));
+        App.WaitForElement(App.Marked("submitButton"));
 
         using var server = WireMockServer.Start(new WireMockServerSettings
         {
@@ -121,16 +118,15 @@ public class UITests : TestBase
 
         // Assert
         Assert.That(server.LogEntries, Has.Count.EqualTo(1));
-        App.WaitForElement(App.Find(q => q.WithText("Response status code does not indicate success: 404 (Not Found).")));
+        App.WaitForElement(q => q.Text("Response status code does not indicate success: 404 (Not Found)."));
     }
 
     [Test]
     public async Task Submit_Retry_EventOnly()
     {
         // Arrange
-        App.WaitForElement(q => q.All().Class("MainPage"));
-        App.WaitForElement(q => q.All().Class("FeedbackView"));
-        App.WaitForElement(q => q.All().Class("FooterView"));
+        App.WaitForElement(App.Marked("messageTextBox"));
+        App.WaitForElement(App.Marked("submitButton"));
 
         using var server = WireMockServer.Start(new WireMockServerSettings
         {
@@ -174,9 +170,8 @@ public class UITests : TestBase
     public async Task Submit_Retry_WithFeedback()
     {
         // Arrange
-        App.WaitForElement(q => q.All().Class("MainPage"));
-        App.WaitForElement(q => q.All().Class("FeedbackView"));
-        App.WaitForElement(q => q.All().Class("FooterView"));
+        App.WaitForElement(App.Marked("messageTextBox"));
+        App.WaitForElement(App.Marked("submitButton"));
 
         using var server = WireMockServer.Start(new WireMockServerSettings
         {
