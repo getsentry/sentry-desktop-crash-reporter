@@ -31,9 +31,9 @@ public class UITests : TestBase
                 .WithBody("{\"id\":\"abcd1234\"}"));
 
         // Act
-        App.ClearText(App.Marked("nameTextBox"));
-        App.ClearText(App.Marked("emailTextBox"));
-        App.ClearText(App.Marked("messageTextBox"));
+        ClearText("nameTextBox");
+        ClearText("emailTextBox");
+        ClearText("messageTextBox");
         App.Tap(App.Marked("submitButton"));
         await WaitUntilAsync(() => server.LogEntries.Count >= 1, TimeSpan.FromSeconds(30));
 
@@ -68,9 +68,9 @@ public class UITests : TestBase
                 .WithBody("{\"id\":\"abcd1234\"}"));
 
         // Act
-        App.EnterText(App.Marked("messageTextBox"), "It crashed!");
-        App.EnterText(App.Marked("nameTextBox"), "John Doe");
-        App.EnterText(App.Marked("emailTextBox"), "john.doe@example.com");
+        EnterText("messageTextBox", "It crashed!");
+        EnterText("nameTextBox", "John Doe");
+        EnterText("emailTextBox", "john.doe@example.com");
         App.Tap(App.Marked("submitButton"));
         await WaitUntilAsync(() => server.LogEntries.Count >= 2, TimeSpan.FromSeconds(30));
 
@@ -148,9 +148,9 @@ public class UITests : TestBase
                 .WithBody("{\"id\":\"abcd1234\"}"));
 
         // Act
-        App.ClearText(App.Marked("nameTextBox"));
-        App.ClearText(App.Marked("emailTextBox"));
-        App.ClearText(App.Marked("messageTextBox"));
+        ClearText("nameTextBox");
+        ClearText("emailTextBox");
+        ClearText("messageTextBox");
         App.Tap(App.Marked("submitButton"));
         await WaitUntilAsync(() => server.LogEntries.Count >= 2, TimeSpan.FromSeconds(30));
 
@@ -193,9 +193,9 @@ public class UITests : TestBase
                 .WithBody("{\"id\":\"abcd1234\"}"));
 
         // Act
-        App.EnterText(App.Marked("messageTextBox"), "It crashed!");
-        App.EnterText(App.Marked("nameTextBox"), "John Doe");
-        App.EnterText(App.Marked("emailTextBox"), "john.doe@example.com");
+        EnterText("messageTextBox", "It crashed!");
+        EnterText("nameTextBox", "John Doe");
+        EnterText("emailTextBox", "john.doe@example.com");
         App.Tap(App.Marked("submitButton"));
         await WaitUntilAsync(() => server.LogEntries.Count >= 3, TimeSpan.FromSeconds(30));
 

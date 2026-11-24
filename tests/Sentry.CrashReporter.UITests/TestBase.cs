@@ -87,4 +87,15 @@ public class TestBase
         }
         throw new TimeoutException();
     }
+
+    // Clicking and typing into canvas-rendered text boxes is unreliable, so set the text through
+    // the semantic element of the text box instead.
+    public void EnterText(string marked, string text)
+    {
+        App.Invoke(
+            "((id, text) => { const e = document.querySelector(`[xamlautomationid='${id}']`); e.value = text; e.dispatchEvent(new Event('input')); })",
+            [marked, text]);
+    }
+
+    public void ClearText(string marked) => EnterText(marked, "");
 }
