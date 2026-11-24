@@ -37,6 +37,30 @@ function Stop-UiTestProcesses {
     }
 }
 
+function Wait-UiTestServer {
+    param(
+        [System.Diagnostics.Process] $Server,
+        [int] $TimeoutSeconds = 120
+    )
+
+    $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+    while ([DateTime]::UtcNow -lt $deadline) {
+        if ($Server.HasExited) {
+            throw "UI test server exited with code $($Server.ExitCode)."
+        }
+
+        try {
+            Invoke-WebRequest -Uri $env:UNO_UITEST_TARGETURI -TimeoutSec 5 | Out-Null
+            return
+        }
+        catch {
+            Start-Sleep -Seconds 1
+        }
+    }
+
+    throw "UI test server did not respond at $env:UNO_UITEST_TARGETURI within $TimeoutSeconds seconds."
+}
+
 if ($Clean) {
     Stop-UiTestProcesses
 }
@@ -45,6 +69,7 @@ $server = $null
 $server = Start-Process -FilePath dotnet -ArgumentList "run --no-build -c $Configuration -f net10.0-browserwasm --project Sentry.CrashReporter/Sentry.CrashReporter.csproj --launch-profile ""Sentry.CrashReporter (WebAssembly)""" -PassThru
 try
 {
+    Wait-UiTestServer -Server $server
     dotnet test --no-build -c $Configuration -f net10.0 -l GitHubActions -l trx tests/Sentry.CrashReporter.UITests/Sentry.CrashReporter.UITests.csproj
 }
 finally
