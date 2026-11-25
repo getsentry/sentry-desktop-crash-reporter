@@ -53,7 +53,7 @@ public sealed class JsonGrid : DataGrid
             Header = "Key",
             MinWidth = 200,
             Width = DataGridLength.Auto,
-            CellTemplate = new DataTemplate(() =>
+            CellTemplate = DataTemplateHelpers.DataTemplate(() =>
                 new TextBlock()
                     .WithSourceCodePro()
                     .Margin(new Thickness(8, 0))
@@ -65,7 +65,7 @@ public sealed class JsonGrid : DataGrid
         {
             Header = "Value",
             Width = new DataGridLength(1, DataGridLengthUnitType.Star),
-            CellTemplate = new DataTemplate(() =>
+            CellTemplate = DataTemplateHelpers.DataTemplate(() =>
                 new TextBlock()
                     .WithSourceCodePro()
                     .Margin(new Thickness(8, 0))

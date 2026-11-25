@@ -297,7 +297,7 @@ public sealed class FooterView : ReactiveUserControl<FooterViewModel>
                 .VerticalAlignment(VerticalAlignment.Center)
                 .Text(x => x.Binding(() => vm.ErrorMessage))
                 .Foreground(ThemeResource.Get<Brush>("SystemErrorTextColor")),
-            _ => new Control()
+            _ => new ContentControl()
                 .Visibility(Visibility.Collapsed),
         };
     }

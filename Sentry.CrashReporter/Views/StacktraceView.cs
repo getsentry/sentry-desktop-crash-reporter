@@ -139,7 +139,7 @@ internal class StacktraceFrameGrid : DataGrid
         {
             Header = "Image",
             Width = DataGridLength.Auto,
-            CellTemplate = new DataTemplate(() =>
+            CellTemplate = DataTemplateHelpers.DataTemplate(() =>
                 new TextBlock()
                     .WithSourceCodePro()
                     .Margin(new Thickness(8, 0))
@@ -151,7 +151,7 @@ internal class StacktraceFrameGrid : DataGrid
         {
             Header = "Address",
             Width = DataGridLength.Auto,
-            CellTemplate = new DataTemplate(() =>
+            CellTemplate = DataTemplateHelpers.DataTemplate(() =>
                 new TextBlock()
                     .WithSourceCodePro()
                     .Margin(new Thickness(8, 0))
@@ -163,7 +163,7 @@ internal class StacktraceFrameGrid : DataGrid
         {
             Header = "Symbol",
             Width = DataGridLength.Auto,
-            CellTemplate = new DataTemplate(() =>
+            CellTemplate = DataTemplateHelpers.DataTemplate(() =>
                 new TextBlock()
                     .WithSourceCodePro()
                     .Margin(new Thickness(8, 0))
