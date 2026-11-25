@@ -14,17 +14,7 @@ public class FilePickerService : IFilePickerService
         var picker = new FileOpenPicker { ViewMode = PickerViewMode.List };
         picker.FileTypeFilter.Add("*");
 
-        IReadOnlyList<StorageFile>? files;
-        try
-        {
-            files = await picker.PickMultipleFilesAsync();
-        }
-        // TODO: remove (https://github.com/unoplatform/uno/issues/23071)
-        catch (AccessViolationException)
-        {
-            return Array.Empty<(string, byte[])>();
-        }
-
+        var files = await picker.PickMultipleFilesAsync();
         if (files is null || files.Count == 0)
         {
             return Array.Empty<(string, byte[])>();
