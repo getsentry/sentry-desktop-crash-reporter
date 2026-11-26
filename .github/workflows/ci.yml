@@ -137,10 +137,12 @@ jobs:
           mkdir ./artifacts
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             (cd ./build && 7z a -tzip "../artifacts/${{ steps.vars.outputs.artifact }}.zip" .)
+            cp ./build/Sentry.CrashReporter.exe "./artifacts/${{ steps.vars.outputs.artifact }}.exe"
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             tar czf "./artifacts/${{ steps.vars.outputs.artifact }}.tar.gz" -C ./build "Sentry Crash Reporter.app"
           else
             tar czf "./artifacts/${{ steps.vars.outputs.artifact }}.tar.gz" -C ./build .
+            cp ./build/Sentry.CrashReporter "./artifacts/${{ steps.vars.outputs.artifact }}"
           fi
 
       - name: Upload Artifacts
