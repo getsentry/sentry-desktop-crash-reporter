@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.6
+
+### Dependencies
+
+#### Deps
+
+- chore(deps): Bump coverlet.console from 10.1.0 to 10.1.1 by @dependabot in [#324](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/324)
+- chore(deps): Bump Symbolic.NET from 0.1.0 to 0.1.1 by @dependabot in [#320](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/320)
+- chore(deps): Bump CommunityToolkit.WinUI.Converters from 8.2.250402 to 8.2.251219 by @dependabot in [#313](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/313)
+- chore(deps): Bump CommunityToolkit.WinUI.Controls.Segmented from 8.2.250402 to 8.2.251219 by @dependabot in [#312](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/312)
+- chore(deps): Bump Microsoft.Extensions.Http.Resilience from 10.5.0 to 11.0.0 by @dependabot in [#316](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/316)
+- chore(deps): Bump KaitaiStruct.Runtime.CSharp from 0.10.0 to 0.11.0 by @dependabot in [#315](https://github.com/getsentry/sentry-desktop-crash-reporter/pull/315)
+
 ## 0.3.5
 
 ### Features
