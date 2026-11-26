@@ -11,15 +11,15 @@ public partial class MainViewModel : ReactiveObject, ILoadable
     [Reactive] private bool _isExecuting;
     [Reactive] private int _selectedIndex;
     [Reactive] private Exception? _error;
-    [ObservableAsProperty] private EnvelopeItem? _event;
-    [ObservableAsProperty] private JsonObject? _payload;
-    [ObservableAsProperty] private JsonObject? _user;
-    [ObservableAsProperty] private JsonObject? _tags;
-    [ObservableAsProperty] private JsonObject? _contexts;
-    [ObservableAsProperty] private JsonObject? _extra;
-    [ObservableAsProperty] private JsonObject? _sdk;
-    [ObservableAsProperty] private List<Attachment>? _attachments;
-    [ObservableAsProperty] private bool _hasStacktrace;
+    [ObservableAsProperty] public partial EnvelopeItem? Event { get; }
+    [ObservableAsProperty] public partial JsonObject? Payload { get; }
+    [ObservableAsProperty] public partial JsonObject? User { get; }
+    [ObservableAsProperty] public partial JsonObject? Tags { get; }
+    [ObservableAsProperty] public partial JsonObject? Contexts { get; }
+    [ObservableAsProperty] public partial JsonObject? Extra { get; }
+    [ObservableAsProperty] public partial JsonObject? Sdk { get; }
+    [ObservableAsProperty] public partial List<Attachment>? Attachments { get; }
+    [ObservableAsProperty] public partial bool HasStacktrace { get; }
 
     public event EventHandler? IsExecutingChanged;
 

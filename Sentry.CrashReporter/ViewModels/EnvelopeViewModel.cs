@@ -5,10 +5,10 @@ namespace Sentry.CrashReporter.ViewModels;
 public partial class EnvelopeViewModel : ReactiveObject
 {
     [Reactive] private Envelope? _envelope;
-    [ObservableAsProperty] private string? _eventId = string.Empty;
-    [ObservableAsProperty] private string? _filePath = string.Empty;
-    [ObservableAsProperty] private string? _fileName = string.Empty;
-    [ObservableAsProperty] private FormattedEnvelope? _formatted;
+    [ObservableAsProperty] public partial string? EventId { get; }
+    [ObservableAsProperty] public partial string? FilePath { get; }
+    [ObservableAsProperty] public partial string? FileName { get; }
+    [ObservableAsProperty] public partial FormattedEnvelope? Formatted { get; }
     private readonly IObservable<bool> _canLaunch;
 
     public EnvelopeViewModel()

@@ -21,21 +21,21 @@ public partial class FooterViewModel : ReactiveObject
     private readonly IClipboardService _clipboard;
     private CancellationTokenSource? _submitCts;
     [Reactive] private Envelope? _envelope;
-    [ObservableAsProperty] private string? _dsn = string.Empty;
-    [ObservableAsProperty] private string? _eventId = string.Empty;
-    [ObservableAsProperty] private string? _shortEventId = string.Empty;
-    [ObservableAsProperty] private string? _statusText = string.Empty;
+    [ObservableAsProperty] public partial string? Dsn { get; }
+    [ObservableAsProperty] public partial string? EventId { get; }
+    [ObservableAsProperty] public partial string? ShortEventId { get; }
+    [ObservableAsProperty] public partial string? StatusText { get; }
     [ObservableAsProperty] private string[] _statusIcons = [];
-    [ObservableAsProperty] private string? _cacheDirectory = string.Empty;
-    [ObservableAsProperty] private bool _canCache;
+    [ObservableAsProperty] public partial string? CacheDirectory { get; }
+    [ObservableAsProperty] public partial bool CanCache { get; }
     [Reactive] private CacheKeep _cacheKeep;
     [Reactive] private bool _canResetCacheKeep;
     [Reactive] private int _cacheKeepIndex;
-    [ObservableAsProperty] private bool _isSubmitting;
+    [ObservableAsProperty] public partial bool IsSubmitting { get; }
     [Reactive] private double _progress;
     private readonly IObservable<bool> _canSubmit;
     [Reactive] private string? _errorMessage;
-    [ObservableAsProperty] private FooterStatus _status;
+    [ObservableAsProperty] public partial FooterStatus Status { get; }
 
     public ReactiveCommand<Unit, string?> CopyEventIdCommand { get; }
     public ReactiveCommand<CacheKeep, Unit> SetCacheKeepCommand { get; }
@@ -114,7 +114,7 @@ public partial class FooterViewModel : ReactiveObject
         ResetCacheKeepCommand = ReactiveCommand.Create(ResetCacheKeep, canResetCacheKeep);
         OpenCacheDirectoryCommand = ReactiveCommand.CreateFromTask(OpenCacheDirectory, canOpenCacheDirectory);
 
-        _isSubmittingHelper = this.WhenAnyObservable(x => x.SubmitCommand.IsExecuting)
+        _isSubmittingHelper = SubmitCommand.IsExecuting
             .ToProperty(this, x => x.IsSubmitting);
 
         _statusHelper = this.WhenAnyValue(

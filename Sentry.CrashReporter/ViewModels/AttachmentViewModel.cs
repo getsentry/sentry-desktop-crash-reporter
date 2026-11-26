@@ -7,22 +7,22 @@ public partial class AttachmentViewModel : ReactiveObject
 {
     private readonly IFilePickerService _filePicker;
     [Reactive] private Envelope? _envelope;
-    [ObservableAsProperty] private List<Attachment>? _attachments;
+    [ObservableAsProperty] public partial List<Attachment>? Attachments { get; }
     private readonly IObservable<bool> _canAdd;
 
     public AttachmentViewModel(IFilePickerService? filePicker = null)
     {
         _filePicker = filePicker ?? App.Services.GetRequiredService<IFilePickerService>();
 
-        _attachmentsHelper = this.WhenAnyValue(x => x.Envelope)
+        var envelopes = this.WhenAnyValue(x => x.Envelope)
             .Select(env => env is null
                 ? Observable.Return<Envelope?>(null)
                 : Observable.FromEventPattern(
                         h => env.ItemsChanged += h,
                         h => env.ItemsChanged -= h)
                     .Select(_ => (Envelope?)env)
-                    .StartWith(env))
-            .Switch()
+                    .StartWith(env));
+        _attachmentsHelper = Observable.Switch(envelopes)
             .Select(env => env?.TryGetAttachments())
             .ToProperty(this, x => x.Attachments);
 
