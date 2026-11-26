@@ -24,6 +24,14 @@ public partial class App : Application
     public App()
     {
         InitializeComponent();
+#if GOLDEN_TEST
+        // Request the golden theme app-wide before any UI exists, because C# Markup theme
+        // resources follow the app theme rather than a theme requested on the root element
+        if (GoldenTestCapture.IsEnabled && GoldenTestCapture.Theme is { } theme)
+        {
+            RequestedTheme = theme;
+        }
+#endif
     }
 
     public static IServiceProvider ConfigureServices(StorageFile? file, ICacheService? cache = null)
@@ -151,7 +159,10 @@ public partial class App : Application
         MainWindow.Title = (Resources["WindowTitle"] as string)!;
         MainWindow.Resize(DefaultWindowWidth, DefaultWindowHeight);
         MainWindow.SetPreferredMinSize(MinWindowWidth, MinWindowHeight);
+        // Golden captures keep the theme requested at startup instead of following the OS
+#if !GOLDEN_TEST
         MainWindow.UseSystemTheme();
+#endif
 #if DEBUG
         MainWindow.UseStudio();
 #endif
