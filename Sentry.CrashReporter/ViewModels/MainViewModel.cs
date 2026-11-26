@@ -93,7 +93,7 @@ public partial class MainViewModel : ReactiveObject, ILoadable
         IsExecuting = true;
 
         Observable.FromAsync(() => reporter.LoadAsync())
-            .ObserveOn(RxApp.MainThreadScheduler)
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
             .Subscribe(
                 onNext: value =>
                 {

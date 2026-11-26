@@ -14,7 +14,7 @@ public class RuntimeTestBase
     [TestInitialize]
     public void Initialize()
     {
-        RxApp.MainThreadScheduler = Scheduler.Immediate;
+        RxSchedulers.MainThreadScheduler = Scheduler.Immediate;
     }
 
     [TestCleanup]
