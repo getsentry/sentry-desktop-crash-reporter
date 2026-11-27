@@ -46,8 +46,8 @@ public class AppConfigTests
 
         config.Apply(resources);
 
-        var fg = (resources["AccentButtonForeground"] as SolidColorBrush)!.Color;
-        Assert.AreEqual(Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF), fg);
+        Assert.AreEqual(Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF), GetForeground(resources, "Light"));
+        Assert.AreEqual(Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF), GetForeground(resources, "Dark"));
     }
 
     [TestMethod]
@@ -58,22 +58,32 @@ public class AppConfigTests
 
         config.Apply(resources);
 
-        var fg = (resources["AccentButtonForeground"] as SolidColorBrush)!.Color;
-        Assert.AreEqual(Color.FromArgb(0xFF, 0x00, 0x00, 0x00), fg);
+        Assert.AreEqual(Color.FromArgb(0xFF, 0x00, 0x00, 0x00), GetForeground(resources, "Light"));
+        Assert.AreEqual(Color.FromArgb(0xFF, 0x00, 0x00, 0x00), GetForeground(resources, "Dark"));
     }
 
     [TestMethod]
-    public void Apply_AccentColor_SetsForegroundOpacities()
+    public void Apply_TranslucentAccentColor_SetsForegroundPerTheme()
     {
-        var config = new AppConfig { SystemAccentColor = "#FF6600" };
+        var config = new AppConfig { SystemAccentColor = "#40FF0000" };
         var resources = new ResourceDictionary();
 
         config.Apply(resources);
 
-        var pressed = resources["AccentButtonForegroundPressed"] as SolidColorBrush;
-        var disabled = resources["AccentButtonForegroundDisabled"] as SolidColorBrush;
-        Assert.AreEqual(0.9, pressed!.Opacity, 0.001);
-        Assert.AreEqual(0.75, disabled!.Opacity, 0.001);
+        Assert.AreEqual(Color.FromArgb(0xFF, 0x00, 0x00, 0x00), GetForeground(resources, "Light"));
+        Assert.AreEqual(Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF), GetForeground(resources, "Dark"));
+    }
+
+    [TestMethod]
+    public void Apply_AccentButtonForeground_SetsForegroundForBothThemes()
+    {
+        var config = new AppConfig { SystemAccentColor = "#40FF0000", AccentButtonForeground = "#123456" };
+        var resources = new ResourceDictionary();
+
+        config.Apply(resources);
+
+        Assert.AreEqual(ColorExtensions.ParseHex("#123456"), GetForeground(resources, "Light"));
+        Assert.AreEqual(ColorExtensions.ParseHex("#123456"), GetForeground(resources, "Dark"));
     }
 
     [TestMethod]
@@ -248,4 +258,7 @@ public class AppConfigTests
 
         config.Apply(resources);
     }
+
+    private static Color GetForeground(ResourceDictionary resources, string theme) =>
+        (Color)((ResourceDictionary)resources.ThemeDictionaries[theme])["AccentButtonForegroundColor"];
 }

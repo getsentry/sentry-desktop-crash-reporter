@@ -80,11 +80,10 @@ public record AppConfig
             resources["SystemAccentColorDark3"] = ColorExtensions.TryParseHex(SystemAccentColorDark3) ?? ColorExtensions.Darken(accent, 0.35f);
             resources["SystemAccentColorBrush"] = new SolidColorBrush(accent);
 
-            var fg = ColorExtensions.TryParseHex(AccentButtonForeground) ?? ColorExtensions.ContrastForeground(accent);
-            resources["AccentButtonForeground"] = new SolidColorBrush(fg);
-            resources["AccentButtonForegroundPointerOver"] = new SolidColorBrush(fg);
-            resources["AccentButtonForegroundPressed"] = new SolidColorBrush(fg) { Opacity = 0.9 };
-            resources["AccentButtonForegroundDisabled"] = new SolidColorBrush(fg) { Opacity = 0.75 };
+            // contrast against the accent as rendered over each theme's page background
+            var fg = ColorExtensions.TryParseHex(AccentButtonForeground);
+            ApplyAccentButtonForeground(resources, fg ?? ColorExtensions.ContrastForeground(ColorExtensions.Composite(accent, Colors.White)), "Light");
+            ApplyAccentButtonForeground(resources, fg ?? ColorExtensions.ContrastForeground(ColorExtensions.Composite(accent, Colors.Black)), "Dark");
         }
 
         if (WindowTitle is not null)
@@ -119,6 +118,18 @@ public record AppConfig
 
         ApplyLogoOverride(resources, LogoLight, "Light");
         ApplyLogoOverride(resources, LogoDark, "Dark");
+    }
+
+    private static void ApplyAccentButtonForeground(ResourceDictionary resources, Color fg, string themeKey)
+    {
+        if (!resources.ThemeDictionaries.TryGetValue(themeKey, out var themeObj) ||
+            themeObj is not ResourceDictionary themeDict)
+        {
+            themeDict = new ResourceDictionary();
+            resources.ThemeDictionaries[themeKey] = themeDict;
+        }
+
+        themeDict["AccentButtonForegroundColor"] = fg;
     }
 
     private static void ApplyLogoOverride(ResourceDictionary resources, string? logoPath, string themeKey)

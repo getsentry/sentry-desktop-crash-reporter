@@ -45,7 +45,7 @@ All color resources are defined in `App.xaml` inside the `<ResourceDictionary>`.
 
 ### Accent color
 
-The primary brand color used for buttons and highlights (`App.xaml:13-19`):
+The primary brand color used for buttons and highlights (`App.xaml:22-28`):
 
 ```xml
 <Color x:Key="SystemAccentColor">#8866FF</Color>
@@ -62,13 +62,17 @@ accordingly.
 
 ### Accent button foreground
 
-The text color on accent-colored buttons (`App.xaml:22-25`):
+The text color on accent-colored buttons for each theme (`App.xaml:13-20`):
 
 ```xml
-<SolidColorBrush x:Key="AccentButtonForeground" Color="#FFFFFF" />
-<SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#FFFFFF" />
-<SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#FFFFFF" Opacity="0.9" />
-<SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#FFFFFF" Opacity="0.75" />
+<ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="Light">
+        <Color x:Key="AccentButtonForegroundColor">#FFFFFF</Color>
+    </ResourceDictionary>
+    <ResourceDictionary x:Key="Dark">
+        <Color x:Key="AccentButtonForegroundColor">#FFFFFF</Color>
+    </ResourceDictionary>
+</ResourceDictionary.ThemeDictionaries>
 ```
 
 ## Window Title, Header Text & Close Behavior

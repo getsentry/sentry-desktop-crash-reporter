@@ -10,6 +10,15 @@
                 <ResourceDictionary Source="ms-appx:///Styles/Images.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <Color x:Key="AccentButtonForegroundColor">#FFFFFF</Color>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <Color x:Key="AccentButtonForegroundColor">#FFFFFF</Color>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
             <Color x:Key="SystemAccentColor">#8866FF</Color>
             <Color x:Key="SystemAccentColorLight1">#9C7FFF</Color>
             <Color x:Key="SystemAccentColorLight2">#7554FF</Color>
@@ -19,10 +28,10 @@
             <Color x:Key="SystemAccentColorDark3">#3F2B99</Color>
 
             <SolidColorBrush x:Key="SystemAccentColorBrush" Color="{StaticResource SystemAccentColor}" />
-            <SolidColorBrush x:Key="AccentButtonForeground" Color="#FFFFFF" />
-            <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#FFFFFF" />
-            <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#FFFFFF" Opacity="0.9" />
-            <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#FFFFFF" Opacity="0.75" />
+            <SolidColorBrush x:Key="AccentButtonForeground" Color="{ThemeResource AccentButtonForegroundColor}" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="{ThemeResource AccentButtonForegroundColor}" />
+            <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="{ThemeResource AccentButtonForegroundColor}" Opacity="0.9" />
+            <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="{ThemeResource AccentButtonForegroundColor}" Opacity="0.75" />
 
             <x:String x:Key="WindowTitle">Sentry Crash Reporter</x:String>
             <x:Boolean x:Key="WindowClosable">True</x:Boolean>
