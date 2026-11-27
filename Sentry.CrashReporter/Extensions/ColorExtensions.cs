@@ -53,6 +53,16 @@ public static class ColorExtensions
             Blend(color.B, 0, amount));
     }
 
+    public static Color Composite(Color foreground, Color background)
+    {
+        var alpha = foreground.A / 255f;
+        return Color.FromArgb(
+            0xFF,
+            Blend(background.R, foreground.R, alpha),
+            Blend(background.G, foreground.G, alpha),
+            Blend(background.B, foreground.B, alpha));
+    }
+
     // https://www.w3.org/TR/WCAG20/#contrast-ratiodef
     public static Color ContrastForeground(Color background)
     {

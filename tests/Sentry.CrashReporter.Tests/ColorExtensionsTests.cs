@@ -228,4 +228,37 @@ public class ColorExtensionsTests
 
         Assert.That(result, Is.EqualTo(Color.FromArgb(0xFF, 0x00, 0x00, 0x00)));
     }
+
+    [Test]
+    public void Composite_Opaque_ReturnsForeground()
+    {
+        var color = Color.FromArgb(0xFF, 0x80, 0x40, 0x20);
+        var white = Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF);
+
+        var result = ColorExtensions.Composite(color, white);
+
+        Assert.That(result, Is.EqualTo(color));
+    }
+
+    [Test]
+    public void Composite_Transparent_ReturnsBackground()
+    {
+        var color = Color.FromArgb(0x00, 0x80, 0x40, 0x20);
+        var white = Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF);
+
+        var result = ColorExtensions.Composite(color, white);
+
+        Assert.That(result, Is.EqualTo(white));
+    }
+
+    [Test]
+    public void Composite_Translucent_BlendsOverBackground()
+    {
+        var color = Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF);
+        var black = Color.FromArgb(0xFF, 0x00, 0x00, 0x00);
+
+        var result = ColorExtensions.Composite(color, black);
+
+        Assert.That(result, Is.EqualTo(Color.FromArgb(0xFF, 0x33, 0x33, 0x33)));
+    }
 }
